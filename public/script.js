@@ -456,7 +456,7 @@ if (uploadForm && promptsContainer) {
     promptCard.innerHTML = `
       <div class="prompt-image" style="background-image: url('${prompt.imageUrl}')">
         <div class="viral-badge" style="background: #20bf6b">
-          <i class="fas fa-user"></i> Your Upload
+          <i class="fas fa-user"></i>  Uploaded
         </div>
       </div>
       <div class="prompt-content">
