@@ -456,7 +456,7 @@ if (uploadForm && promptsContainer) {
     promptCard.innerHTML = `
       <div class="prompt-image" style="background-image: url('${prompt.imageUrl}')">
         <div class="viral-badge" style="background: #20bf6b">
-          <i class="fas fa-user"></i>  Uploaded
+          <i class="fas fa-user"></i>  Prompt Seen
         </div>
       </div>
       <div class="prompt-content">
@@ -550,9 +550,9 @@ if (uploadForm && promptsContainer) {
   }
   
   // Load first page on showcase page load
-  if (window.location.pathname.includes('showcase.html')) {
+ if (window.location.pathname.includes('index.html') || window.location.pathname.includes('showcase.html')) {
     window.addEventListener('load', () => {
-      loadUploads(1);
+        loadUploads(1);
     });
   }
 }
