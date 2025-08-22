@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-LS811PSS3V"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-LS811PSS3V');
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="title" content="Prompt Seen: New Trending Prompts & Photo Editing Prompts">
+<meta name="description" content="Prompt Seen Website is a Trending and viral Prompts Website Which can Help You To Make Your Photo Image In Awesome by Just Using Prompt Seen Website .">
+<meta name="keywords" content="Prompt Seen,home prompt seen,chatgpt prompt seen,midjourney prompt seen,type prompt seen,prompt seen download,prompt seen gcam,prompt seen camera,prompt seen chatgpt,prompt seen lmc,prompt seen couple,prompt seen gcam download,	prompt seen name,prompt seen ai,prompt seen app download,	prompt seen app,prompt seen apk,prompt seen attitude boy,prompt seen apk download,	prompt seen all,	prompt seen ai image generator,prompt signification,ai prompt seen,apk prompt seen download,ai couple prompt seen,	all prompt seen,prompt seen 15 august name,prompt seen 15 august photo,	prompt seen camera app,	prompt seen boy,	prompt seen birthday,prompt seen bike,prompt seen black and white,prompt seen baby,prompt seen black,prompt seen boy and girl,	prompt seen bing image creator,prompt seen bike rider,	prompt report meaning,birthday prompt seen,	best prompt seen,prompt seen ganpati bappa,prompt seen birthday wishes,prompt seen sad boy,	prompt seen name for boy,prompt seen com,prompt seen camera download,	prompt seen copy,prompt seen car,prompt seen camera iphone,prompt seen couple free,chatgpt prompt seen,couple prompt seen,prompt seen diwali,prompt seen durga puja,diwali prompt seen,prompt seen friendship day,prompt seen editing,	prompt seen eid milad un nabi,prompt seen photo editor,prompt seen rajan editz,command prompt see environment variables,anaconda prompt see environments,prompt seen name ai photo editing,	prompt scene editing,photo editing prompt seen,prompt seen free,prompt seen friends,	prompt seen free fire,prompt seen for girl,	prompt seen for chatgpt,	prompt seen for boys">
+<meta name="robots" content="index, follow">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="language" content="English">
+
+<title>Prompt Seen: New Trending Prompts & Photo Editing Prompts</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+<link rel="icon" type="image/png" href="/favicon.png">
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<style>
+/* Add these styles to your styles.css */
+  /* Upload Modal Responsive Styles */
+    @media (max-width: 768px) {
+        .upload-modal {
+            width: 95%;
+            padding: 20px;
+            margin: 10px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        
+        .modal-header h2 {
+            font-size: 1.5rem;
+        }
+        
+        .upload-form .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .upload-form input,
+        .upload-form textarea,
+        .upload-form select {
+            padding: 10px;
+            font-size: 16px; /* Prevents zoom on iOS */
+        }
+        
+        .file-upload {
+            padding: 20px 15px;
+        }
+        
+        .file-upload i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .file-upload p {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            justify-content: center;
+            padding: 12px;
+        }
+        
+        /* Filter controls adjustments */
+        .filter-controls {
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .filter-btn, .upload-btn {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+        }
+        
+        /* Prompt card adjustments */
+        .prompt-card {
+            margin-bottom: 20px;
+        }
+        
+        .prompt-actions {
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .show-prompt-btn, .copy-prompt-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .upload-modal {
+            padding: 15px;
+        }
+        
+        .modal-header h2 {
+            font-size: 1.3rem;
+        }
+        
+        .file-upload {
+            padding: 15px 10px;
+        }
+        
+        /* Stack filter buttons on very small screens */
+        .filter-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .upload-btn {
+            margin-top: 10px;
+            justify-content: center;
+        }
+    }
+
+    /* Prevent horizontal scrolling on mobile */
+    body.modal-open {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+    }
+.prompt-text {
+    position: relative;
+    background: var(--light);
+    border-radius: 10px;
+    padding: 15px;
+    font-family: monospace;
+    margin-bottom: 20px;
+    max-height: 120px;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
+
+.prompt-text.expanded {
+    max-height: 1000px;
+}
+
+.prompt-text::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    font-size: 3rem;
+    color: rgba(78, 84, 200, 0.1);
+    font-family: serif;
+}
+
+.prompt-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.show-prompt-btn, .copy-prompt-btn {
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.show-prompt-btn:hover, .copy-prompt-btn:hover {
+    transform: translateY(-2px);
+}
+
+.prompt-text.fade::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--light));
+}
+
+.copy-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--success);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 30px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.copy-notification.show {
+    opacity: 1;
+}
+</style>
+</head>
+<body>
+  <header>
+    <div class="container">
+        <nav>
+            <div class="logo">
+             <img src="logo.png" alt="Logo" style="width:50px;height:50px;">
+                <span>Prompt Seen</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html">Showcase</a>
+                <a href="promptconverter.html">Prompt Converter</a>
+<a href="showcase.html">Gallery</a>
+                <a href="features.html">Features</a>
+         
+                <a href="howitworks.html">How It Works</a>
+            </div>
+            <div id="authSection">
+                <!-- Will be populated by script.js -->
+                <a href="login.html" class="login-btn">Login</a>
+   
+            </div>
+            <div class="mobile-toggle">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+    </div>
+</header>
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Welcome to Prompt Seen</h1>
+                <p>
+Struggling to transform your ideas into stunning visuals?
+Look no further! Promptseen is your one-stop shop for mastering the art of AI image generation & Photo Editing prompts</p>
+
+                <div class="hero-buttons">
+                      <a href="promptconverter.html">Explore prompts</a>
+                    <a href="howitworks.html">Learn More</a>
+                </div>
+            </div>
+
+ <!-- Showcase Section -->
+    <section class="showcase" id="showcase">
+        <div class="container">
+            <div class="trending-header">
+                <div class="section-title" style="text-align: left; margin: 0;">
+                    <h2>Trending Prompts Showcase</h2>
+                    <p>Explore our community's most successful prompts and their outputs </p>
+		<p>login if you want to upload</p>
+                </div>
+                <div class="filter-controls">
+                    <button class="filter-btn active">All</button>
+                    <button class="filter-btn">Art</button>
+                    <button class="filter-btn">Photography</button>
+                    <button class="filter-btn">Design</button>
+                    <button class="filter-btn">Writing</button>
+                    <button class="upload-btn" id="openUploadModal">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload Creation
+                    </button>
+                </div>
+            </div>
+            
+            <div class="prompts-grid" id="promptsContainer">
+                <!-- Prompt Card 1 -->
+                <div class="prompt-card">
+                    <div class="prompt-image" style="background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1755872380612-925487767.png?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16446997800&Signature=Ghu0ifpYDANk7YViqk3Ii%2FjJWFeEEJO91siT2QbXlj0upmNtsAT%2FU6DjAIhOpsartys8WpkBBm0PAJd4CKJTE9ilYKHSBLcyR5w3gZZFd1eBzuz6IlLxucpChSLbLtrkJvUaGD%2BsTp%2BEDDeWX2CjoeXJealVgja0713BNydqcjmaYh%2FfV3uXktF%2FD42AK5Gt7PEHLipay1PoFMBeF9VZHZwcDOPITfgJVFCnBUmC68QHiSwF4Il0YBtD4t4sBRfX9hjjvgTGhGILiF2K7c5KIUk%2B8MJXlG9n9nIzAAFEjwJlId796V46rLcvGJUvmOAm3xcVIGiMJmgKj1V8Hwgqmg%3D%3D')">
+                        <div class="viral-badge">
+                            <i class="fas fa-fire"></i> Viral
+                        </div>
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 2.4K Likes</span>
+                            <span><i class="fas fa-download"></i> 1.7K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red</h3>
+                        <div class="prompt-text fade">
+                           
+          HYPER-DETAILED GRAPHIC DESIGN FEATURING A STRIKING PORTRAIT OF A YOUNG MAN WITH THE SAME FACE AS UPLOADED] WITH A CONFIDENT DEMEANOUR. HIS HEAD IS ADORNED WITH VOLUMINOUS, ADDING TEXTURE AND DEPTH TO THE COMPOSITION. THE PORTRAIT IS RENDERED IN A HIGH-CONTRAST BLACK-AND-WHITE STYLE, STANDING OUT AGAINST THE MINIMALIST BACKGROUND. HIS EXPRESSION IS CALM YET DETERMINED, WITH ONE EYE PARTIALLY OBSCURED BY A BOLD RED RECTANGULAR OVERLAY THAT ADDS A MODERN, ARTISTIC FLAIR.
+
+THE BACKGROUND IS A SMOOTH, TEXTURED GREY CANVAS.
+
+SERVING AS A NEUTRAL BACKDROP THAT ENHANCES THE FOCAL ELEMENTS. OVERLAID VERTICALLY ALONG THE LEFT SIDE OF THE IMAGE, THE WORD "PAUL SOMENDRA IS REPEATED IN LARGE, BOLD
+BLACK LETTERS WITH A SLIGHT TRANSPARENCY EFFECT.
+
+CREATING A LAYERED, DYNAMIC LOOK INTERSPERSED WITHIN THIS TEXT ARE ICONIC DESIGN ELEMENTS: A PROMINENT NIKE LOGO IN RED NEAR THE TOP. A STYLIZED RED "S" LOWER DOWN, AND A VERTICAL RED LINE THAT PUNCTUATES THE DESIGN. TO THE RIGHT. A RED GEOMETRIC FRAME SURROUNDS THE OBSCURED EYE, DRAWING ATTENTION TO THE INTERPLAY OF COLOUR AND FORM. AT THE BOTTOM RIGHT. THE PHRASE "WORK SMART NOT HARD" IS WRITTEN IN BOLD RED CAPITAL LETTERS, WITH "SMART" IN A SMALLER, ELEGANT CURSIVE SCRIPT BENEATH IT SIGNED OFF WITH "GRAPHICS" IN A MATCHING STYLE, SUGGESTING A PERSONAL OR BRAND SIGNATURE. THE BOTTOM LEFT CORNER FEATURES THE HASHTAG #PAUL" IN RED. REINFORCING THE IDENTITY THEME.
+THE YOUNG MAN'S ATTIRE, A PARTIALLY VISIBLE BLACK LEATHER JACKET WITH AN OPEN COLLAR, ADDS A RUGGED YET STYLISH EDGE TO THE OVERALL AESTHETIC.
+
+THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JACKET, WHILE THE RED ACCENTS POP VIVIDLY AGAINST THE GRAYSCALE TONES, CREATING A COHESIVE, HIGH-ENERGY VISUAL THAT BLENDS STREETWEAR CULTURE WITH GRAPHIC ARTISTRY. PHOTOREALISTIC, SHALLOW DEPTH OF FIELD, HIGH-RESOLUTION DSLR QUALITY, HASSELBLAD X2D 100C, SHALLOW DEPTH OF FIELD. SHARPLY FOCUSED ON ME.4:5 ASPECT RATIO. MAKE IT 8K ULTRA REALISTIC HYPER DETAILED
+        
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <div class="prompt-analysis">
+                            <h4>Why this prompt works:</h4>
+                            <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                    </div>
+                </div>
+                
+        
+                
+                <!-- Prompt Card 3 -->
+                <div class="prompt-card">
+                   <div class="prompt-image" style="background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1755862081813-759452550.webp?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16446997800&Signature=DXMDJApijKRPFEbe9FnYtBrWay6JRAQDqJ7J9PlA1%2BplcL%2F0VbqUnghj2iKhmh52wEnGEx8ndHHi9q%2B1Rj7%2FnqbCRdlW6x%2BLO5cyUKycksczKNKnecYj8WwbbIQ22VB7fmjS3FRufdaASnjFnfWqsuGhWFE7UiI2FF7YLbeXa%2BIq6ebi0yUs6AGFlevvtHEcTtlEGOfYUQrmNlakGOAti7LvscCPN16YyhG0n%2B48NtOv1Wq0N0wx2%2B%2BvWnkeiSXVc0FeYVTTlaFCn0LUSuL%2Fnm4x3O5QALRdFmsqDTXK48bOvuCjK2Zyguj%2Fe05jtwF%2Fb8PyexjG6a%2FQOVeH2lRZow%3D%3D')">
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 3.1K Likes</span>
+                            <span><i class="fas fa-download"></i> 2.2K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">a man on bike rider chatgpt photo editing</h3>
+                        <div class="prompt-text fade">
+                           
+          create image into a "VISH EDITZ" text at background and with vfx edits like thundar logo design at background into a poster
+        
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <div class="prompt-analysis">
+                            <h4>Why this prompt works:</h4>
+                            <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Prompt Card 4 -->
+                <div class="prompt-card">
+                    <div class="prompt-image" style="background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1755862010976-880728132.webp?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16446997800&Signature=fMkdxPEMgRuOUSEbRaNvV9Sg8BzKmSrqoKiQX4l822fCKRkUfNIWPUfaVZm5AjtBrmyr%2B2FvQ097Ll84B77CrsCVF%2F%2FGUEqgzQWDwmCGzW%2FcawFBuSAyv5KYYpc32D4CwuI5Yd4soTWN2euXRA1bRc3vYXzpA9gg2r8FsCF5xC5%2FIeNwfQur1ROpp%2FYpx9hOPQI8zRLk641znyKKVPfbKTsTQxOpP0oDjBS36U0FJYdhKRhJGdMVTeeWJMSMqaNODeZj8%2BzRDu1pH8y822FFdNbZR1%2F8amV1sTbh%2F4CyN4IelSi1bkupdPZ%2BNjl8noqlZWDOofgW46%2F0phsH%2Bu24yA%3D%3D')">
+                        <div class="viral-badge" style="background: #20bf6b">
+                            <i class="fas fa-user"></i>   prompt seen
+                        </div>
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 128 Likes</span>
+                            <span><i class="fas fa-download"></i> 87 Uses</span>
+                        </div>
+                        <h3 class="prompt-title">a movie like poster prompt</h3>
+                        <div class="prompt-text fade">
+                            
+          A cinematic double exposure of me in profile, with a post-apocalyptic cityscape inside his silhouette.The inner scene shows the man walking through a destroyed, burning urban street, buildings in ruins, glowing embers and fire, with a dramatic sunset in the background. Moody lighting, warm tones, emotional and introspective mood, high detail, 8K resolution
+        
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <div class="prompt-analysis">
+                            <h4>Why this prompt works:</h4>
+                            <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                    </div>
+                </div>
+
+<!-- Prompt Card 3 -->
+                <div class="prompt-card">
+                   <div class="prompt-image" style="background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1755861935368-917383315.webp?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16446997800&Signature=kitu4e3gGPCm0az5OnWqKsaQQEKzGqqKFT1OhMrV988m1ON75waoU9httXX8iiZiVzqgryL1U1AOKV%2FLjFH5AzSvKQhBZn2f3QyPkFALKdjp0GlfKLVmU2b3zeOIXSFH%2BXWpUp%2BU8XwnHI%2BqZR2Hjdv4vAW3rRFgFBLy%2BcH%2B7LfQyyXfkzHJDoLlORTePnyEgR8m%2FrMIkvaLaDSRJiSzYbRsvOb0EXCbMB4GoaZGU5UtCMcKqNmj8S4Ycf1o4QWPfHqwn1pcbjqIi4s2HQuWqemXY2X5Jg7pWhuArYFI0fZA8dFwZiWTu281WiTrNVCp5%2F7lho9c6w2qoJmPAmxxHw%3D%3D')">
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 3.1K Likes</span>
+                            <span><i class="fas fa-download"></i> 2.2K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">midjourny prompt for car</h3>
+                        <div class="prompt-text fade">
+                          
+          Visualise me as A young man wearing drop shoulder t-shirt and baggy jeans confidently leaning against my customised BMW E46 M3. The car is modified and blue and silver paintjob is done modernly street racing aesthetic. I am in a middle of a busy Phaka city road where people are rushing in motion. The style is inspired by a street racing game Need for speed.
+        
+           </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <div class="prompt-analysis">
+                            <h4>Why this prompt works:</h4>
+                            <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                    </div>
+                </div>
+<!-- Prompt Card 3 -->
+                <div class="prompt-card">
+                   <div class="prompt-image" style="background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1755861626142-349117543.webp?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16446997800&Signature=VmCor3nsGFPwFFSlJofnghK%2F97CyhEcfjvvxzDOGsi3VPhtPCpW6YKCLrXHgduNEsIN8d7dGFt8fVMkldpeaHFrViM8m6XeDotTQTK44%2FABulicXhQCa6E6Kn3gOuOwWwQ%2FGoqDBqQuha7k24WO5v3YjwwumQFiIqz2uzsS%2F%2FR86tG%2BBguIXUP9INSBZ84E4p3JeaaqbJ6if93A4ySlZd0NpTCdeFJttlkxFU2S5BX3uzyD%2BAEYSMVGoCUQshZtM3QR8W%2FZhhYMDuQeRo627IJ0aAvtfymZSrX3Tp7yc8IP8TZgObyV%2BYTAgavAElWR2WKCRzXNrpPpJPXsqORsLQg%3D%3D')">
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 3.1K Likes</span>
+                            <span><i class="fas fa-download"></i> 2.2K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">15 August chatgpt prompt</h3>
+                        <div class="prompt-text fade">
+                        
+          Create a image in 9:16, 4k - A hyper-realistic 8K studio portrait of a proud young Indian man saluting in front of a waving Indian national flag. He stands confidently under dramatic studio lighting, which casts soft highlights and shadows around him. He wears a crisp white kurta with a long tricolor (saffron, white, green) dupatta draped neatly around his neck, and fitted black jeans. The dupatta’s fabric slightly ripples, mirroring the motion of the flag behind.
+        
+  </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <div class="prompt-analysis">
+                            <h4>Why this prompt works:</h4>
+                            <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                    </div>
+                </div>
+<!-- Prompt Card 3 -->
+                <div class="prompt-card">
+                   <div class="prompt-image" style=" background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1755861207886-425420045.webp?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16446997800&Signature=H5%2B8zaMixP88kIYTs2dsnP3udrz19gfIGMtpWpJc0bYfBC51kvLnlpk7cMMYCFehbFnbmnlm47vg1dnHIG%2Bn21C7ZK3EyK7HM4Qn5cpBeAEAcAIlKG6PSA9tcjS2rWdvhtx1E14vXjWLnk%2BM8agCIP%2BEdZZTFegVDagTTzzn07K2ApHDfptOe602twNac3G%2B5KEXmm4elWMvH1PbwUX2%2BNpH6369kRYYVgSmNP5qYivKPImVd2K63p5f2T%2BBxDH%2BZ0UUoyjZ7B7vZUMXdx9DTus1xeNdrxeYQ9ZW5C8tX3BTgOw0QxDygoW9YNnFLO7qNirQ0hbhp9maj6goSDnGqg%3D%3D')">
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 3.1K Likes</span>
+                            <span><i class="fas fa-download"></i> 2.2K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">a man with work smart with one eye red ai photo</h3>
+                        <div class="prompt-text fade">
+                           
+          HYPER-DETAILED GRAPHIC DESIGN FEATURING A STRIKING PORTRAIT OF A YOUNG MAN WITH THE SAME FACE AS UPLOADED] WITH A CONFIDENT DEMEANOUR. HIS HEAD IS ADORNED WITH VOLUMINOUS, ADDING TEXTURE AND DEPTH TO THE COMPOSITION. THE PORTRAIT IS RENDERED IN A HIGH-CONTRAST BLACK-AND-WHITE STYLE, STANDING OUT AGAINST THE MINIMALIST BACKGROUND. HIS EXPRESSION IS CALM YET DETERMINED, WITH ONE EYE PARTIALLY OBSCURED BY A BOLD RED RECTANGULAR OVERLAY THAT ADDS A MODERN, ARTISTIC FLAIR.
+
+THE BACKGROUND IS A SMOOTH, TEXTURED GREY CANVAS.
+
+SERVING AS A NEUTRAL BACKDROP THAT ENHANCES THE FOCAL ELEMENTS. OVERLAID VERTICALLY ALONG THE LEFT SIDE OF THE IMAGE, THE WORD "PAUL SOMENDRA IS REPEATED IN LARGE, BOLD
+BLACK LETTERS WITH A SLIGHT TRANSPARENCY EFFECT.
+
+CREATING A LAYERED, DYNAMIC LOOK INTERSPERSED WITHIN THIS TEXT ARE ICONIC DESIGN ELEMENTS: A PROMINENT NIKE LOGO IN RED NEAR THE TOP. A STYLIZED RED "S" LOWER DOWN, AND A VERTICAL RED LINE THAT PUNCTUATES THE DESIGN. TO THE RIGHT. A RED GEOMETRIC FRAME SURROUNDS THE OBSCURED EYE, DRAWING ATTENTION TO THE INTERPLAY OF COLOUR AND FORM. AT THE BOTTOM RIGHT. THE PHRASE "WORK SMART NOT HARD" IS WRITTEN IN BOLD RED CAPITAL LETTERS, WITH "SMART" IN A SMALLER, ELEGANT CURSIVE SCRIPT BENEATH IT SIGNED OFF WITH "GRAPHICS" IN A MATCHING STYLE, SUGGESTING A PERSONAL OR BRAND SIGNATURE. THE BOTTOM LEFT CORNER FEATURES THE HASHTAG #PAUL" IN RED. REINFORCING THE IDENTITY THEME.
+THE YOUNG MAN'S ATTIRE, A PARTIALLY VISIBLE BLACK LEATHER JACKET WITH AN OPEN COLLAR, ADDS A RUGGED YET STYLISH EDGE TO THE OVERALL AESTHETIC.
+
+THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JACKET, WHILE THE RED ACCENTS POP VIVIDLY AGAINST THE GRAYSCALE TONES, CREATING A COHESIVE, HIGH-ENERGY VISUAL THAT BLENDS STREETWEAR CULTURE WITH GRAPHIC ARTISTRY. PHOTOREALISTIC, SHALLOW DEPTH OF FIELD, HIGH-RESOLUTION DSLR QUALITY, HASSELBLAD X2D 100C, SHALLOW DEPTH OF FIELD. SHARPLY FOCUSED ON ME.4:5 ASPECT RATIO. MAKE IT 8K ULTRA REALISTIC HYPER DETAILED
+        
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <div class="prompt-analysis">
+                            <h4>Why this prompt works:</h4>
+                            <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="pagination">
+                <button class="pagination-btn active">1</button>
+                <button class="pagination-btn">2</button>
+                <button class="pagination-btn">3</button>
+                <button class="pagination-btn">Next <i class="fas fa-arrow-right"></i></button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Upload Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="upload-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-cloud-upload-alt"></i> Upload Your Creation</h2>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <form class="upload-form" id="uploadForm">
+                <div class="form-group">
+                    <label for="promptTitle">Prompt Title</label>
+                    <input type="text" id="promptTitle" placeholder="Give your creation a title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="promptText">Prompt Text</label>
+                    <textarea id="promptText" placeholder="Enter the prompt you used to generate this content" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="imageUpload">Upload Generated Image</label>
+                    <div class="file-upload">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Click to upload or drag and drop</p>
+                        <p style="font-size: 0.9rem; color: #777;">JPG, PNG or GIF (Max. 5MB)</p>
+                        <input type="file" id="imageUpload" accept="image/*" required>
+                        <img id="imagePreview" class="preview-image" alt="Preview">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <select id="category" required>
+                        <option value="">Select a category</option>
+                        <option value="art">Art</option>
+                        <option value="photography">Photography</option>
+                        <option value="design">Design</option>
+                        <option value="writing">Writing</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-upload"></i> Submit Creation
+                </button>
+            </form>
+        </div>
+    </div>
+
+ <!-- Prompt Converter Section -->
+    <section class="prompt-converter" id="converter">
+        <div class="container">
+            <div class="section-title">
+                <h2>Prompt Enhancement Tool</h2>
+                <p>Transform your basic prompts into detailed, optimized instructions for better AI results</p>
+            </div>
+            
+            <div class="converter-container">
+                <div class="converter-header">
+                    <h2><i class="fas fa-magic"></i> AI Prompt Converter</h2>
+                    <p>Enter your basic prompt and watch it transform into a detailed masterpiece</p>
+                </div>
+                
+                <div class="converter-body">
+                    <div class="converter-column">
+                        <h3><i class="fas fa-edit"></i> Your Prompt</h3>
+                        <textarea id="userPrompt" placeholder="Enter your basic prompt here... Example: 'a cat in space'">a cat in space</textarea>
+                    </div>
+                    
+                    <div class="converter-column">
+                        <h3><i class="fas fa-star"></i> Enhanced Prompt</h3>
+                        <textarea id="enhancedPrompt" rows="5" cols="15" readonly>Enter your prompt and click "Enhance" to see the magic...</textarea>
+                    </div>
+                </div>
+                
+                <div class="converter-actions">
+                    <button class="convert-btn" id="convertBtn">
+                        <i class="fas fa-bolt"></i> Enhance Prompt
+                    </button>
+                </div>
+                
+                <div class="converter-tips">
+                    <h4><i class="fas fa-lightbulb"></i> Tips for Better Prompts</h4>
+                    <ul>
+                        <li>Be specific about style, mood, and composition</li>
+                        <li>Include lighting and color preferences</li>
+                        <li>Reference artistic styles or photographers</li>
+                        <li>Specify technical details like aspect ratio and resolution</li>
+                        <li>Add context about the scene or subject</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+            <div class="hero-image">
+                <div class="hero-card">
+                    <div class="card-header">
+                        Prompt Generator Tool
+                    </div>
+                    <div class="card-body">
+                        <div class="prompt-example">
+                            Generate a photorealistic image of a futuristic cityscape at sunset, with flying vehicles, holographic advertisements, and lush vertical gardens. The scene should have cinematic lighting with strong volumetric rays.
+                        </div>
+                        <div class="prompt-result">
+                            <div class="result-box" style="background-image: url('https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8Y2l0eSxmdXR1cmlzdGljfHx8fHx8MTY4OTYyODQ5NA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1200')"></div>
+                            <div class="result-box" style="background-image: url('https://images.unsplash.com/photo-1541701494587-cb58502866ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8Y2l0eSxmdXR1cmlzdicl8fHx8fDE2ODk2Mjg1MDA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1200')"></div>
+                        </div>
+                        <div style="text-align: center; color: #777; font-size: 0.9rem;">
+                            Results generated from the prompt above
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Preview Section -->
+    <section class="features-preview">
+        <div class="container">
+            <div class="section-title">
+                <h2>Why Choose Promptseen?</h2>
+                <p>Our platform combines cutting-edge AI with human expertise to deliver prompt engineering that consistently produces superior results.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <h3>Intelligent Prompt Crafting</h3>
+                    <p>Our algorithms analyze thousands of successful prompts to identify patterns that generate the best results.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <h3>Context Optimization</h3>
+                    <p>We structure prompts with the perfect balance of detail and flexibility for optimal AI interpretation.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="fas fa-rocket"></i>
+                    </div>
+                    <h3>Rapid Iteration</h3>
+                    <p>Generate multiple variations instantly to find the perfect prompt for your specific needs.</p>
+                </div>
+            </div>
+            <div class="centered-button">
+                <a href="features.html" class="cta-button">Explore All Features</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Showcase Preview Section -->
+    <section class="showcase-preview">
+        <div class="container">
+            <div class="section-title">
+                <h2>Community Showcase</h2>
+                <p>Explore our community's most successful prompts and their outputs</p>
+            </div>
+            
+            <div class="prompts-grid">
+                <!-- Prompt Card 1 -->
+                <div class="prompt-card">
+                    <div class="prompt-image" style="background-image: url('https://images.unsplash.com/photo-1505506874110-6a7a69069a08?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8YWl8fHx8fHwxNjg5NjI4NTY4&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1200')">
+                        <div class="viral-badge">
+                            <i class="fas fa-fire"></i> Viral
+                        </div>
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 2.4K Likes</span>
+                            <span><i class="fas fa-download"></i> 1.7K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">Cyberpunk Samurai Warrior</h3>
+                        <div class="prompt-text fade">
+                            A highly detailed portrait of a female cyberpunk samurai warrior...
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Prompt Card 2 -->
+                <div class="prompt-card">
+                    <div class="prompt-image" style="background-image: url('https://images.unsplash.com/photo-1503376780353-7e6692767b70?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8Y2FyfHx8fHx8MTY4OTYyODU3MA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1200')">
+                        <div class="viral-badge">
+                            <i class="fas fa-fire"></i> Viral
+                        </div>
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 1.9K Likes</span>
+                            <span><i class="fas fa-download"></i> 1.3K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">Retro Futuristic Sports Car</h3>
+                        <div class="prompt-text fade">
+                            A 1970s concept sports car reimagined in 2050, sleek aerodynamic design...
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="centered-button">
+                <a href="showcase.html" class="cta-button">View Full Showcase</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2>Ready to Transform Your AI Experience?</h2>
+            <p>Join our community of 50,000+ prompt engineers and creatives who are unlocking the full potential of generative AI.</p>
+             <a href="promptconverter.html">Create Free Account</a>
+        </div>
+    </section>
+
+
+<!-- In index.html -->
+<section class="featured-posts">
+    <div class="container">
+        <div class="section-title">
+            <h2>Featured Blog Post</h2>
+            <p>Discover trending AI techniques</p>
+        </div>
+        
+        <div class="featured-card">
+            <div class="featured-image" style="background-image: url('https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80')"></div>
+            <div class="featured-content">
+                <span class="featured-tag">AI Photo Editing</span>
+                <h3>ChatGPT Celebrity Selfie AI Photo Editing Prompts</h3>
+                <p>Learn how to transform ordinary selfies into celebrity-style portraits using advanced AI prompt engineering techniques.</p>
+                <a href="blog/celebrity-selfie-prompts.html" class="cta-button">Read Article</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-column">
+                    <h3>Promptseen</h3>
+                    <p>Master the art of AI communication with our advanced prompt engineering platform.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-discord"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Resources</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Prompt Library</a></li>
+                        <li><a href="#">Tutorials</a></li>
+                        <li><a href="blog.html">Blog</a></li>
+                        <li><a href="#">API Documentation</a></li>
+                        <li><a href="#">Community Forum</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Company</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">About Us</a></li>
+                        <li><a href="#">Careers</a></li>
+                        <li><a href="#">Press</a></li>
+                        <li><a href="#">Contact</a></li>
+                        <li><a href="#">Partnerships</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Legal</h3>
+                    <ul class="footer-links">
+                        <li><a href="tos.html">Terms of Service</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="copyright.html">Copyright</a></li>
+                        <li><a href="cookies-ethics.html">Cookies</a></li>
+                        <li><a href="cookies-ethics.html">AI Ethics</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="copyright">
+                &copy; 2025 Promptseen.co  All rights reserved. AI-generated content is subject to respective platform terms.
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+<script>
+  // Enhanced mobile handling for the upload modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const uploadModal = document.getElementById('uploadModal');
+        const openUploadBtn = document.getElementById('openUploadModal');
+        const closeModalBtn = document.getElementById('closeModal');
+        const body = document.body;
+        
+        if (openUploadBtn && uploadModal) {
+            openUploadBtn.addEventListener('click', function() {
+                // Check authentication
+                const user = checkAuth();
+                if (!user) {
+                    alert('Please login to upload creations');
+                    window.location.href = 'login.html?returnUrl=' + encodeURIComponent(window.location.href);
+                    return;
+                }
+                
+                uploadModal.classList.add('active');
+                body.classList.add('modal-open');
+            });
+        }
+        
+        if (closeModalBtn && uploadModal) {
+            closeModalBtn.addEventListener('click', function() {
+                uploadModal.classList.remove('active');
+                body.classList.remove('modal-open');
+            });
+        }
+        
+        if (uploadModal) {
+            uploadModal.addEventListener('click', function(e) {
+                if (e.target === uploadModal) {
+                    uploadModal.classList.remove('active');
+                    body.classList.remove('modal-open');
+                }
+            });
+        }
+        
+        // Handle keyboard dismissal on mobile
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && uploadModal.classList.contains('active')) {
+                uploadModal.classList.remove('active');
+                body.classList.remove('modal-open');
+            }
+        });
+    });
+</script>
+<!-- Cookie Consent Banner -->
+<div id="cookie-consent" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(45,51,74,0.95); color: white; padding: 20px; z-index: 1000;">
+    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px; padding-right: 20px;">
+            <p>We use cookies to enhance your experience and analyze site usage. By continuing to browse, you agree to our use of cookies. Learn more in our <a href="cookies-ethics.html" style="color: #8f94fb;">Cookies & AI Ethics Policy</a>.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button id="accept-cookies" style="background: #20bf6b; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer;">Accept All</button>
+            <button id="customize-cookies" style="background: transparent; color: white; border: 1px solid #8f94fb; padding: 10px 20px; border-radius: 30px; cursor: pointer;">Customize</button>
+        </div>
+    </div>
+</div>
+</body>
+</html>
