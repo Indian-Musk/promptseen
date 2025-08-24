@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Prompt Seen</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="icon" type="image/png" href="/favicon.png">    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-<!-- Add to <head> section -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     
-<style>
+    <style>
         .login-container {
             display: flex;
             min-height: 100vh;
@@ -146,8 +146,10 @@
     <div class="login-container">
         <div class="login-left">
             <div class="login-logo">
-                <img src="logo.png" alt="Logo" style="width:100px;height:60px;">
-                <span>Prompt Seen</span>
+                 <a href="index.html" class="logo home-link" id="homeLink">
+                      <img src="logo.png" alt="Logo" style="width:50px;height:50px;">
+                    <span>PromptSeen</span>
+                </a>
             </div>
             
             <h1>Master the Art of Perfect AI Prompts</h1>
@@ -181,7 +183,7 @@
                 </button>
                 
                 <div class="login-footer">
-                    <p>By signing in, you agree to our Terms of Service and Privacy Policy</p>
+                    <p>By signing in, you agree to our</p><a href="tos.html"> Terms of Service</a><p> and</p> <a href="privacy.html">Privacy Policy</a>
                 </div>
             </div>
         </div>
@@ -192,20 +194,17 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     
     <script>
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDWDn4T6tkk8ihjLX8Y_YHMkz7y2Uw9paQ",
-  authDomain: "clone-8d83d.firebaseapp.com",
-  projectId: "clone-8d83d",
-  storageBucket: "clone-8d83d.appspot.com",
-  messagingSenderId: "263963146412",
-  appId: "1:263963146412:web:c83a284115414a2c44c709",
-  measurementId: "G-C3CMBQR6GH"
-};
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyDWDn4T6tkk8ihjLX8Y_YHMkz7y2Uw9paQ",
+            authDomain: "clone-8d83d.firebaseapp.com",
+            projectId: "clone-8d83d",
+            storageBucket: "clone-8d83d.appspot.com",
+            messagingSenderId: "263963146412",
+            appId: "1:263963146412:web:c83a284115414a2c44c709",
+            measurementId: "G-C3CMBQR6GH"
+        };
 
-// Rest of your script.js code...
-
-        
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
@@ -243,7 +242,6 @@ const firebaseConfig = {
             });
         });
     </script>
-<!-- Add to end of <body> in login.html -->
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

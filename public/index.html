@@ -25,6 +25,107 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <style>
+ .hero-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .hero-buttons a {
+            display: inline-block;
+            padding: 14px 28px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            min-width: 180px;
+        }
+        
+        /* First button style */
+        .hero-buttons a:nth-child(1) {
+            background-color: #4f46e5;
+            color: white;
+            border: 2px solid #4f46e5;
+        }
+        
+        .hero-buttons a:nth-child(1):hover {
+            background-color: #3730a3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(79, 70, 229, 0.2);
+        }
+        
+        /* Second button style */
+        .hero-buttons a:nth-child(2) {
+            background-color: transparent;
+            color: #4f46e5;
+            border: 2px solid #4f46e5;
+        }
+        
+        .hero-buttons a:nth-child(2):hover {
+            background-color: #4f46e5;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(79, 70, 229, 0.2);
+        }
+        
+        /* Third button style */
+        .hero-buttons a:nth-child(3) {
+            background-color: #10b981;
+            color: white;
+            border: 2px solid #10b981;
+        }
+        
+        .hero-buttons a:nth-child(3):hover {
+            background-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(16, 185, 129, 0.2);
+        }
+/* Responsive adjustments */
+        @media (max-width: 600px) {
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .hero-buttons a {
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            .container {
+                padding: 30px 20px;
+            }
+        }   
+
+ .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        
+        .logo:hover {
+            transform: scale(1.05);
+        }
+        
+        .logo img {
+            width: 40px;
+            height: 40px;
+            object-fit: contain;
+            transition: var(--transition);
+        }
+        
+        .logo:hover img {
+            transform: rotate(10deg);
+        }
 /* Add these styles to your styles.css */
   /* Upload Modal Responsive Styles */
     @media (max-width: 768px) {
@@ -217,12 +318,19 @@
     <div class="container">
         <nav>
             <div class="logo">
-             <img src="logo.png" alt="Logo" style="width:50px;height:50px;">
-                <span>Prompt Seen</span>
+ <a href="#" class="logo home-link" id="homeLink">
+                      <img src="logo.png" alt="Logo" style="width:50px;height:50px;">
+
+                    <span>PromptSeen</span>
+                </a>
+
             </div>
             <div class="nav-links">
+
                 <a href="index.html">Showcase</a>
-                <a href="promptconverter.html">Prompt Converter</a>
+<!-- In all HTML files, add this to the nav-links section -->
+<a href="chatbot.html">Generate Image</a>                
+<a href="promptconverter.html">Prompt Converter</a>
 <a href="showcase.html">Gallery</a>
                 <a href="features.html">Features</a>
          
@@ -251,6 +359,7 @@ Look no further! Promptseen is your one-stop shop for mastering the art of AI im
                 <div class="hero-buttons">
                       <a href="promptconverter.html">Explore prompts</a>
                     <a href="howitworks.html">Learn More</a>
+<a href="chatbot.html">Use Our Free ChatBot</a>
                 </div>
             </div>
 

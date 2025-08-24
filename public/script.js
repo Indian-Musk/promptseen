@@ -263,7 +263,7 @@ if (userPrompt && enhancedPrompt && convertBtn) {
     // Capitalize first letter
     enhanced = enhanced.charAt(0).toUpperCase() + enhanced.slice(1);
     
-    // Add details based on content
+    // Add detls based on content
     if (enhanced.includes('cat') || enhanced.includes('dog') || enhanced.includes('animal')) {
       enhanced += `, ${getRandomItem(enhancements.details)}, fur texture detailed`;
     }
@@ -666,3 +666,14 @@ document.addEventListener('DOMContentLoaded', function() {
     window.location.href = 'cookies-ethics.html';
   });
 });
+
+// Authentication requirement function
+function requireAuth(redirectUrl = null) {
+  const user = checkAuth();
+  if (!user) {
+    const returnUrl = redirectUrl || window.location.href;
+    window.location.href = `login.html?returnUrl=${encodeURIComponent(returnUrl)}`;
+    return false;
+  }
+  return true;
+}
