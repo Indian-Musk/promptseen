@@ -25,6 +25,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 <style>
+
  .hero-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -84,48 +85,7 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(16, 185, 129, 0.2);
         }
-/* Responsive adjustments */
-        @media (max-width: 600px) {
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .hero-buttons a {
-                width: 100%;
-                max-width: 280px;
-            }
-            
-            .container {
-                padding: 2px 20px;
-            }
-        }   
 
- .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary);
-            text-decoration: none;
-            transition: var(--transition);
-        }
-        
-        .logo:hover {
-            transform: scale(1.05);
-        }
-        
-        .logo img {
-            width: 40px;
-            height: 40px;
-            object-fit: contain;
-            transition: var(--transition);
-        }
-        
-        .logo:hover img {
-            transform: rotate(10deg);
-        }
 /* Add these styles to your styles.css */
   /* Upload Modal Responsive Styles */
     @media (max-width: 768px) {
@@ -311,10 +271,73 @@
 .copy-notification.show {
     opacity: 1;
 }
+
+/* Social Sharing Styles */
+.prompt-share {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.share-title {
+    font-size: 0.9rem;
+    color: #777;
+    margin-bottom: 8px;
+}
+
+.share-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.share-btn.whatsapp {
+    background: #25D366;
+}
+
+.share-btn.facebook {
+    background: #3b5998;
+}
+
+.share-btn.instagram {
+    background: #E1306C;
+}
+
+/* Mobile responsive for share buttons */
+@media (max-width: 480px) {
+    .share-buttons {
+        justify-content: center;
+    }
+    
+    .share-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+}
 </style>
 </head>
 <body>
-  <header>
+ <header>
     <div class="container">
         <nav>
             <div class="logo">
@@ -347,7 +370,8 @@
         </nav>
     </div>
 </header>
-    <!-- Hero Section -->
+
+     <!-- Hero Section -->
     <section class="hero" id="home">
         <div class="container">
             <div class="hero-content">
@@ -385,6 +409,95 @@ Look no further! Promptseen is your one-stop shop for mastering the art of AI im
             </div>
             
             <div class="prompts-grid" id="promptsContainer">
+
+
+<!-- Prompt Card 7 -->
+                <div class="prompt-card">
+                   <div class="prompt-image" style="background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1758272445109-100339518.png?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16447017600&Signature=fmWoPEB3HyCf5LHdjaif4B6nXwq0Lk9B7Dh3Cu%2BLPewViHjP4oZkGx9jUkk70%2Frm1STxQRF4hzIsC%2BferHKJHigig%2FV44610ZASb5YDRsgn66ZLr5PiRifzBjOtS%2FZ8QPTY%2FYqndHYUriab1fNNtEEUA%2F7RvvdF6Ezn8l5kMt8TQuZsM1W2eukPS4KgDshe76ZE4We4kDjBKJ0WLEUfJoQUi%2FHNuHg3VqVHq3fcoZLYGM7NTxoiVwTZCkT3CJ%2FFijpopU4JS2mj7LNzs9q9fR8MS%2BvR4PZq%2F%2FpXrAjsg3GpWtxNeRz3pAVsdN%2FFd0YNZK2JyAD6x%2B2loEsDVdDTvOQ%3D%3D')">
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 3.1K Likes</span>
+                            <span><i class="fas fa-download"></i> 2.2K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">Pre-wedding couple prompts</h3>
+                        <div class="prompt-text fade">
+                           
+       
+       
+          Realistic photo of a couple dancing under fairy lights, evening setting, magical ambiance.
+              
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+<a href="https://promptseen.co/index.html"><button class="show-prompt-btn">Show More</button></a>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <div class="prompt-analysis">
+                            <h4>Why this prompt works:</h4>
+                            <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+<!-- Prompt Card 6 -->
+                <div class="prompt-card">
+                   <div class="prompt-image" style="background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1756375746127-518800041.png?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16447017600&Signature=wNNh9pjLhjclIrE8KimhoDOHcAUtYiw0n9tNY8X%2BRncqyXpwkrstbeb1GncsWAys548%2BUfxBh2YsJqPUTvGLk3tI5HSusv%2Fk3NItYYclZWjT4AXvUFWbXv%2Bg%2FUfn9eJrynAUZvlDRV33AeN1f7ZkifOL%2F4BydwCaiZx93YUssjMOh1iC%2BJDq%2FBZXGOF%2FgPYRWkYJFMu0k9KOMmb7SF4Y%2FXTjamuaWC4uc%2F0eyZI6UneNLHU3yfn9cIBZf7VQibhEtjvOtgZq5pa2VsYF8UwpZrn3%2FbHpKALWqxuHr7TBYW4YaOBI3qrYsqOxwOWSzGIhqQi3GX52bz%2Bsvksr0wJQsA%3D%3D')">
+                    </div>
+                    <div class="prompt-content">
+                        <div class="prompt-meta">
+                            <span><i class="fas fa-heart"></i> 3.1K Likes</span>
+                            <span><i class="fas fa-download"></i> 2.2K Uses</span>
+                        </div>
+                        <h3 class="prompt-title">happy birthday prompts</h3>
+                        <div class="prompt-text fade">
+                           
+       
+          Create a 3D illusion for a profile picture where a 3 year old kids Boy is cutting his birthday cake facing forward in smiling face, white shirt and red hoodie Sitting casually on a Wingback Chair There are gifts lying on the ground along both sides of the chair. Wearing sneakers, and the cake is lying in front, my username "RAJAN" written on the cake, in my background HAPPY BIRTHDAY RAJAN written with Red Colors, with balloons in different colors attached on the Blue wall
+             
+                        </div>
+                        <div class="prompt-actions">
+                            <button class="show-prompt-btn">Show Prompt</button>
+<a href="https://promptseen.co/blog/3d-birthday-name-ai-photo-editing-prompts.html"><button class="show-prompt-btn">Show More</button></a>
+                            <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <div class="prompt-analysis">
+                            <h4>Why this prompt works:</h4>
+                            <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Prompt Card 1 -->
                 <div class="prompt-card">
                     <div class="prompt-image" style="background-image: url('https://storage.googleapis.com/clone-8d83d.appspot.com/uploads/1755872380612-925487767.png?GoogleAccessId=firebase-adminsdk-zwc31%40clone-8d83d.iam.gserviceaccount.com&Expires=16446997800&Signature=Ghu0ifpYDANk7YViqk3Ii%2FjJWFeEEJO91siT2QbXlj0upmNtsAT%2FU6DjAIhOpsartys8WpkBBm0PAJd4CKJTE9ilYKHSBLcyR5w3gZZFd1eBzuz6IlLxucpChSLbLtrkJvUaGD%2BsTp%2BEDDeWX2CjoeXJealVgja0713BNydqcjmaYh%2FfV3uXktF%2FD42AK5Gt7PEHLipay1PoFMBeF9VZHZwcDOPITfgJVFCnBUmC68QHiSwF4Il0YBtD4t4sBRfX9hjjvgTGhGILiF2K7c5KIUk%2B8MJXlG9n9nIzAAFEjwJlId796V46rLcvGJUvmOAm3xcVIGiMJmgKj1V8Hwgqmg%3D%3D')">
@@ -421,6 +534,21 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                             <h4>Why this prompt works:</h4>
                             <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
                         </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="a man viral chatgpt prompt smart and a slogaon like worwk hard one eye red">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -448,6 +576,21 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                         <div class="prompt-analysis">
                             <h4>Why this prompt works:</h4>
                             <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="a man on bike rider chatgpt photo editing">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="a man on bike rider chatgpt photo editing">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="a man on bike rider chatgpt photo editing">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -478,6 +621,21 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                             <h4>Why this prompt works:</h4>
                             <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
                         </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="a movie like poster prompt">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="a movie like poster prompt">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="a movie like poster prompt">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -504,6 +662,21 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                             <h4>Why this prompt works:</h4>
                             <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
                         </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="midjourny prompt for car">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="midjourny prompt for car">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="midjourny prompt for car">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 <!-- Prompt Card 3 -->
@@ -528,6 +701,21 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                         <div class="prompt-analysis">
                             <h4>Why this prompt works:</h4>
                             <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="15 August chatgpt prompt">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="15 August chatgpt prompt">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="15 August chatgpt prompt">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -563,6 +751,21 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                         <div class="prompt-analysis">
                             <h4>Why this prompt works:</h4>
                             <p>This prompt was successfully generated by a community member. It demonstrates effective prompt engineering techniques to achieve desired results.</p>
+                        </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="a man with work smart with one eye red ai photo">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="a man with work smart with one eye red ai photo">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="a man with work smart with one eye red ai photo">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -681,8 +884,8 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                             Generate a photorealistic image of a futuristic cityscape at sunset, with flying vehicles, holographic advertisements, and lush vertical gardens. The scene should have cinematic lighting with strong volumetric rays.
                         </div>
                         <div class="prompt-result">
-                            <div class="result-box" style="background-image: url('https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8Y2l0eSxmdXR1cmlzdGljfHx8fHx8MTY4OTYyODQ5NA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1200')"></div>
-                            <div class="result-box" style="background-image: url('https://images.unsplash.com/photo-1541701494587-cb58502866ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8Y2l0eSxmdXR1cmlzdicl8fHx8fDE2ODk2Mjg1MDA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1200')"></div>
+                            <div class="result-box" style="background-image: url('https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8city,futuristicfHx8fHx8MTY4OTYyODQ5NA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1200')"></div>
+                            <div class="result-box" style="background-image: url('https://images.unsplash.com/photo-1541701494587-cb58502866ab?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=MnwxfDB8MXxyYW5kb218MHx8city,futuristicfHx8fHx8MTY4OTYyODUwMA&ixlib=rb-4.0.3&q=80&utm_campaign=api-credit&utm_medium=referral&utm_source=unsplash_source&w=1200')"></div>
                         </div>
                         <div style="text-align: center; color: #777; font-size: 0.9rem;">
                             Results generated from the prompt above
@@ -758,6 +961,21 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                             <button class="show-prompt-btn">Show Prompt</button>
                             <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
                         </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="Cyberpunk Samurai Warrior">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="Cyberpunk Samurai Warrior">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="Cyberpunk Samurai Warrior">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 
@@ -780,6 +998,21 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                         <div class="prompt-actions">
                             <button class="show-prompt-btn">Show Prompt</button>
                             <button class="copy-prompt-btn" style="display: none;"><i class="fas fa-copy"></i> Copy</button>
+                        </div>
+                        <!-- Social Sharing Section -->
+                        <div class="prompt-share">
+                            <div class="share-title">Share this prompt:</div>
+                            <div class="share-buttons">
+                                <button class="share-btn whatsapp" data-prompt-title="Retro Futuristic Sports Car">
+                                    <i class="fab fa-whatsapp"></i>
+                                </button>
+                                <button class="share-btn facebook" data-prompt-title="Retro Futuristic Sports Car">
+                                    <i class="fab fa-facebook-f"></i>
+                                </button>
+                                <button class="share-btn instagram" data-prompt-title="Retro Futuristic Sports Car">
+                                    <i class="fab fa-instagram"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -921,6 +1154,37 @@ THE LIGHTING IS SOFT YET DRAMATIC. HIGHLIGHTING THE TEXTURES OF HIS HAIR AND JAC
                 uploadModal.classList.remove('active');
                 body.classList.remove('modal-open');
             }
+        });
+        
+        // Social sharing functionality
+        const shareButtons = document.querySelectorAll('.share-btn');
+        shareButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const platform = this.classList[1];
+                const promptTitle = this.getAttribute('data-prompt-title');
+                const promptText = this.closest('.prompt-card').querySelector('.prompt-text').textContent;
+                const pageUrl = encodeURIComponent(window.location.href);
+                const text = encodeURIComponent(`Check out this AI prompt: "${promptTitle}" - ${promptText.substring(0, 100)}...`);
+                
+                let shareUrl;
+                
+                switch(platform) {
+                    case 'whatsapp':
+                        shareUrl = `https://api.whatsapp.com/send?text=${text} ${pageUrl}`;
+                        break;
+                    case 'facebook':
+                        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${pageUrl}&quote=${text}`;
+                        break;
+                    case 'instagram':
+                        // Instagram doesn't support direct sharing via URL
+                        // So we'll copy the text to clipboard and prompt user to paste it
+                        navigator.clipboard.writeText(`${promptTitle}: ${promptText.substring(0, 200)}...\n\nSee more at: ${window.location.href}`);
+                        showCopyNotification('Prompt copied! Paste it on Instagram');
+                        return;
+                }
+                
+                window.open(shareUrl, '_blank', 'width=600,height=400');
+            });
         });
     });
 </script>

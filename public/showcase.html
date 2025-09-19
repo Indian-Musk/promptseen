@@ -24,6 +24,70 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <style>
+
+/* Social Sharing Styles */
+.prompt-share {
+    margin-top: 15px;
+    border-top: 1px solid #eee;
+    padding-top: 15px;
+}
+
+.share-title {
+    font-size: 0.9rem;
+    color: #777;
+    margin-bottom: 8px;
+}
+
+.share-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.share-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+}
+
+.share-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.share-btn.whatsapp {
+    background: #25D366;
+}
+
+.share-btn.facebook {
+    background: #3b5998;
+}
+
+.share-btn.instagram {
+    background: #E1306C;
+}
+
+/* Mobile responsive for share buttons */
+@media (max-width: 480px) {
+    .share-buttons {
+        justify-content: center;
+    }
+    
+    .share-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.2rem;
+    }
+}
+
         .prompt-text {
             position: relative;
             background: var(--light);
