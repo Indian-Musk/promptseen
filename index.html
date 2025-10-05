@@ -73,45 +73,38 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 </head>
 <body>
-    <header>
-        <div class="container">
-            <nav>
-                <div class="logo">
-                    <img src="logo.png" alt="Prompt Seen Logo - AI Prompt Engineering" style="width:50px;height:50px;">
-                    <span>Prompt Seen</span>
+   <header>
+    <div class="container">
+        <nav>
+            <div class="nav-left">
+               
+              <a href="index.html" class="logo">
+    <img src="logo.png" alt="Prompt Seen Logo - AI Prompt Engineering" style="width:50px;height:50px;">
+    <span>Prompt Seen</span>
+</a>
+            </div>
+            
+            <!-- YouTube-style Search Bar -->
+            <div class="search-container">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Search prompts...">
+                    <button class="search-btn" id="searchButton">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
-                <div class="nav-links">
-                    <a href="index.html" class="active">Showcase</a>
-<a href="chatbot.html">Generate image</a>
-                    <a href="promptconverter.html">Prompt Converter</a>
-                    <a href="howitworks.html">How It Works</a>
-<a href="features.html">Features</a>
-                </div>
+                <div class="search-suggestions" id="searchSuggestions"></div>
+            </div>
+
+         
                 <div id="authSection">
                     <a href="login.html" class="login-btn">Login</a>
                 </div>
-                <div class="mobile-toggle">
-                    <i class="fas fa-bars"></i>
-                </div>
-            </nav>
-        </div>
-    </header>
+            </div>
+        </nav>
+    </div>
+</header>
 
-    <!-- Hero Section -->
-    <section class="hero" id="home">
-        <div class="container">
-            <div class="hero-content">
-                <h1>Welcome to Prompt Seen </h1>
-                <p>Struggling to transform your ideas into stunning visuals? Look no further! Promptseen is your one-stop shop for mastering the art of AI image generation & Photo Editing prompts </p>
-               
-
-                <div class="hero-buttons">
-                    <a href="promptconverter.html" class="cta-button">Explore Prompts</a>
-                    <a href="howitworks.html" class="btn-outline">Learn More</a>
-<a href="chatbot.html" class="cta-button">Use Our Free Chatbot</a>
-                </div>
-            </div>    
-     
+  
    
 
     <!-- Trending Prompts Showcase -->
@@ -119,9 +112,9 @@
         <div class="container">
             <div class="trending-header">
                 <div class="section-title" style="text-align: left; margin: 0;">
-                    <h2>Trending AI Prompts Showcase</h2>
-                    <p>Explore our community's most successful prompts and their AI-generated outputs</p>
-                    <p>Login to upload your own creations </p>
+                    <h2> Trending showcase Just Copy & Paste Prompt </h2>
+                    <p>Search any prompt by entering your text in above search bar</p>
+                    <p>e.g,wing chair ,Login to upload your own creations </p>
                 </div>
                 <div class="filter-controls">
                     <button class="filter-btn active">All</button>
@@ -202,6 +195,22 @@
             </form>
         </div>
     </div>
+
+  <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Welcome to Prompt Seen </h1>
+                <p>Struggling to transform your ideas into stunning visuals? Look no further! Promptseen is your one-stop shop for mastering the art of AI image generation & Photo Editing prompts </p>
+               
+
+                <div class="hero-buttons">
+                    <a href="promptconverter.html" class="cta-button">Explore Prompts</a>
+                    <a href="howitworks.html" class="btn-outline">Learn More</a>
+<a href="chatbot.html" class="cta-button">Use Our Free Chatbot</a>
+                </div>
+            </div>    
+     
 
     <!-- CTA Section -->
     <section class="cta-section">

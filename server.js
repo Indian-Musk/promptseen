@@ -1,4 +1,4 @@
-﻿﻿﻿const express = require('express');
+﻿const express = require('express');
 const path = require('path');
 const admin = require('firebase-admin');
 const Busboy = require('busboy');
@@ -23,8 +23,29 @@ try {
     console.log('⚠️ Firebase Admin not configured - running in demo mode');
     // Create a mock admin object for development
     admin = {
-      firestore: () => ({ collection: () => ({}) }),
-      storage: () => ({ bucket: () => ({}) }),
+      firestore: () => ({ 
+        collection: () => ({
+          doc: () => ({
+            get: () => Promise.resolve({ exists: false, data: () => null }),
+            set: () => Promise.resolve(),
+            update: () => Promise.resolve(),
+            delete: () => Promise.resolve()
+          }),
+          add: () => Promise.resolve({ id: 'mock-id' }),
+          get: () => Promise.resolve({ docs: [], forEach: () => {} }),
+          where: () => ({ orderBy: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }) }),
+          orderBy: () => ({ offset: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }) }),
+          count: () => ({ get: () => Promise.resolve({ data: () => ({ count: 0 }) }) })
+        })
+      }),
+      storage: () => ({ 
+        bucket: () => ({
+          file: () => ({
+            save: () => Promise.resolve(),
+            makePublic: () => Promise.resolve()
+          })
+        }) 
+      }),
       auth: () => ({ verifyIdToken: () => Promise.resolve({}) })
     };
   }
@@ -32,8 +53,29 @@ try {
   console.error('❌ Firebase Admin initialization failed:', error);
   // Fallback for development
   admin = {
-    firestore: () => ({ collection: () => ({}) }),
-    storage: () => ({ bucket: () => ({}) }),
+    firestore: () => ({ 
+      collection: () => ({
+        doc: () => ({
+          get: () => Promise.resolve({ exists: false, data: () => null }),
+          set: () => Promise.resolve(),
+          update: () => Promise.resolve(),
+          delete: () => Promise.resolve()
+        }),
+        add: () => Promise.resolve({ id: 'mock-id' }),
+        get: () => Promise.resolve({ docs: [], forEach: () => {} }),
+        where: () => ({ orderBy: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }) }),
+        orderBy: () => ({ offset: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }) }),
+        count: () => ({ get: () => Promise.resolve({ data: () => ({ count: 0 }) }) })
+      })
+    }),
+    storage: () => ({ 
+      bucket: () => ({
+        file: () => ({
+          save: () => Promise.resolve(),
+          makePublic: () => Promise.resolve()
+        })
+      }) 
+    }),
     auth: () => ({ verifyIdToken: () => Promise.resolve({}) })
   };
 }
@@ -147,6 +189,7 @@ const mockPrompts = [
     views: 156,
     uses: 23,
     keywords: ['fantasy', 'landscape', 'mountains', 'digital art'],
+    category: 'art',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     seoScore: 85
@@ -161,9 +204,25 @@ const mockPrompts = [
     views: 289,
     uses: 45,
     keywords: ['cyberpunk', 'city', 'neon', 'futuristic'],
+    category: 'art',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     seoScore: 92
+  },
+  {
+    id: 'demo-3',
+    title: 'Professional Portrait Photography',
+    promptText: 'Professional portrait photography, natural lighting, soft shadows, high detail, 85mm lens, studio quality, professional model',
+    imageUrl: 'https://via.placeholder.com/800x400/20bf6b/white?text=Portrait+Photo',
+    userName: 'Demo User',
+    likes: 34,
+    views: 189,
+    uses: 12,
+    keywords: ['photography', 'portrait', 'professional', 'studio'],
+    category: 'photography',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    seoScore: 78
   }
 ];
 
@@ -308,7 +367,7 @@ app.get('/sitemap-posts.xml', async (req, res) => {
       // Production mode - fetch from Firestore
       const snapshot = await db.collection('uploads')
         .orderBy('updatedAt', 'desc')
-        .limit(1000) // Limit to 1000 latest prompts for sitemap
+        .limit(1000)
         .get();
 
       prompts = snapshot.docs.map(doc => {
@@ -348,7 +407,6 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     
   } catch (error) {
     console.error('❌ Posts sitemap error:', error);
-    // Fallback to basic sitemap with just pages
     const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
     const fallbackUrls = [
       {
@@ -363,6 +421,233 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     res.send(sitemap);
   }
 });
+
+// Engagement API Endpoints
+
+// Track view count
+app.post('/api/prompt/:id/view', async (req, res) => {
+  try {
+    const promptId = req.params.id;
+    
+    if (db && db.collection) {
+      // Production mode - update in Firestore
+      const promptRef = db.collection('uploads').doc(promptId);
+      const promptDoc = await promptRef.get();
+      
+      if (promptDoc.exists) {
+        const currentViews = promptDoc.data().views || 0;
+        await promptRef.update({
+          views: currentViews + 1,
+          updatedAt: new Date().toISOString()
+        });
+      }
+    } else {
+      // Development mode - update mock data
+      const prompt = mockPrompts.find(p => p.id === promptId);
+      if (prompt) {
+        prompt.views = (prompt.views || 0) + 1;
+        prompt.updatedAt = new Date().toISOString();
+      }
+    }
+    
+    res.json({ success: true, message: 'View counted' });
+  } catch (error) {
+    console.error('Error counting view:', error);
+    res.status(500).json({ error: 'Failed to count view' });
+  }
+});
+
+// Like/Unlike prompt
+app.post('/api/prompt/:id/like', async (req, res) => {
+  try {
+    const promptId = req.params.id;
+    const { userId, action } = req.body; // action: 'like' or 'unlike'
+    
+    if (db && db.collection) {
+      const promptRef = db.collection('uploads').doc(promptId);
+      const promptDoc = await promptRef.get();
+      
+      if (promptDoc.exists) {
+        const currentLikes = promptDoc.data().likes || 0;
+        
+        if (action === 'like') {
+          await promptRef.update({
+            likes: currentLikes + 1,
+            updatedAt: new Date().toISOString()
+          });
+        } else {
+          await promptRef.update({
+            likes: Math.max(0, currentLikes - 1),
+            updatedAt: new Date().toISOString()
+          });
+        }
+      }
+    } else {
+      // Development mode
+      const prompt = mockPrompts.find(p => p.id === promptId);
+      if (prompt) {
+        if (action === 'like') {
+          prompt.likes = (prompt.likes || 0) + 1;
+        } else {
+          prompt.likes = Math.max(0, (prompt.likes || 1) - 1);
+        }
+        prompt.updatedAt = new Date().toISOString();
+      }
+    }
+    
+    res.json({ success: true, action });
+  } catch (error) {
+    console.error('Error updating like:', error);
+    res.status(500).json({ error: 'Failed to update like' });
+  }
+});
+
+// Track prompt use
+app.post('/api/prompt/:id/use', async (req, res) => {
+  try {
+    const promptId = req.params.id;
+    const { userId } = req.body;
+    
+    if (db && db.collection) {
+      const promptRef = db.collection('uploads').doc(promptId);
+      const promptDoc = await promptRef.get();
+      
+      if (promptDoc.exists) {
+        const currentUses = promptDoc.data().uses || 0;
+        await promptRef.update({
+          uses: currentUses + 1,
+          updatedAt: new Date().toISOString()
+        });
+      }
+    } else {
+      // Development mode
+      const prompt = mockPrompts.find(p => p.id === promptId);
+      if (prompt) {
+        prompt.uses = (prompt.uses || 0) + 1;
+        prompt.updatedAt = new Date().toISOString();
+      }
+    }
+    
+    res.json({ success: true, message: 'Use counted' });
+  } catch (error) {
+    console.error('Error counting use:', error);
+    res.status(500).json({ error: 'Failed to count use' });
+  }
+});
+
+// Get user engagement status for a prompt
+app.get('/api/prompt/:id/user-engagement', async (req, res) => {
+  try {
+    const promptId = req.params.id;
+    const userId = req.query.userId;
+    
+    // For now, return default values since we're not tracking per-user in development
+    res.json({ userLiked: false, userUsed: false });
+  } catch (error) {
+    console.error('Error fetching user engagement:', error);
+    res.json({ userLiked: false, userUsed: false });
+  }
+});
+
+// Search API endpoint
+app.get('/api/search', async (req, res) => {
+  try {
+    const { q: query, category, sort, page = 1, limit = 12 } = req.query;
+    
+    let prompts = [];
+
+    if (db && db.collection) {
+      // Production mode - search in Firestore
+      let firestoreQuery = db.collection('uploads');
+      
+      // Basic text search
+      if (query) {
+        // This is a simple implementation - for production, consider using Algolia or Elasticsearch
+        const snapshot = await firestoreQuery.get();
+        prompts = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          promptUrl: `/prompt/${doc.id}`
+        })).filter(prompt => 
+          prompt.title.toLowerCase().includes(query.toLowerCase()) ||
+          prompt.promptText.toLowerCase().includes(query.toLowerCase()) ||
+          (prompt.keywords && prompt.keywords.some(keyword => 
+            keyword.toLowerCase().includes(query.toLowerCase())
+          ))
+        );
+      } else {
+        const snapshot = await firestoreQuery.get();
+        prompts = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          promptUrl: `/prompt/${doc.id}`
+        }));
+      }
+    } else {
+      // Development mode - search in mock data
+      prompts = mockPrompts.filter(prompt => {
+        let matches = true;
+        
+        if (query) {
+          const searchTerm = query.toLowerCase();
+          matches = matches && (
+            prompt.title.toLowerCase().includes(searchTerm) ||
+            prompt.promptText.toLowerCase().includes(searchTerm) ||
+            prompt.keywords.some(keyword => keyword.toLowerCase().includes(searchTerm))
+          );
+        }
+        
+        if (category && category !== 'all') {
+          matches = matches && prompt.category === category;
+        }
+        
+        return matches;
+      });
+    }
+    
+    // Apply sorting
+    prompts = sortPrompts(prompts, sort);
+    
+    // Pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedPrompts = prompts.slice(startIndex, endIndex);
+    
+    res.json({
+      prompts: paginatedPrompts,
+      totalCount: prompts.length,
+      currentPage: parseInt(page),
+      totalPages: Math.ceil(prompts.length / limit),
+      hasMore: endIndex < prompts.length
+    });
+    
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ 
+      error: 'Search failed', 
+      details: error.message 
+    });
+  }
+});
+
+// Helper function for sorting
+function sortPrompts(prompts, sortBy) {
+  const sorted = [...prompts];
+  
+  switch (sortBy) {
+    case 'popular':
+      return sorted.sort((a, b) => (b.likes + b.views) - (a.likes + a.views));
+    case 'likes':
+      return sorted.sort((a, b) => b.likes - a.likes);
+    case 'views':
+      return sorted.sort((a, b) => b.views - a.views);
+    case 'recent':
+    default:
+      return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+}
 
 // Upload endpoint
 app.post('/api/upload', async (req, res) => {
@@ -424,7 +709,6 @@ app.post('/api/upload', async (req, res) => {
       }
 
       let imageUrl;
-      let uploadResult;
 
       if (bucket) {
         // Production mode - upload to Firebase Storage
@@ -473,23 +757,24 @@ app.post('/api/upload', async (req, res) => {
         seoTitle: seoTitle,
         metaDescription: metaDescription,
         slug: slug,
-        seoScore: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
+        seoScore: Math.floor(Math.random() * 30) + 70,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
       let docRef;
       
-      if (db) {
+      if (db && db.collection) {
         // Production mode - save to Firestore
         docRef = await db.collection('uploads').add(promptData);
         console.log('✅ Prompt saved to Firestore with ID:', docRef.id);
-        
-        // Update sitemap (in production, you might want to trigger a sitemap rebuild)
-        console.log('🔍 Sitemap will be updated on next crawl');
       } else {
         // Development mode - generate mock ID
         docRef = { id: 'demo-' + Date.now() };
+        mockPrompts.unshift({
+          id: docRef.id,
+          ...promptData
+        });
         console.log('🎭 Development mode: Mock prompt created with ID:', docRef.id);
       }
 
@@ -525,47 +810,52 @@ app.post('/api/upload', async (req, res) => {
   req.pipe(busboy);
 });
 
-// API Routes
+// API Routes - Get uploads with user engagement data
 app.get('/api/uploads', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 12;
+    const limit = parseInt(req.query.limit) || 12;
+    const userId = req.query.userId;
     
-    if (db) {
-      // Production mode with Firestore
+    if (db && db.collection) {
       const offset = (page - 1) * limit;
       const snapshot = await db.collection('uploads')
         .orderBy('createdAt', 'desc')
-        .offset(offset)
-        .limit(limit)
         .get();
 
-      const uploads = [];
+      const allUploads = [];
       snapshot.forEach(doc => {
         const data = doc.data();
-        uploads.push({ 
+        allUploads.push({ 
           id: doc.id, 
           ...data,
+          userLiked: false,
+          userUsed: false,
           createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           promptUrl: `/prompt/${doc.id}`
         });
       });
 
-      const countSnapshot = await db.collection('uploads').count().get();
-      const totalCount = countSnapshot.data().count;
-      const totalPages = Math.ceil(totalCount / limit);
+      // Manual pagination
+      const startIndex = (page - 1) * limit;
+      const endIndex = startIndex + limit;
+      const uploads = allUploads.slice(startIndex, endIndex);
 
       res.json({
         uploads,
         currentPage: page,
-        totalPages,
-        totalCount
+        totalPages: Math.ceil(allUploads.length / limit),
+        totalCount: allUploads.length
       });
     } else {
       // Development mode with mock data
       const startIndex = (page - 1) * limit;
       const endIndex = startIndex + limit;
-      const uploads = mockPrompts.slice(startIndex, endIndex);
+      const uploads = mockPrompts.slice(startIndex, endIndex).map(prompt => ({
+        ...prompt,
+        userLiked: false,
+        userUsed: false
+      }));
       
       res.json({
         uploads,
@@ -578,7 +868,11 @@ app.get('/api/uploads', async (req, res) => {
     console.error('Error fetching uploads:', error);
     // Fallback to mock data
     res.json({
-      uploads: mockPrompts,
+      uploads: mockPrompts.map(prompt => ({
+        ...prompt,
+        userLiked: false,
+        userUsed: false
+      })),
       currentPage: 1,
       totalPages: 1,
       totalCount: mockPrompts.length
@@ -594,7 +888,7 @@ app.get('/prompt/:id', async (req, res) => {
     
     let promptData;
 
-    if (db && promptId !== 'demo-1' && promptId !== 'demo-2') {
+    if (db && db.collection && promptId !== 'demo-1' && promptId !== 'demo-2' && promptId !== 'demo-3') {
       // Production mode - fetch from Firestore
       const doc = await db.collection('uploads').doc(promptId).get();
       
@@ -765,6 +1059,11 @@ function generatePromptHTML(promptData) {
         .prompt-meta { display: flex; gap: 30px; margin: 25px 0; padding: 20px; background: #f8f9fa; border-radius: 10px; flex-wrap: wrap; }
         .meta-item { display: flex; align-items: center; gap: 8px; }
         .meta-item strong { color: #4e54c8; font-weight: 600; }
+        .engagement-buttons { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+        .engagement-btn { display: flex; align-items: center; gap: 8px; padding: 10px 20px; border: 2px solid #4e54c8; border-radius: 25px; background: white; cursor: pointer; transition: all 0.3s ease; text-decoration: none; color: inherit; }
+        .engagement-btn:hover { background: #4e54c8; color: white; transform: translateY(-2px); }
+        .engagement-btn.liked { background: #ff6b6b; border-color: #ff6b6b; color: white; }
+        .engagement-btn.used { background: #20bf6b; border-color: #20bf6b; color: white; }
         .back-link { display: inline-flex; align-items: center; gap: 8px; margin-top: 20px; color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; transition: all 0.3s ease; font-weight: 600; }
         .back-link:hover { background: #4e54c8; color: white; transform: translateY(-2px); }
         .seo-score { display: inline-block; padding: 5px 12px; background: #20bf6b; color: white; border-radius: 20px; font-size: 0.8rem; font-weight: 600; margin-left: 10px; }
@@ -775,6 +1074,7 @@ function generatePromptHTML(promptData) {
             .prompt-image { height: 300px; }
             .prompt-meta { flex-direction: column; gap: 15px; padding: 15px; }
             .prompt-content { padding: 20px; }
+            .engagement-buttons { flex-direction: column; }
         }
     </style>
 </head>
@@ -800,22 +1100,34 @@ function generatePromptHTML(promptData) {
         </div>
         
         <div class="prompt-meta">
-            <div class="meta-item">
+            <div class="meta-item" data-type="likes">
                 <i class="fas fa-heart" style="color: #ff6b6b;"></i>
-                <strong>Likes:</strong> ${promptData.likes}
+                <strong>Likes:</strong> <span class="likes-count">${promptData.likes}</span>
             </div>
-            <div class="meta-item">
+            <div class="meta-item" data-type="views">
                 <i class="fas fa-eye" style="color: #4e54c8;"></i>
-                <strong>Views:</strong> ${promptData.views}
+                <strong>Views:</strong> <span class="views-count">${promptData.views}</span>
             </div>
-            <div class="meta-item">
+            <div class="meta-item" data-type="uses">
                 <i class="fas fa-download" style="color: #20bf6b;"></i>
-                <strong>Uses:</strong> ${promptData.uses}
+                <strong>Uses:</strong> <span class="uses-count">${promptData.uses}</span>
             </div>
             <div class="meta-item">
                 <i class="fas fa-calendar" style="color: #8f94fb;"></i>
                 <strong>Created:</strong> ${new Date(promptData.createdAt).toLocaleDateString()}
             </div>
+        </div>
+        
+        <div class="engagement-buttons">
+            <button class="engagement-btn like-btn" onclick="handleLike('${promptData.id}')">
+                <i class="far fa-heart"></i> Like
+            </button>
+            <button class="engagement-btn use-btn" onclick="handleUse('${promptData.id}')">
+                <i class="fas fa-download"></i> Mark as Used
+            </button>
+            <button class="engagement-btn share-btn" onclick="handleShare('${promptData.id}')">
+                <i class="fas fa-share"></i> Share
+            </button>
         </div>
         
         <a href="/" class="back-link">
@@ -838,7 +1150,91 @@ function generatePromptHTML(promptData) {
                     img.style.opacity = '0';
                 }
             }
+            
+            // Track view
+            fetch('/api/prompt/${promptData.id}/view', { method: 'POST' })
+                .then(() => {
+                    // Update view count
+                    const viewsCount = document.querySelector('.views-count');
+                    if (viewsCount) {
+                        viewsCount.textContent = parseInt(viewsCount.textContent) + 1;
+                    }
+                })
+                .catch(console.error);
         });
+        
+        async function handleLike(promptId) {
+            try {
+                const likeBtn = document.querySelector('.like-btn');
+                const likesCount = document.querySelector('.likes-count');
+                const isLiked = likeBtn.classList.contains('liked');
+                const action = isLiked ? 'unlike' : 'like';
+                
+                const response = await fetch('/api/prompt/' + promptId + '/like', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userId: 'anonymous', 
+                        action: action
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    
+                    if (result.action === 'like') {
+                        likeBtn.innerHTML = '<i class="fas fa-heart"></i> Liked';
+                        likeBtn.classList.add('liked');
+                        likesCount.textContent = parseInt(likesCount.textContent) + 1;
+                    } else {
+                        likeBtn.innerHTML = '<i class="far fa-heart"></i> Like';
+                        likeBtn.classList.remove('liked');
+                        likesCount.textContent = parseInt(likesCount.textContent) - 1;
+                    }
+                }
+            } catch (error) {
+                console.error('Like error:', error);
+                alert('Failed to update like. Please try again.');
+            }
+        }
+        
+        async function handleUse(promptId) {
+            try {
+                const useBtn = document.querySelector('.use-btn');
+                const usesCount = document.querySelector('.uses-count');
+                
+                const response = await fetch('/api/prompt/' + promptId + '/use', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: 'anonymous' })
+                });
+                
+                if (response.ok) {
+                    useBtn.innerHTML = '<i class="fas fa-check"></i> Used';
+                    useBtn.classList.add('used');
+                    usesCount.textContent = parseInt(usesCount.textContent) + 1;
+                    alert('Prompt marked as used!');
+                }
+            } catch (error) {
+                console.error('Use error:', error);
+                alert('Failed to mark as used. Please try again.');
+            }
+        }
+        
+        function handleShare(promptId) {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({
+                    title: '${promptData.title}',
+                    text: '${promptData.promptText?.substring(0, 100)}...',
+                    url: url
+                });
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('Link copied to clipboard!');
+                });
+            }
+        }
     </script>
 </body>
 </html>`;
@@ -921,11 +1317,16 @@ app.listen(port, () => {
   console.log(`🌐 Base URL: http://localhost:${port}`);
   console.log(`🔗 Prompt routes: http://localhost:${port}/prompt/:id`);
   console.log(`📤 Upload endpoint: http://localhost:${port}/api/upload`);
+  console.log(`❤️  Engagement endpoints:`);
+  console.log(`   → Views: http://localhost:${port}/api/prompt/:id/view`);
+  console.log(`   → Likes: http://localhost:${port}/api/prompt/:id/like`);
+  console.log(`   → Uses: http://localhost:${port}/api/prompt/:id/use`);
+  console.log(`🔍 Search: http://localhost:${port}/api/search`);
   console.log(`🗺️  Sitemap: http://localhost:${port}/sitemap.xml`);
   console.log(`🤖 Robots.txt: http://localhost:${port}/robots.txt`);
   console.log(`❤️  Health check: http://localhost:${port}/health`);
   
-  if (!db) {
+  if (!db || !db.collection) {
     console.log(`🎭 Running in DEVELOPMENT mode with mock data`);
     console.log(`📝 Sample prompts:`);
     mockPrompts.forEach(prompt => {

@@ -58,11 +58,10 @@ function showAuthElements() {
     if (user) {
       authSection.innerHTML = `
         <div class="user-profile">
-          <img src="${user.avatar || 'https://via.placeholder.com/36x36/4e54c8/white?text=U'}" 
+          <img src="${user.avatar || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTgiIGN5PSIxOCIgcj0iMTgiIGZpbGw9IiM0ZTU0YzgiLz4KPGNpcmNsZSBjeD0iMTgiIGN5PSIxNCIgcj0iNSIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI2IDI4QzI2IDI0LjY4NjMgMjIuNDE4MyAyMiAxOCAyMkMxMy41ODE3IDIyIDEwIDI0LjY4NjMgMTAgMjgiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='}"  
                alt="${user.name}" 
                class="user-avatar"
-             
-onerror="this.replaceWith(Object.assign(document.createElement('div'), {className: 'avatar-fallback', textContent: 'U'}))"
+               onerror="this.src='https://via.placeholder.com/36x36/4e54c8/white?text=U'">
           <span>${user.name}</span>
           <button class="logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
         </div>
@@ -94,6 +93,503 @@ onerror="this.replaceWith(Object.assign(document.createElement('div'), {classNam
   }
 }
 
+// YouTube-style Search and Category Functionality
+class YouTubeStyleHeader {
+  constructor() {
+    this.currentCategory = 'all';
+    this.searchTimeout = null;
+    this.init();
+  }
+
+  init() {
+    this.setupSearch();
+    this.setupCategories();
+    this.setupMobileMenu();
+  }
+
+  setupSearch() {
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const searchSuggestions = document.getElementById('searchSuggestions');
+
+    if (searchInput) {
+      // Real-time search with debouncing
+      searchInput.addEventListener('input', (e) => {
+        clearTimeout(this.searchTimeout);
+        this.searchTimeout = setTimeout(() => {
+          this.handleSearch(e.target.value);
+        }, 300);
+      });
+
+      // Search on button click
+      if (searchButton) {
+        searchButton.addEventListener('click', () => {
+          this.performSearch(searchInput.value);
+        });
+      }
+
+      // Search on Enter key
+      searchInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          this.performSearch(searchInput.value);
+        }
+      });
+
+      // Show suggestions on focus
+      searchInput.addEventListener('focus', () => {
+        this.showRecentSearches();
+      });
+
+      // Hide suggestions when clicking outside
+      document.addEventListener('click', (e) => {
+        if (searchSuggestions && !searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
+          searchSuggestions.style.display = 'none';
+        }
+      });
+    }
+  }
+
+  setupCategories() {
+    const categoryItems = document.querySelectorAll('.category-item');
+    
+    categoryItems.forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const category = item.dataset.category;
+        this.selectCategory(category);
+        
+        // Update active state
+        categoryItems.forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+      });
+    });
+  }
+
+  setupMobileMenu() {
+    const mobileToggle = document.querySelector('.mobile-toggle');
+    
+    if (mobileToggle) {
+      mobileToggle.addEventListener('click', () => {
+        // Toggle mobile menu (you can expand this)
+        document.body.classList.toggle('mobile-menu-open');
+      });
+    }
+  }
+
+  async handleSearch(query) {
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    
+    if (!searchSuggestions) return;
+    
+    if (!query.trim()) {
+      this.showRecentSearches();
+      return;
+    }
+
+    try {
+      // Show loading state
+      searchSuggestions.innerHTML = `
+        <div class="suggestion-item">
+          <i class="fas fa-spinner fa-spin suggestion-icon"></i>
+          <span>Searching...</span>
+        </div>
+      `;
+      searchSuggestions.style.display = 'block';
+
+      // Simulate API call - replace with actual search
+      const suggestions = await this.getSearchSuggestions(query);
+      this.displaySearchSuggestions(suggestions, query);
+      
+    } catch (error) {
+      console.error('Search error:', error);
+      this.showSearchError();
+    }
+  }
+
+  async getSearchSuggestions(query) {
+    // Simulate API call - replace with your actual search endpoint
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const mockSuggestions = [
+          { text: `${query} art`, category: 'art' },
+          { text: `${query} photography`, category: 'photography' },
+          { text: `${query} design`, category: 'design' },
+          { text: `${query} prompts`, category: 'all' }
+        ];
+        resolve(mockSuggestions);
+      }, 200);
+    });
+  }
+
+  displaySearchSuggestions(suggestions, query) {
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    if (!searchSuggestions) return;
+    
+    if (suggestions.length === 0) {
+      searchSuggestions.innerHTML = `
+        <div class="suggestion-item">
+          <i class="fas fa-search suggestion-icon"></i>
+          <span>No results for "${query}"</span>
+        </div>
+      `;
+    } else {
+      searchSuggestions.innerHTML = suggestions.map(suggestion => `
+        <div class="suggestion-item" data-query="${suggestion.text}">
+          <i class="fas fa-search suggestion-icon"></i>
+          <div class="suggestion-text">${suggestion.text}</div>
+          <span class="suggestion-category">${suggestion.category}</span>
+        </div>
+      `).join('');
+
+      // Add click handlers to suggestions
+      searchSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const query = item.dataset.query;
+          document.getElementById('searchInput').value = query;
+          this.performSearch(query);
+          searchSuggestions.style.display = 'none';
+        });
+      });
+    }
+    
+    searchSuggestions.style.display = 'block';
+  }
+
+  showRecentSearches() {
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    if (!searchSuggestions) return;
+    
+    const recentSearches = this.getRecentSearches();
+    
+    if (recentSearches.length === 0) {
+      searchSuggestions.innerHTML = `
+        <div class="suggestion-item">
+          <i class="fas fa-clock suggestion-icon"></i>
+          <span>No recent searches</span>
+        </div>
+      `;
+    } else {
+      searchSuggestions.innerHTML = `
+        <div class="suggestion-item" style="font-weight: 600; color: #666;">
+          <i class="fas fa-clock suggestion-icon"></i>
+          <span>Recent searches</span>
+        </div>
+        ${recentSearches.map(search => `
+          <div class="suggestion-item" data-query="${search}">
+            <i class="fas fa-search suggestion-icon"></i>
+            <div class="suggestion-text">${search}</div>
+          </div>
+        `).join('')}
+      `;
+
+      // Add click handlers
+      searchSuggestions.querySelectorAll('.suggestion-item:not(:first-child)').forEach(item => {
+        item.addEventListener('click', () => {
+          const query = item.dataset.query;
+          document.getElementById('searchInput').value = query;
+          this.performSearch(query);
+          searchSuggestions.style.display = 'none';
+        });
+      });
+    }
+    
+    searchSuggestions.style.display = 'block';
+  }
+
+  showSearchError() {
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    if (!searchSuggestions) return;
+    
+    searchSuggestions.innerHTML = `
+      <div class="suggestion-item">
+        <i class="fas fa-exclamation-triangle suggestion-icon"></i>
+        <span>Search temporarily unavailable</span>
+      </div>
+    `;
+    searchSuggestions.style.display = 'block';
+  }
+
+  performSearch(query) {
+    if (!query.trim()) return;
+    
+    // Add to recent searches
+    this.addToRecentSearches(query);
+    
+    // Use the existing search manager
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+      searchInput.value = query;
+    }
+    
+    if (window.searchManager) {
+      searchManager.currentSearchTerm = query;
+      searchManager.showSearchResults();
+    }
+    
+    // Hide suggestions
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    if (searchSuggestions) {
+      searchSuggestions.style.display = 'none';
+    }
+  }
+
+  selectCategory(category) {
+    this.currentCategory = category;
+    
+    // Update the search manager
+    if (window.searchManager) {
+      searchManager.currentCategory = category;
+      
+      if (category === 'trending') {
+        // Show trending content
+        searchManager.currentSort = 'popular';
+      } else {
+        searchManager.currentSort = 'recent';
+      }
+      
+      // Refresh the display
+      if (searchManager.currentSearchTerm || category !== 'all') {
+        searchManager.showSearchResults();
+      } else {
+        loadUploads(1);
+      }
+    }
+    
+    // Show notification
+    showNotification(`Showing ${this.getCategoryName(category)} prompts`, 'info');
+  }
+
+  getCategoryName(category) {
+    const categories = {
+      'all': 'All',
+      'art': 'AI Art',
+      'photography': 'Photography',
+      'design': 'Design',
+      'writing': 'Writing',
+      'trending': 'Trending'
+    };
+    return categories[category] || category;
+  }
+
+  // Recent searches management
+  getRecentSearches() {
+    return JSON.parse(localStorage.getItem('recentSearches') || '[]');
+  }
+
+  addToRecentSearches(query) {
+    let recent = this.getRecentSearches();
+    recent = recent.filter(item => item !== query);
+    recent.unshift(query);
+    recent = recent.slice(0, 5); // Keep only 5 most recent
+    localStorage.setItem('recentSearches', JSON.stringify(recent));
+  }
+}
+
+// Engagement Manager Class
+class EngagementManager {
+  constructor() {
+    this.user = null;
+    this.trackedViews = new Set();
+  }
+
+  async init() {
+    this.user = await getCurrentUser();
+    this.setupGlobalListeners();
+  }
+
+  setupGlobalListeners() {
+    // Track prompt visibility for view counting
+    this.setupViewTracking();
+  }
+
+  setupViewTracking() {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const promptCard = entry.target;
+          const promptId = promptCard.dataset.promptId;
+          
+          if (promptId && !this.trackedViews.has(promptId)) {
+            this.trackView(promptId);
+            this.trackedViews.add(promptId);
+          }
+        }
+      });
+    }, { threshold: 0.5 });
+
+    // Observe prompt cards as they're added to DOM
+    const observerConfig = {
+      childList: true,
+      subtree: true
+    };
+
+    const domObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === 1 && node.classList?.contains('prompt-card')) {
+            observer.observe(node);
+          } else if (node.nodeType === 1) {
+            node.querySelectorAll?.('.prompt-card').forEach(card => {
+              observer.observe(card);
+            });
+          }
+        });
+      });
+    });
+
+    domObserver.observe(document.body, observerConfig);
+  }
+
+  async trackView(promptId) {
+    try {
+      await fetch(`/api/prompt/${promptId}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      
+      // Update the view count in the UI
+      this.updatePromptCount(promptId, 'views', 1);
+    } catch (error) {
+      console.error('Error tracking view:', error);
+    }
+  }
+
+  async toggleLike(promptId, currentLikes, isCurrentlyLiked) {
+    try {
+      const action = isCurrentlyLiked ? 'unlike' : 'like';
+      const userId = this.user?.uid || 'anonymous';
+      
+      const response = await fetch(`/api/prompt/${promptId}/like`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId, action })
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        const likeChange = action === 'like' ? 1 : -1;
+        
+        // Update UI immediately
+        this.updatePromptCount(promptId, 'likes', likeChange);
+        this.updateLikeButton(promptId, !isCurrentlyLiked);
+        
+        return true;
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      showNotification('Failed to update like. Please try again.', 'error');
+    }
+    return false;
+  }
+
+  async trackUse(promptId) {
+    try {
+      const userId = this.user?.uid || 'anonymous';
+      
+      const response = await fetch(`/api/prompt/${promptId}/use`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId })
+      });
+
+      if (response.ok) {
+        // Update UI immediately
+        this.updatePromptCount(promptId, 'uses', 1);
+        showNotification('Prompt marked as used!', 'success');
+        return true;
+      }
+    } catch (error) {
+      console.error('Error tracking use:', error);
+      showNotification('Failed to mark as used. Please try again.', 'error');
+    }
+    return false;
+  }
+
+  updatePromptCount(promptId, type, change) {
+    // Update in prompt cards
+    const promptCards = document.querySelectorAll(`[data-prompt-id="${promptId}"]`);
+    promptCards.forEach(card => {
+      const counterElement = card.querySelector(`.${type}-count`);
+      if (counterElement) {
+        const currentCount = parseInt(counterElement.textContent) || 0;
+        const newCount = Math.max(0, currentCount + change);
+        counterElement.textContent = newCount;
+        
+        // Add animation
+        counterElement.style.transform = 'scale(1.2)';
+        setTimeout(() => {
+          counterElement.style.transform = 'scale(1)';
+        }, 300);
+      }
+    });
+
+    // Update in individual prompt pages
+    const metaItems = document.querySelectorAll(`.meta-item[data-type="${type}"]`);
+    metaItems.forEach(item => {
+      const counterElement = item.querySelector('span');
+      if (counterElement && counterElement.classList.contains(`${type}-count`)) {
+        const currentCount = parseInt(counterElement.textContent) || 0;
+        const newCount = Math.max(0, currentCount + change);
+        counterElement.textContent = newCount;
+      }
+    });
+  }
+
+  updateLikeButton(promptId, isLiked) {
+    const likeButtons = document.querySelectorAll(`[data-prompt-id="${promptId}"] .like-btn`);
+    likeButtons.forEach(button => {
+      if (isLiked) {
+        button.classList.add('liked');
+        button.innerHTML = '<i class="fas fa-heart"></i> Liked';
+      } else {
+        button.classList.remove('liked');
+        button.innerHTML = '<i class="far fa-heart"></i> Like';
+      }
+    });
+  }
+
+  createEngagementButtons(prompt, promptUrl) {
+    const isLiked = prompt.userLiked || false;
+    
+    return `
+      <div class="engagement-buttons">
+        <button class="engagement-btn like-btn ${isLiked ? 'liked' : ''}" 
+                data-prompt-id="${prompt.id}">
+          <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
+          <span class="likes-count">${prompt.likes || 0}</span>
+        </button>
+        
+        <button class="engagement-btn use-btn" 
+                data-prompt-id="${prompt.id}"
+                title="Mark as used">
+          <i class="fas fa-download"></i>
+          <span class="uses-count">${prompt.uses || 0}</span>
+        </button>
+        
+        <button class="engagement-btn share-btn" 
+                data-prompt-url="${promptUrl}"
+                title="Share prompt">
+          <i class="fas fa-share"></i>
+        </button>
+        
+        <a href="${promptUrl}" class="engagement-btn view-btn" target="_blank" title="View details">
+          <i class="fas fa-expand"></i>
+          <span class="views-count">${prompt.views || 0}</span>
+        </a>
+      </div>
+    `;
+  }
+}
+
+// Initialize engagement manager
+const engagementManager = new EngagementManager();
+
 // SEO Tracking and Optimization
 class SEOTracker {
   static trackUserEngagement(promptId) {
@@ -121,36 +617,6 @@ class SEOTracker {
         this.sendEngagementData(promptId, 'scroll_depth', maxScroll);
       }
     });
-    
-    // Track social shares
-    this.trackSocialShares(promptId);
-  }
-  
-  static trackSocialShares(promptId) {
-    setTimeout(() => {
-      document.querySelectorAll(`[data-prompt-id="${promptId}"] .share-btn`).forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const platform = btn.dataset.platform;
-          this.sharePrompt(promptId, platform, btn.dataset.url);
-        });
-      });
-    }, 1000);
-  }
-  
-  static async sharePrompt(promptId, platform, url) {
-    const shareUrls = {
-      twitter: `https://twitter.com/intent/tweet?text=Check out this amazing AI prompt&url=${encodeURIComponent(url)}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`
-    };
-    
-    if (shareUrls[platform]) {
-      window.open(shareUrls[platform], '_blank', 'width=600,height=400');
-      
-      // Track the share
-      await this.sendEngagementData(promptId, 'social_share', 1, platform);
-    }
   }
   
   static async sendEngagementData(promptId, type, value, platform = null) {
@@ -171,7 +637,7 @@ class SEOTracker {
   }
 }
 
-// Enhanced prompt card creation with SEO features
+// Enhanced prompt card creation with engagement features
 function createPromptCard(prompt) {
   const promptCard = document.createElement('div');
   promptCard.className = 'prompt-card';
@@ -194,16 +660,15 @@ function createPromptCard(prompt) {
       ${prompt.likes > 1000 ? `<div class="viral-badge">
         <i class="fas fa-fire"></i> Viral
       </div>` : ''}
-      ${!prompt.likes || prompt.likes < 100 ? `<div class="viral-badge" style="background: #20bf6b">
+      ${prompt.likes < 100 ? `<div class="viral-badge" style="background: #20bf6b">
         <i class="fas fa-user"></i> Prompt Seen
       </div>` : ''}
     </div>
     <div class="prompt-content" itemprop="mainEntityOfPage" itemscope itemtype="https://schema.org/WebPage">
       <link itemprop="url" href="${promptUrl}">
       <div class="prompt-meta">
-        <span><i class="fas fa-heart"></i> <span itemprop="interactionCount">${prompt.likes || 0}</span> Likes</span>
-        <span><i class="fas fa-eye"></i> ${prompt.views || 0} Views</span>
-        <span><i class="fas fa-download"></i> ${prompt.uses || 0} Uses</span>
+        <span><i class="fas fa-eye"></i> <span class="views-count">${prompt.views || 0}</span> Views</span>
+        <span><i class="fas fa-download"></i> <span class="uses-count">${prompt.uses || 0}</span> Uses</span>
       </div>
       <h3 class="prompt-title" itemprop="headline">${prompt.title || 'Untitled Prompt'}</h3>
       <div class="prompt-text" itemprop="description">
@@ -213,6 +678,10 @@ function createPromptCard(prompt) {
         <h4>Why this prompt works:</h4>
         <p>This prompt demonstrates effective AI prompt engineering techniques with ${prompt.keywords ? prompt.keywords.slice(0, 3).join(', ') : 'optimal'} parameters for best results.</p>
       </div>
+      
+      <!-- Engagement Buttons -->
+      ${engagementManager.createEngagementButtons(prompt, promptUrl)}
+      
       <div class="seo-meta" style="display: none;">
         <meta itemprop="datePublished" content="${prompt.createdAt || new Date().toISOString()}">
         <meta itemprop="dateModified" content="${prompt.updatedAt || prompt.createdAt || new Date().toISOString()}">
@@ -221,23 +690,325 @@ function createPromptCard(prompt) {
           <meta itemprop="name" content="Prompt Seen">
         </div>
       </div>
-      <div class="social-share">
-        <button class="share-btn" data-platform="twitter" data-url="${promptUrl}">
-          <i class="fab fa-twitter"></i> Share
-        </button>
-        <button class="share-btn" data-platform="facebook" data-url="${promptUrl}">
-          <i class="fab fa-facebook"></i> Share
-        </button>
-        <a href="${promptUrl}" target="_blank" class="seo-link" aria-label="View prompt details">Explore</a>
-      </div>
     </div>
   `;
+  
+  // Add engagement event listeners
+  setTimeout(() => {
+    setupEngagementEventListeners(promptCard, prompt);
+  }, 100);
   
   // Track engagement for this prompt
   SEOTracker.trackUserEngagement(prompt.id);
   
   return promptCard;
 }
+
+// Setup engagement event listeners
+function setupEngagementEventListeners(promptCard, prompt) {
+  // Like button
+  const likeBtn = promptCard.querySelector('.like-btn');
+  if (likeBtn) {
+    likeBtn.addEventListener('click', async () => {
+      const user = await getCurrentUser();
+      if (!user) {
+        showNotification('Please login to like prompts', 'error');
+        return;
+      }
+      
+      const isCurrentlyLiked = likeBtn.classList.contains('liked');
+      const currentLikes = parseInt(promptCard.querySelector('.likes-count').textContent) || 0;
+      
+      await engagementManager.toggleLike(prompt.id, currentLikes, isCurrentlyLiked);
+    });
+  }
+  
+  // Use button
+  const useBtn = promptCard.querySelector('.use-btn');
+  if (useBtn) {
+    useBtn.addEventListener('click', async () => {
+      const user = await getCurrentUser();
+      if (!user) {
+        showNotification('Please login to mark prompts as used', 'error');
+        return;
+      }
+      
+      await engagementManager.trackUse(prompt.id);
+    });
+  }
+  
+  // Share button
+  const shareBtn = promptCard.querySelector('.share-btn');
+  if (shareBtn) {
+    shareBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const promptUrl = shareBtn.dataset.promptUrl;
+      sharePrompt(prompt, promptUrl);
+    });
+  }
+}
+
+// Share prompt function
+function sharePrompt(prompt, promptUrl) {
+  if (navigator.share) {
+    // Web Share API
+    navigator.share({
+      title: prompt.title,
+      text: prompt.promptText?.substring(0, 100) + '...',
+      url: promptUrl,
+    })
+    .then(() => console.log('Successful share'))
+    .catch((error) => console.log('Error sharing:', error));
+  } else {
+    // Fallback to copy to clipboard
+    const shareText = `${prompt.title}\n\n${prompt.promptText?.substring(0, 200)}...\n\nView more: ${promptUrl}`;
+    
+    navigator.clipboard.writeText(shareText).then(() => {
+      showNotification('Prompt copied to clipboard!', 'success');
+    }).catch(() => {
+      // Fallback to old method
+      const textArea = document.createElement('textarea');
+      textArea.value = shareText;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showNotification('Prompt copied to clipboard!', 'success');
+    });
+  }
+}
+
+// Search functionality
+class SearchManager {
+    constructor() {
+        this.currentSearchTerm = '';
+        this.currentCategory = 'all';
+        this.currentSort = 'recent';
+        this.allPrompts = [];
+        this.isSearching = false;
+    }
+
+    async init() {
+        await this.loadAllPrompts();
+        this.setupSearchListeners();
+    }
+
+    async loadAllPrompts() {
+        try {
+            const user = await getCurrentUser();
+            const userId = user?.uid || null;
+            const params = new URLSearchParams({
+                page: '1',
+                limit: '1000',
+                ...(userId && { userId })
+            });
+            
+            const response = await fetch(`/api/uploads?${params}`);
+            if (response.ok) {
+                const data = await response.json();
+                this.allPrompts = data.uploads;
+            }
+        } catch (error) {
+            console.error('Error loading prompts for search:', error);
+        }
+    }
+
+    setupSearchListeners() {
+        const searchInput = document.getElementById('searchInput');
+        const searchButton = document.getElementById('searchButton');
+        const sortBy = document.getElementById('sortBy');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const clearSearch = document.getElementById('clearSearch');
+
+        // Search on button click
+        if (searchButton) {
+            searchButton.addEventListener('click', () => this.performSearch());
+        }
+
+        // Search on Enter key
+        if (searchInput) {
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.performSearch();
+                }
+            });
+        }
+
+        // Filter and sort changes
+        if (sortBy) {
+            sortBy.addEventListener('change', () => {
+                this.currentSort = sortBy.value;
+                if (this.currentSearchTerm || this.currentCategory !== 'all') {
+                    this.performSearch();
+                }
+            });
+        }
+
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', () => {
+                this.currentCategory = categoryFilter.value;
+                if (this.currentSearchTerm || this.currentCategory !== 'all') {
+                    this.performSearch();
+                }
+            });
+        }
+
+        // Clear search
+        if (clearSearch) {
+            clearSearch.addEventListener('click', () => this.clearSearch());
+        }
+    }
+
+    performSearch() {
+        const searchInput = document.getElementById('searchInput');
+        const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        
+        this.currentSearchTerm = searchTerm;
+        this.showSearchResults();
+    }
+
+    showSearchResults() {
+        const promptsContainer = document.getElementById('promptsContainer');
+        const resultsInfo = document.getElementById('searchResultsInfo');
+        const resultsCount = document.getElementById('resultsCount');
+
+        if (!this.currentSearchTerm && this.currentCategory === 'all') {
+            this.clearSearch();
+            return;
+        }
+
+        this.isSearching = true;
+
+        // Show loading state
+        if (promptsContainer) {
+            promptsContainer.innerHTML = `
+                <div class="search-loading">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Searching prompts...</p>
+                </div>
+            `;
+        }
+
+        // Simulate search delay for better UX
+        setTimeout(() => {
+            const filteredPrompts = this.filterPrompts();
+            this.displaySearchResults(filteredPrompts);
+            
+            // Update results info
+            if (resultsCount && resultsInfo) {
+                resultsCount.textContent = `Found ${filteredPrompts.length} prompts matching your search`;
+                resultsInfo.style.display = 'flex';
+            }
+            
+            this.isSearching = false;
+        }, 500);
+    }
+
+    filterPrompts() {
+        let filtered = [...this.allPrompts];
+
+        // Filter by search term
+        if (this.currentSearchTerm) {
+            filtered = filtered.filter(prompt => 
+                prompt.title.toLowerCase().includes(this.currentSearchTerm) ||
+                prompt.promptText.toLowerCase().includes(this.currentSearchTerm) ||
+                (prompt.keywords && prompt.keywords.some(keyword => 
+                    keyword.toLowerCase().includes(this.currentSearchTerm)
+                ))
+            );
+        }
+
+        // Filter by category
+        if (this.currentCategory !== 'all') {
+            filtered = filtered.filter(prompt => 
+                prompt.category === this.currentCategory
+            );
+        }
+
+        // Sort results
+        filtered = this.sortPrompts(filtered);
+
+        return filtered;
+    }
+
+    sortPrompts(prompts) {
+        switch (this.currentSort) {
+            case 'recent':
+                return prompts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            case 'popular':
+                return prompts.sort((a, b) => (b.likes + b.views) - (a.likes + a.views));
+            case 'likes':
+                return prompts.sort((a, b) => b.likes - a.likes);
+            case 'views':
+                return prompts.sort((a, b) => b.views - a.views);
+            default:
+                return prompts;
+        }
+    }
+
+    displaySearchResults(prompts) {
+        const promptsContainer = document.getElementById('promptsContainer');
+        
+        if (!promptsContainer) return;
+        
+        if (prompts.length === 0) {
+            promptsContainer.innerHTML = `
+                <div class="no-results">
+                    <i class="fas fa-search"></i>
+                    <h3>No prompts found</h3>
+                    <p>Try adjusting your search terms or filters</p>
+                    <button class="btn-outline" onclick="searchManager.clearSearch()" style="margin-top: 20px;">
+                        Show All Prompts
+                    </button>
+                </div>
+            `;
+            return;
+        }
+
+        promptsContainer.innerHTML = '';
+        
+        prompts.forEach((prompt, index) => {
+            const promptCard = createPromptCard(prompt);
+            
+            // Add animation
+            promptCard.style.opacity = '0';
+            promptCard.style.transform = 'translateY(20px)';
+            promptCard.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+            
+            promptsContainer.appendChild(promptCard);
+            
+            // Animate in
+            setTimeout(() => {
+                promptCard.style.opacity = '1';
+                promptCard.style.transform = 'translateY(0)';
+            }, 100 + (index * 100));
+        });
+    }
+
+    clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const sortBy = document.getElementById('sortBy');
+        const resultsInfo = document.getElementById('searchResultsInfo');
+        
+        if (searchInput) searchInput.value = '';
+        if (categoryFilter) categoryFilter.value = 'all';
+        if (sortBy) sortBy.value = 'recent';
+        
+        this.currentSearchTerm = '';
+        this.currentCategory = 'all';
+        this.currentSort = 'recent';
+        
+        if (resultsInfo) resultsInfo.style.display = 'none';
+        this.isSearching = false;
+        
+        // Reload default prompts
+        loadUploads(1);
+    }
+}
+
+// Initialize search manager
+const searchManager = new SearchManager();
 
 // Mobile Navigation Toggle
 function initMobileNavigation() {
@@ -424,7 +1195,7 @@ async function handleUploadSubmit(e) {
   const title = document.getElementById('promptTitle').value;
   const promptText = document.getElementById('promptText').value;
   const category = document.getElementById('category').value;
-  const file = imageUpload.files[0];
+  const file = document.getElementById('imageUpload').files[0];
   
   if (!file) {
     alert('Please select an image to upload!');
@@ -453,7 +1224,7 @@ async function handleUploadSubmit(e) {
   }
   
   try {
-    const submitBtn = uploadForm.querySelector('.submit-btn');
+    const submitBtn = document.querySelector('.submit-btn');
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
     submitBtn.disabled = true;
@@ -530,7 +1301,7 @@ async function handleUploadSubmit(e) {
     
     showNotification(`Upload failed: ${userMessage}`, 'error');
   } finally {
-    const submitBtn = uploadForm.querySelector('.submit-btn');
+    const submitBtn = document.querySelector('.submit-btn');
     if (submitBtn) {
       submitBtn.innerHTML = '<i class="fas fa-upload"></i> Upload with SEO Optimization';
       submitBtn.disabled = false;
@@ -646,7 +1417,14 @@ async function loadUploads(page = 1) {
       `;
     }
     
-    const response = await fetch(`/api/uploads?page=${page}`);
+    const user = await getCurrentUser();
+    const userId = user?.uid || null;
+    const params = new URLSearchParams({
+      page: page.toString(),
+      ...(userId && { userId })
+    });
+    
+    const response = await fetch(`/api/uploads?${params}`);
     
     if (!response.ok) {
       throw new Error(`Failed to load uploads: ${response.status}`);
@@ -763,6 +1541,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   initScrollEffects();
   initUploadModal();
   
+  // Initialize engagement manager
+  await engagementManager.init();
+  
+  // Initialize search functionality
+  await searchManager.init();
+  
+  // Initialize YouTube-style header
+  const youTubeHeader = new YouTubeStyleHeader();
+  
   // Load uploads if on showcase page
   if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
     await loadUploads(1);
@@ -787,15 +1574,78 @@ document.addEventListener('DOMContentLoaded', async () => {
   script.textContent = JSON.stringify(structuredData);
   document.head.appendChild(script);
   
-  // Add CSS for animations
+  // Add CSS for animations and engagement buttons
   const animationStyles = document.createElement('style');
   animationStyles.textContent = `
     .prompt-card {
       transition: opacity 0.5s ease, transform 0.5s ease;
     }
+    
+    .engagement-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid #f0f0f0;
+    }
+    
+    .engagement-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      text-decoration: none;
+      color: inherit;
+    }
+    
+    .engagement-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .like-btn.liked {
+      background: #ff6b6b;
+      color: white;
+      border-color: #ff6b6b;
+    }
+    
+    .use-btn:hover {
+      background: #20bf6b;
+      color: white;
+      border-color: #20bf6b;
+    }
+    
+    .share-btn:hover {
+      background: #4e54c8;
+      color: white;
+      border-color: #4e54c8;
+    }
+    
+    .view-btn:hover {
+      background: #8f94fb;
+      color: white;
+      border-color: #8f94fb;
+    }
+    
     @keyframes slideOut {
       from { transform: translateX(0); opacity: 1; }
       to { transform: translateX(100%); opacity: 0; }
+    }
+    
+    .count-animation {
+      animation: countPop 0.3s ease;
+    }
+    
+    @keyframes countPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+      100% { transform: scale(1); }
     }
   `;
   document.head.appendChild(animationStyles);
@@ -803,3 +1653,48 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Make functions available globally for onclick handlers
 window.loadUploads = loadUploads;
+window.searchManager = searchManager;
+
+// Mobile Navigation Toggle
+document.addEventListener('DOMContentLoaded', function() {
+    const mobileToggle = document.querySelector('.mobile-toggle');
+    const navLinks = document.querySelector('.nav-links');
+    const mobileOverlay = document.createElement('div');
+    
+    // Create mobile overlay
+    mobileOverlay.className = 'mobile-overlay';
+    document.body.appendChild(mobileOverlay);
+    
+    // Toggle mobile navigation
+    mobileToggle.addEventListener('click', function() {
+        navLinks.classList.toggle('active');
+        mobileOverlay.classList.toggle('active');
+        document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+    });
+    
+    // Close mobile navigation when clicking overlay
+    mobileOverlay.addEventListener('click', function() {
+        navLinks.classList.remove('active');
+        mobileOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    });
+    
+    // Close mobile navigation when clicking a link
+    const navLinksItems = document.querySelectorAll('.nav-links a');
+    navLinksItems.forEach(link => {
+        link.addEventListener('click', function() {
+            navLinks.classList.remove('active');
+            mobileOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        });
+    });
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth > 768) {
+            navLinks.classList.remove('active');
+            mobileOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+});
