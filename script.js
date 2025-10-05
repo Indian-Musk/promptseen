@@ -197,7 +197,7 @@ class YouTubeStyleHeader {
       searchSuggestions.style.display = 'block';
 
       // Simulate API call - replace with actual search
-      const suggestions = await this.getSearchSuggestions(query);
+      const suggestions = await this.getSearchSuggestions(query.toLowerCase());
       this.displaySearchSuggestions(suggestions, query);
       
     } catch (error) {
@@ -211,10 +211,10 @@ class YouTubeStyleHeader {
     return new Promise((resolve) => {
       setTimeout(() => {
         const mockSuggestions = [
-          { text: `${query} art`, category: 'art' },
-          { text: `${query} photography`, category: 'photography' },
-          { text: `${query} design`, category: 'design' },
-          { text: `${query} prompts`, category: 'all' }
+          { text: `${query} `, category: 'art' },
+          { text: `${query} `, category: 'photography' },
+          { text: `${query} `, category: 'design' },
+          { text: `${query} `, category: 'all' }
         ];
         resolve(mockSuggestions);
       }, 200);
@@ -907,15 +907,18 @@ class SearchManager {
     filterPrompts() {
         let filtered = [...this.allPrompts];
 
-        // Filter by search term
+        // Filter by search term (case-insensitive)
         if (this.currentSearchTerm) {
-            filtered = filtered.filter(prompt => 
-                prompt.title.toLowerCase().includes(this.currentSearchTerm) ||
-                prompt.promptText.toLowerCase().includes(this.currentSearchTerm) ||
-                (prompt.keywords && prompt.keywords.some(keyword => 
-                    keyword.toLowerCase().includes(this.currentSearchTerm)
-                ))
-            );
+            const searchTerm = this.currentSearchTerm.toLowerCase();
+            filtered = filtered.filter(prompt => {
+                const title = prompt.title?.toLowerCase() || '';
+                const promptText = prompt.promptText?.toLowerCase() || '';
+                const keywords = prompt.keywords?.map(k => k.toLowerCase()) || [];
+                
+                return title.includes(searchTerm) ||
+                       promptText.includes(searchTerm) ||
+                       keywords.some(keyword => keyword.includes(searchTerm));
+            });
         }
 
         // Filter by category
@@ -1530,6 +1533,19 @@ function updatePagination(currentPage, totalPages) {
   }
 }
 
+// Quick Fix for Case-Insensitive Search
+function setupCaseInsensitiveSearch() {
+  const searchInput = document.getElementById('searchInput');
+  
+  if (searchInput) {
+    // Normalize input for search while preserving display
+    searchInput.addEventListener('input', function(e) {
+      // The search logic now handles case-insensitive matching
+      // No need to modify the input value for display
+    });
+  }
+}
+
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
   await initializeFirebase();
@@ -1549,6 +1565,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Initialize YouTube-style header
   const youTubeHeader = new YouTubeStyleHeader();
+  
+  // Setup case-insensitive search
+  setupCaseInsensitiveSearch();
   
   // Load uploads if on showcase page
   if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
