@@ -87,7 +87,7 @@
             <!-- YouTube-style Search Bar -->
             <div class="search-container">
                 <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search prompts...">
+                    <input type="text" id="searchInput" placeholder="Search...e.g. happy diwali">
                     <button class="search-btn" id="searchButton">
                         <i class="fas fa-search"></i>
                     </button>
@@ -96,9 +96,7 @@
             </div>
 
          
-                <div id="authSection">
-                    <a href="login.html" class="login-btn">Login</a>
-                </div>
+                
             </div>
         </nav>
     </div>
@@ -106,41 +104,30 @@
 
   
    
-
-    <!-- Trending Prompts Showcase -->
-    <section class="showcase" id="showcase">
-        <div class="container">
-            <div class="trending-header">
-                <div class="section-title" style="text-align: left; margin: 0;">
-                    <h2> Trending showcase Just Copy & Paste Prompt </h2>
-                    <p>Search any prompt by entering your text in above search bar</p>
-                    <p>e.g,wing chair ,Login to upload your own creations </p>
-                </div>
-                <div class="filter-controls">
-                    <button class="filter-btn active">All</button>
-                    <button class="filter-btn">Art</button>
-                    <button class="filter-btn">Photography</button>
-                    <button class="filter-btn">Design</button>
-                    <button class="filter-btn">Writing</button>
-                    <button class="upload-btn" id="openUploadModal">
-                        <i class="fas fa-cloud-upload-alt"></i> Upload Creation
-                    </button>
-                </div>
+<!-- Replace the showcase section with this -->
+<section class="showcase" id="showcase">
+    <div class="container">
+        <div class="trending-header">
+            <div class="section-title" style="text-align: left; margin: 0;">
+                <h2>🔥 AI Prompt Shorts</h2>
+                <p>Scroll to discover prompt seen • Copy & paste prompts to make your photo like this</p>
             </div>
-            
-            <div class="prompts-grid" id="promptsContainer">
-                <!-- Prompts will be loaded dynamically -->
-                <div class="loading" style="text-align: center; padding: 40px; color: #666;">
-                    <i class="fas fa-spinner fa-spin"></i> Loading AI creations...
-                </div>
-            </div>
-            
-            <div class="pagination" id="pagination">
-                <!-- Pagination will be loaded dynamically -->
+            <div class="filter-controls desktop-only">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">Art</button>
+                <button class="filter-btn">Photography</button>
+                <button class="upload-btn" id="openUploadModal">
+                    <i class="fas fa-cloud-upload-alt"></i> Upload
+                </button>
             </div>
         </div>
-    </section>
- </section>
+        
+        <!-- YouTube Shorts Style Container -->
+        <div class="shorts-container" id="promptsContainer">
+            <!-- Prompts will be loaded here automatically -->
+        </div>
+    </div>
+</section>
 
     <!-- Upload Modal -->
     <div class="modal-overlay" id="uploadModal">
@@ -196,110 +183,9 @@
         </div>
     </div>
 
-  <!-- Hero Section -->
-    <section class="hero" id="home">
-        <div class="container">
-            <div class="hero-content">
-                <h1>Welcome to Prompt Seen </h1>
-                <p>Struggling to transform your ideas into stunning visuals? Look no further! Promptseen is your one-stop shop for mastering the art of AI image generation & Photo Editing prompts </p>
-               
-
-                <div class="hero-buttons">
-                    <a href="promptconverter.html" class="cta-button">Explore Prompts</a>
-                    <a href="howitworks.html" class="btn-outline">Learn More</a>
-<a href="chatbot.html" class="cta-button">Use Our Free Chatbot</a>
-                </div>
-            </div>    
-     
-
-    <!-- CTA Section -->
-    <section class="cta-section">
-        <div class="container">
-            <h2>Ready to Master AI Prompt Engineering?</h2>
-            <p>Join our growing community of AI enthusiasts. Share your prompts, get discovered, and learn from others.</p>
-            <a href="login.html" class="cta-button">Create Free Account</a>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="footer-grid">
-                <div class="footer-column">
-                    <h3>Prompt Seen</h3>
-                    <p>AI Prompt Engineering Platform - Create, share and discover effective AI prompts with automatic SEO optimization.</p>
-                    <div class="social-links">
-                        <a href="#" aria-label="Twitter"><i class="fab fa-twitter"></i></a>
-                        <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
-                        <a href="#" aria-label="Discord"><i class="fab fa-discord"></i></a>
-                        <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin"></i></a>
-                    </div>
-                </div>
-                
-                <div class="footer-column">
-                    <h3>Quick Links</h3>
-                    <ul class="footer-links">
-                        <li><a href="index.html">Home</a></li>
-                        <li><a href="https://www.promptseen.co/promptconverter.html">Prompt Converter</a></li>
-                        <li><a href="https://www.promptseen.co/howitworks.html">How It Works</a></li>
-                        <li><a href="https://promptseen.co/login.html">Login/Signup</a></li>
-                    </ul>
-                </div>
-                
-                <div class="footer-column">
-                    <h3>Legal</h3>
-                    <ul class="footer-links">
-                        <li><a href="tos.html">Terms of Service</a></li>
-                        <li><a href="privacy.html">Privacy Policy</a></li>
-                        <li><a href="copyright.html">Copyright</a></li>
-                        <li><a href="cookies-ethics.html">AI Ethics</a></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="copyright">
-                &copy; 2025 Prompt Seen. All rights reserved. AI-generated content is subject to respective platform terms.
-            </div>
-        </div>
-    </footer>
-
+  
     <!-- Scripts -->
     <script src="script.js"></script>
 
-    <!-- Cookie Consent -->
-    <div id="cookie-consent" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(45,51,74,0.95); color: white; padding: 20px; z-index: 1000;">
-        <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-            <div style="flex: 1; min-width: 300px; padding-right: 20px;">
-                <p>We use cookies to enhance your experience and analyze site usage. By continuing to browse, you agree to our use of cookies. Learn more in our <a href="cookies-ethics.html" style="color: #8f94fb;">Cookies & AI Ethics Policy</a>.</p>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <button id="accept-cookies" style="background: #20bf6b; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer;">Accept All</button>
-                <button id="customize-cookies" style="background: transparent; color: white; border: 1px solid #8f94fb; padding: 10px 20px; border-radius: 30px; cursor: pointer;">Customize</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // Cookie consent functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const consentBanner = document.getElementById('cookie-consent');
-            const accepted = localStorage.getItem('cookiesAccepted');
-            
-            if (!accepted) {
-                setTimeout(() => {
-                    consentBanner.style.display = 'block';
-                }, 2000);
-            }
-            
-            document.getElementById('accept-cookies').addEventListener('click', function() {
-                localStorage.setItem('cookiesAccepted', 'true');
-                consentBanner.style.display = 'none';
-            });
-            
-            document.getElementById('customize-cookies').addEventListener('click', function() {
-                window.location.href = 'cookies-ethics.html';
-            });
-        });
-    </script>
 </body>
 </html>

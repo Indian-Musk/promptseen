@@ -93,6 +93,852 @@ function showAuthElements() {
   }
 }
 
+// YouTube-style Prompts with Infinite Scroll
+class YouTubeStylePrompts {
+  constructor() {
+    this.currentPage = 1;
+    this.isLoading = false;
+    this.hasMore = true;
+    this.promptsPerPage = 4;
+    this.allPrompts = [];
+    this.loadedPrompts = new Set();
+    this.init();
+  }
+
+  init() {
+    this.injectCriticalCSS();
+    this.setupInfiniteScroll();
+    this.loadInitialPrompts();
+    this.setupEngagementListeners();
+    console.log('YouTubeStylePrompts initialized');
+  }
+
+ // Replace the injectCriticalCSS method in the YouTubeStylePrompts class with this:
+
+injectCriticalCSS() {
+  const criticalCSS = `
+    /* YouTube Shorts Critical Styles with !important */
+    .shorts-container {
+      display: grid !important;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
+      gap: 20px !important;
+      padding: 20px !important;
+      max-width: 100% !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+    }
+
+    .shorts-prompt-card {
+      position: relative !important;
+      background: white !important;
+      border-radius: 12px !important;
+      overflow: hidden !important;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+      width: 100% !important;
+      margin: 0 !important;
+      display: block !important;
+      transition: transform 0.3s ease !important;
+    }
+
+    .shorts-prompt-card:hover {
+      transform: translateY(-5px) !important;
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .shorts-video-container {
+      position: relative !important;
+      width: 100% !important;
+      height: 400px !important;
+      background: #000 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+
+    .shorts-image {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      display: block !important;
+    }
+
+    .shorts-engagement {
+      position: absolute !important;
+      right: 12px !important;
+      bottom: 80px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      gap: 15px !important;
+      align-items: center !important;
+      z-index: 10 !important;
+    }
+
+    .engagement-action {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 4px !important;
+      color: white !important;
+      background: none !important;
+      border: none !important;
+      cursor: pointer !important;
+      padding: 0 !important;
+      font-size: 12px !important;
+      transition: transform 0.2s ease !important;
+    }
+
+    .engagement-action:hover {
+      transform: scale(1.1) !important;
+    }
+
+    .engagement-action i {
+      font-size: 18px !important;
+      background: rgba(0, 0, 0, 0.5) !important;
+      border-radius: 50% !important;
+      padding: 8px !important;
+      width: 36px !important;
+      height: 36px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      backdrop-filter: blur(10px) !important;
+    }
+
+    .engagement-count {
+      font-size: 11px !important;
+      font-weight: 500 !important;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
+    }
+
+    .shorts-info {
+      padding: 15px !important;
+      background: white !important;
+      display: block !important;
+    }
+
+    .shorts-prompt-text {
+      font-size: 14px !important;
+      line-height: 1.4 !important;
+      margin-bottom: 10px !important;
+      display: -webkit-box !important;
+      -webkit-line-clamp: 3 !important;
+      -webkit-box-orient: vertical !important;
+      overflow: hidden !important;
+      color: #0f0f0f !important;
+      min-height: 60px !important;
+    }
+
+    .shorts-meta {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      font-size: 12px !important;
+      color: #606060 !important;
+      margin-bottom: 8px !important;
+    }
+
+    .prompt-actions {
+      margin-top: 10px !important;
+      display: flex !important;
+      gap: 10px !important;
+      width: 100% !important;
+      align-items: center !important;
+    }
+
+    .copy-prompt-btn {
+      padding: 8px 16px !important;
+      border: 1px solid #ddd !important;
+      border-radius: 20px !important;
+      background: white !important;
+      font-size: 12px !important;
+      cursor: pointer !important;
+      transition: all 0.3s ease !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 6px !important;
+      font-weight: 500 !important;
+    }
+
+    .copy-prompt-btn:hover {
+      background: #4e54c8 !important;
+      color: white !important;
+      border-color: #4e54c8 !important;
+    }
+
+    /* Loading states */
+    .loading-shorts {
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      padding: 40px !important;
+      color: #666 !important;
+      width: 100% !important;
+      grid-column: 1 / -1 !important;
+    }
+
+    .loading-shorts .spinner {
+      width: 24px !important;
+      height: 24px !important;
+      border: 3px solid #f3f3f3 !important;
+      border-top: 3px solid #4e54c8 !important;
+      border-radius: 50% !important;
+      animation: spin 1s linear infinite !important;
+      margin-right: 12px !important;
+    }
+
+    .loading-prompt .shorts-video-container {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
+      background-size: 200% 100% !important;
+      animation: loading 1.5s infinite !important;
+    }
+
+    .loading-text {
+      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
+      background-size: 200% 100% !important;
+      animation: loading 1.5s infinite !important;
+      border-radius: 4px !important;
+    }
+
+    /* Desktop specific styles */
+    @media (min-width: 1024px) {
+      .shorts-container {
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 24px !important;
+        padding: 24px !important;
+        max-width: 1400px !important;
+      }
+
+      .shorts-video-container {
+        height: 350px !important;
+      }
+
+      .shorts-prompt-text {
+        -webkit-line-clamp: 4 !important;
+        min-height: 80px !important;
+      }
+    }
+
+    @media (min-width: 768px) and (max-width: 1023px) {
+      .shorts-container {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 20px !important;
+        padding: 20px !important;
+      }
+
+      .shorts-video-container {
+        height: 400px !important;
+      }
+    }
+
+    /* Mobile responsive */
+    @media (max-width: 767px) {
+      .shorts-container {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+        padding: 16px !important;
+      }
+      
+      .shorts-video-container {
+        height: 500px !important;
+      }
+      
+      .shorts-prompt-card {
+        border-radius: 8px !important;
+      }
+      
+      .engagement-action i {
+        font-size: 20px !important;
+        width: 40px !important;
+        height: 40px !important;
+      }
+
+      .shorts-prompt-text {
+        -webkit-line-clamp: 2 !important;
+        min-height: 50px !important;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .shorts-video-container {
+        height: 450px !important;
+      }
+      
+      .shorts-info {
+        padding: 12px !important;
+      }
+      
+      .shorts-prompt-text {
+        font-size: 13px !important;
+      }
+    }
+
+    /* Animations */
+    @keyframes spin {
+      0% { transform: rotate(0deg) !important; }
+      100% { transform: rotate(360deg) !important; }
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0 !important; }
+      100% { background-position: -200% 0 !important; }
+    }
+
+    .count-animation {
+      animation: countPop 0.3s ease !important;
+    }
+
+    @keyframes countPop {
+      0% { transform: scale(1) !important; }
+      50% { transform: scale(1.2) !important; }
+      100% { transform: scale(1) !important; }
+    }
+
+    /* Override any grid layouts */
+    #promptsContainer {
+      display: grid !important;
+      width: 100% !important;
+    }
+
+    /* Hide any existing grid styles */
+    .prompts-grid {
+      display: none !important;
+    }
+
+    .prompt-card {
+      display: none !important;
+    }
+
+    /* Ensure proper image loading */
+    .shorts-image {
+      transition: opacity 0.3s ease !important;
+    }
+
+    .shorts-image:not([src]) {
+      opacity: 0 !important;
+    }
+
+    .shorts-image[src] {
+      opacity: 1 !important;
+    }
+  `;
+
+  const style = document.createElement('style');
+  style.id = 'youtube-shorts-critical-css';
+  style.textContent = criticalCSS;
+  document.head.appendChild(style);
+}
+  setupInfiniteScroll() {
+    let ticking = false;
+    
+    const checkScroll = () => {
+      if (this.isLoading || !this.hasMore) return;
+
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const pageHeight = document.documentElement.scrollHeight - 100;
+
+      if (scrollPosition >= pageHeight) {
+        console.log('Loading more prompts...');
+        this.loadMorePrompts();
+      }
+    };
+
+    window.addEventListener('scroll', () => {
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          checkScroll();
+          ticking = false;
+        });
+        ticking = true;
+      }
+    }, { passive: true });
+
+    // Also check on load in case content doesn't fill the screen
+    window.addEventListener('load', () => {
+      setTimeout(() => this.checkScrollPosition(), 1000);
+    });
+  }
+
+  checkScrollPosition() {
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const pageHeight = document.documentElement.scrollHeight;
+    
+    if (scrollPosition >= pageHeight - 200 && this.hasMore && !this.isLoading) {
+      this.loadMorePrompts();
+    }
+  }
+
+  async loadInitialPrompts() {
+  const promptsContainer = document.getElementById('promptsContainer');
+  if (!promptsContainer) {
+    console.error('Prompts container not found');
+    return;
+  }
+
+  console.log('Loading initial prompts...');
+  
+  // Clear any existing content and apply critical styles
+  promptsContainer.innerHTML = '';
+  promptsContainer.className = 'shorts-container';
+  
+  // Add loading skeletons - ensure 4 loading cards for desktop
+  promptsContainer.innerHTML = this.createLoadingShorts();
+
+  try {
+    await this.loadAllPrompts();
+    const initialPrompts = this.allPrompts.slice(0, this.promptsPerPage);
+    console.log(`Loaded ${initialPrompts.length} initial prompts`);
+    this.displayPrompts(initialPrompts, true);
+  } catch (error) {
+    console.error('Error loading initial prompts:', error);
+    this.showErrorState();
+  }
+}
+
+
+  async loadAllPrompts() {
+    try {
+      console.log('Fetching all prompts from API...');
+      const user = await getCurrentUser();
+      const userId = user?.uid || null;
+      const params = new URLSearchParams({
+        page: '1',
+        limit: '100',
+        ...(userId && { userId })
+      });
+      
+      const response = await fetch(`/api/uploads?${params}`);
+      if (response.ok) {
+        const data = await response.json();
+        this.allPrompts = data.uploads || [];
+        console.log(`Loaded ${this.allPrompts.length} prompts from API`);
+      } else {
+        throw new Error('Failed to fetch prompts');
+      }
+    } catch (error) {
+      console.error('API fetch error:', error);
+      // Fallback to mock data
+      this.allPrompts = this.generateMockPrompts(50);
+      console.log(`Generated ${this.allPrompts.length} mock prompts`);
+    }
+  }
+
+  async loadMorePrompts() {
+    if (this.isLoading || !this.hasMore) {
+      console.log('Already loading or no more prompts');
+      return;
+    }
+
+    this.isLoading = true;
+    this.showLoadingIndicator();
+    console.log(`Loading page ${this.currentPage + 1}...`);
+
+    try {
+      // Simulate API delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      const startIndex = this.currentPage * this.promptsPerPage;
+      const nextPrompts = this.allPrompts.slice(startIndex, startIndex + this.promptsPerPage);
+      
+      if (nextPrompts.length > 0) {
+        console.log(`Displaying ${nextPrompts.length} more prompts`);
+        this.displayPrompts(nextPrompts, false);
+        this.currentPage++;
+        
+        // Check if we need to load more immediately (for short screens)
+        setTimeout(() => this.checkScrollPosition(), 500);
+      } else {
+        console.log('No more prompts to load');
+        this.hasMore = false;
+        this.hideLoadingIndicator();
+        this.showNoMorePrompts();
+      }
+    } catch (error) {
+      console.error('Error loading more prompts:', error);
+      this.hideLoadingIndicator();
+      showNotification('Failed to load more prompts', 'error');
+    } finally {
+      this.isLoading = false;
+    }
+  }
+
+  generateMockPrompts(count) {
+    const prompts = [];
+    const categories = ['art', 'photography', 'design', 'writing'];
+    const styles = ['cyberpunk', 'fantasy', 'minimalist', 'realistic', 'anime', 'painting'];
+    const adjectives = ['amazing', 'stunning', 'beautiful', 'epic', 'magnificent', 'breathtaking'];
+    
+    for (let i = 1; i <= count; i++) {
+      const style = styles[Math.floor(Math.random() * styles.length)];
+      const category = categories[Math.floor(Math.random() * categories.length)];
+      const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
+      
+      prompts.push({
+        id: `prompt-${i}`,
+        title: `${adjective} ${style} ${category}`,
+        promptText: `Create a ${style} ${category} image with perfect lighting, highly detailed, professional composition, trending on art station, 4K resolution, masterpiece quality`,
+        imageUrl: `https://picsum.photos/300/500?random=${i}&blur=2`,
+        likes: Math.floor(Math.random() * 1000),
+        views: Math.floor(Math.random() * 5000),
+        uses: Math.floor(Math.random() * 500),
+        userName: `creator${i}`,
+        category: category,
+        createdAt: new Date().toISOString()
+      });
+    }
+    
+    return prompts;
+  }
+
+  displayPrompts(prompts, isInitial) {
+    const promptsContainer = document.getElementById('promptsContainer');
+    if (!promptsContainer) return;
+
+    // Ensure container has correct class
+    promptsContainer.className = 'shorts-container';
+
+    if (isInitial) {
+      promptsContainer.innerHTML = '';
+      this.loadedPrompts.clear();
+    } else {
+      this.hideLoadingIndicator();
+    }
+
+    prompts.forEach((prompt, index) => {
+      // Avoid duplicates
+      if (this.loadedPrompts.has(prompt.id)) {
+        return;
+      }
+      
+      const promptElement = this.createShortsPrompt(prompt, index);
+      promptsContainer.appendChild(promptElement);
+      this.loadedPrompts.add(prompt.id);
+    });
+
+    // Animate prompts in
+    setTimeout(() => {
+      this.animatePromptsIn();
+    }, 50);
+
+    // Track views for new prompts
+    prompts.forEach(prompt => {
+      this.trackPromptView(prompt.id);
+    });
+
+    console.log(`Displayed ${prompts.length} prompts, total loaded: ${this.loadedPrompts.size}`);
+  }
+
+  createShortsPrompt(prompt, index) {
+    const promptDiv = document.createElement('div');
+    promptDiv.className = 'shorts-prompt-card';
+    promptDiv.setAttribute('data-prompt-id', prompt.id);
+    promptDiv.style.opacity = '0';
+    promptDiv.style.transform = 'translateY(20px)';
+    promptDiv.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+
+    promptDiv.innerHTML = `
+      <div class="shorts-video-container">
+        <img src="${prompt.imageUrl}" 
+             alt="${prompt.title}"
+             class="shorts-image"
+             loading="lazy"
+             onerror="this.src='https://via.placeholder.com/300x500/4e54c8/white?text=AI+Image'">
+        
+        <div class="shorts-engagement">
+          <button class="engagement-action like-btn" data-prompt-id="${prompt.id}" title="Like">
+            <i class="far fa-heart"></i>
+            <span class="engagement-count likes-count">${this.formatCount(prompt.likes)}</span>
+          </button>
+          
+          <button class="engagement-action use-btn" data-prompt-id="${prompt.id}" title="Mark as used">
+            <i class="fas fa-download"></i>
+            <span class="engagement-count uses-count">${this.formatCount(prompt.uses)}</span>
+          </button>
+          
+          <button class="engagement-action share-btn" data-prompt-id="${prompt.id}" title="Share">
+            <i class="fas fa-share"></i>
+            <span class="engagement-count">Share</span>
+          </button>
+          
+          <a href="/prompt/${prompt.id}" class="engagement-action view-btn" target="_blank" title="View details">
+            <i class="fas fa-expand"></i>
+            <span class="engagement-count views-count">${this.formatCount(prompt.views)}</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="shorts-info">
+        <div class="shorts-prompt-text">
+          ${prompt.promptText}
+        </div>
+        <div class="shorts-meta">
+          <span>@${prompt.userName}</span>
+          <span>${this.formatCount(prompt.views)} views</span>
+        </div>
+        <div class="prompt-actions">
+          <button class="copy-prompt-btn" data-prompt-text="${prompt.promptText}">
+            <i class="fas fa-copy"></i> Copy Prompt
+          </button>
+          <span style="font-size: 11px; color: #888; margin-left: auto;">
+            #${prompt.category}
+          </span>
+        </div>
+      </div>
+    `;
+
+    return promptDiv;
+  }
+
+  setupEngagementListeners() {
+    // Event delegation for all engagement buttons
+    document.addEventListener('click', async (e) => {
+      const likeBtn = e.target.closest('.like-btn');
+      const useBtn = e.target.closest('.use-btn');
+      const shareBtn = e.target.closest('.share-btn');
+      const copyBtn = e.target.closest('.copy-prompt-btn');
+      
+      if (likeBtn) {
+        await this.handleLike(likeBtn);
+      } else if (useBtn) {
+        await this.handleUse(useBtn);
+      } else if (shareBtn) {
+        await this.handleShare(shareBtn);
+      } else if (copyBtn) {
+        await this.handleCopyPrompt(copyBtn);
+      }
+    });
+  }
+
+  async handleLike(likeBtn) {
+    const promptId = likeBtn.dataset.promptId;
+    const user = await getCurrentUser();
+    if (!user) {
+      showNotification('Please login to like prompts', 'error');
+      return;
+    }
+
+    const likesCount = likeBtn.querySelector('.likes-count');
+    const icon = likeBtn.querySelector('i');
+    const isLiked = icon.classList.contains('fas');
+    
+    try {
+      const action = isLiked ? 'unlike' : 'like';
+      const response = await fetch(`/api/prompt/${promptId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid, action })
+      });
+
+      if (response.ok) {
+        const currentLikes = parseInt(likesCount.textContent) || 0;
+        const newLikes = action === 'like' ? currentLikes + 1 : Math.max(0, currentLikes - 1);
+        
+        likesCount.textContent = this.formatCount(newLikes);
+        icon.className = action === 'like' ? 'fas fa-heart' : 'far fa-heart';
+        
+        // Add animation
+        likesCount.classList.add('count-animation');
+        setTimeout(() => likesCount.classList.remove('count-animation'), 300);
+        
+        showNotification(action === 'like' ? 'Prompt liked!' : 'Like removed', 'success');
+      }
+    } catch (error) {
+      console.error('Like error:', error);
+      showNotification('Failed to update like', 'error');
+    }
+  }
+
+  async handleUse(useBtn) {
+    const promptId = useBtn.dataset.promptId;
+    const user = await getCurrentUser();
+    if (!user) {
+      showNotification('Please login to mark prompts as used', 'error');
+      return;
+    }
+
+    const usesCount = useBtn.querySelector('.uses-count');
+    
+    try {
+      const response = await fetch(`/api/prompt/${promptId}/use`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid })
+      });
+
+      if (response.ok) {
+        const currentUses = parseInt(usesCount.textContent) || 0;
+        usesCount.textContent = this.formatCount(currentUses + 1);
+        
+        // Add animation
+        usesCount.classList.add('count-animation');
+        setTimeout(() => usesCount.classList.remove('count-animation'), 300);
+        
+        showNotification('Prompt marked as used!', 'success');
+      }
+    } catch (error) {
+      console.error('Use error:', error);
+      showNotification('Failed to mark as used', 'error');
+    }
+  }
+
+  async handleShare(shareBtn) {
+    const promptId = shareBtn.dataset.promptId;
+    const promptUrl = `${window.location.origin}/prompt/${promptId}`;
+    
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Check out this AI prompt!',
+          text: 'Amazing AI-generated creation on Prompt Seen',
+          url: promptUrl
+        });
+      } catch (error) {
+        if (error.name !== 'AbortError') {
+          await this.copyToClipboard(promptUrl);
+          showNotification('Link copied to clipboard!', 'success');
+        }
+      }
+    } else {
+      await this.copyToClipboard(promptUrl);
+      showNotification('Link copied to clipboard!', 'success');
+    }
+  }
+
+  async handleCopyPrompt(button) {
+    const promptText = button.dataset.promptText;
+    await this.copyToClipboard(promptText);
+    showNotification('Prompt copied to clipboard!', 'success');
+    
+    // Add visual feedback
+    const originalHTML = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check"></i> Copied!';
+    button.style.background = '#20bf6b';
+    button.style.color = 'white';
+    button.style.borderColor = '#20bf6b';
+    
+    setTimeout(() => {
+      button.innerHTML = originalHTML;
+      button.style.background = '';
+      button.style.color = '';
+      button.style.borderColor = '';
+    }, 2000);
+  }
+
+  async copyToClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch (error) {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
+  }
+
+  async trackPromptView(promptId) {
+    try {
+      await fetch(`/api/prompt/${promptId}/view`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (error) {
+      console.error('View tracking error:', error);
+    }
+  }
+
+ createLoadingShorts() {
+  // Create 4 loading cards for desktop grid
+  const loadingCards = Array(4).fill(0).map((_, i) => `
+    <div class="shorts-prompt-card loading-prompt" style="opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease ${i * 0.1}s, transform 0.5s ease ${i * 0.1}s">
+      <div class="shorts-video-container">
+        <div class="loading-placeholder"></div>
+      </div>
+      <div class="shorts-info">
+        <div class="shorts-prompt-text loading-text" style="height: 60px; margin-bottom: 10px;"></div>
+        <div class="shorts-meta">
+          <span class="loading-text" style="width: 100px; height: 12px; display: inline-block;"></span>
+          <span class="loading-text" style="width: 80px; height: 12px; display: inline-block;"></span>
+        </div>
+        <div class="prompt-actions">
+          <div class="loading-text" style="width: 120px; height: 32px; border-radius: 20px;"></div>
+          <div class="loading-text" style="width: 60px; height: 12px; margin-left: auto;"></div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  return loadingCards;
+}
+  showLoadingIndicator() {
+    let loader = document.getElementById('infinite-scroll-loader');
+    if (!loader) {
+      loader = document.createElement('div');
+      loader.id = 'infinite-scroll-loader';
+      loader.className = 'loading-shorts';
+      loader.innerHTML = `
+        <div class="spinner"></div>
+        <span>Loading more prompts...</span>
+      `;
+      document.getElementById('promptsContainer').appendChild(loader);
+    }
+  }
+
+  hideLoadingIndicator() {
+    const loader = document.getElementById('infinite-scroll-loader');
+    if (loader) {
+      loader.remove();
+    }
+  }
+
+  showNoMorePrompts() {
+    const promptsContainer = document.getElementById('promptsContainer');
+    if (promptsContainer) {
+      const endMessage = document.createElement('div');
+      endMessage.className = 'loading-shorts';
+      endMessage.innerHTML = `
+        <i class="fas fa-check-circle" style="color: #20bf6b; margin-right: 8px;"></i>
+        <span>You've seen all prompts!</span>
+      `;
+      promptsContainer.appendChild(endMessage);
+    }
+  }
+
+  animatePromptsIn() {
+    const prompts = document.querySelectorAll('.shorts-prompt-card');
+    prompts.forEach(prompt => {
+      prompt.style.opacity = '1';
+      prompt.style.transform = 'translateY(0)';
+    });
+  }
+
+  formatCount(count) {
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + 'M';
+    } else if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'K';
+    }
+    return count.toString();
+  }
+
+  showErrorState() {
+    const promptsContainer = document.getElementById('promptsContainer');
+    if (promptsContainer) {
+      promptsContainer.innerHTML = `
+        <div style="text-align: center; padding: 40px; color: #666;">
+          <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
+          <h3>Unable to load prompts</h3>
+          <p>Please check your connection and try again</p>
+          <button onclick="youtubePrompts.loadInitialPrompts()" class="cta-button" style="margin-top: 20px;">
+            <i class="fas fa-redo"></i> Retry
+          </button>
+        </div>
+      `;
+    }
+  }
+}
+
 // YouTube-style Search and Category Functionality
 class YouTubeStyleHeader {
   constructor() {
@@ -113,7 +959,6 @@ class YouTubeStyleHeader {
     const searchSuggestions = document.getElementById('searchSuggestions');
 
     if (searchInput) {
-      // Real-time search with debouncing
       searchInput.addEventListener('input', (e) => {
         clearTimeout(this.searchTimeout);
         this.searchTimeout = setTimeout(() => {
@@ -121,26 +966,22 @@ class YouTubeStyleHeader {
         }, 300);
       });
 
-      // Search on button click
       if (searchButton) {
         searchButton.addEventListener('click', () => {
           this.performSearch(searchInput.value);
         });
       }
 
-      // Search on Enter key
       searchInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
           this.performSearch(searchInput.value);
         }
       });
 
-      // Show suggestions on focus
       searchInput.addEventListener('focus', () => {
         this.showRecentSearches();
       });
 
-      // Hide suggestions when clicking outside
       document.addEventListener('click', (e) => {
         if (searchSuggestions && !searchInput.contains(e.target) && !searchSuggestions.contains(e.target)) {
           searchSuggestions.style.display = 'none';
@@ -158,7 +999,6 @@ class YouTubeStyleHeader {
         const category = item.dataset.category;
         this.selectCategory(category);
         
-        // Update active state
         categoryItems.forEach(i => i.classList.remove('active'));
         item.classList.add('active');
       });
@@ -170,7 +1010,6 @@ class YouTubeStyleHeader {
     
     if (mobileToggle) {
       mobileToggle.addEventListener('click', () => {
-        // Toggle mobile menu (you can expand this)
         document.body.classList.toggle('mobile-menu-open');
       });
     }
@@ -187,7 +1026,6 @@ class YouTubeStyleHeader {
     }
 
     try {
-      // Show loading state
       searchSuggestions.innerHTML = `
         <div class="suggestion-item">
           <i class="fas fa-spinner fa-spin suggestion-icon"></i>
@@ -196,7 +1034,6 @@ class YouTubeStyleHeader {
       `;
       searchSuggestions.style.display = 'block';
 
-      // Simulate API call - replace with actual search
       const suggestions = await this.getSearchSuggestions(query.toLowerCase());
       this.displaySearchSuggestions(suggestions, query);
       
@@ -207,7 +1044,6 @@ class YouTubeStyleHeader {
   }
 
   async getSearchSuggestions(query) {
-    // Simulate API call - replace with your actual search endpoint
     return new Promise((resolve) => {
       setTimeout(() => {
         const mockSuggestions = [
@@ -241,7 +1077,6 @@ class YouTubeStyleHeader {
         </div>
       `).join('');
 
-      // Add click handlers to suggestions
       searchSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
         item.addEventListener('click', () => {
           const query = item.dataset.query;
@@ -282,7 +1117,6 @@ class YouTubeStyleHeader {
         `).join('')}
       `;
 
-      // Add click handlers
       searchSuggestions.querySelectorAll('.suggestion-item:not(:first-child)').forEach(item => {
         item.addEventListener('click', () => {
           const query = item.dataset.query;
@@ -312,21 +1146,19 @@ class YouTubeStyleHeader {
   performSearch(query) {
     if (!query.trim()) return;
     
-    // Add to recent searches
     this.addToRecentSearches(query);
     
-    // Use the existing search manager
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
       searchInput.value = query;
     }
     
+    // Show search results using the search manager
     if (window.searchManager) {
       searchManager.currentSearchTerm = query;
       searchManager.showSearchResults();
     }
     
-    // Hide suggestions
     const searchSuggestions = document.getElementById('searchSuggestions');
     if (searchSuggestions) {
       searchSuggestions.style.display = 'none';
@@ -336,26 +1168,13 @@ class YouTubeStyleHeader {
   selectCategory(category) {
     this.currentCategory = category;
     
-    // Update the search manager
-    if (window.searchManager) {
-      searchManager.currentCategory = category;
-      
-      if (category === 'trending') {
-        // Show trending content
-        searchManager.currentSort = 'popular';
-      } else {
-        searchManager.currentSort = 'recent';
-      }
-      
-      // Refresh the display
-      if (searchManager.currentSearchTerm || category !== 'all') {
-        searchManager.showSearchResults();
-      } else {
-        loadUploads(1);
-      }
+    if (window.youtubePrompts) {
+      // Filter prompts by category
+      youtubePrompts.currentPage = 1;
+      youtubePrompts.hasMore = true;
+      youtubePrompts.loadInitialPrompts();
     }
     
-    // Show notification
     showNotification(`Showing ${this.getCategoryName(category)} prompts`, 'info');
   }
 
@@ -371,7 +1190,6 @@ class YouTubeStyleHeader {
     return categories[category] || category;
   }
 
-  // Recent searches management
   getRecentSearches() {
     return JSON.parse(localStorage.getItem('recentSearches') || '[]');
   }
@@ -380,7 +1198,7 @@ class YouTubeStyleHeader {
     let recent = this.getRecentSearches();
     recent = recent.filter(item => item !== query);
     recent.unshift(query);
-    recent = recent.slice(0, 5); // Keep only 5 most recent
+    recent = recent.slice(0, 5);
     localStorage.setItem('recentSearches', JSON.stringify(recent));
   }
 }
@@ -398,7 +1216,6 @@ class EngagementManager {
   }
 
   setupGlobalListeners() {
-    // Track prompt visibility for view counting
     this.setupViewTracking();
   }
 
@@ -417,7 +1234,6 @@ class EngagementManager {
       });
     }, { threshold: 0.5 });
 
-    // Observe prompt cards as they're added to DOM
     const observerConfig = {
       childList: true,
       subtree: true
@@ -426,10 +1242,10 @@ class EngagementManager {
     const domObserver = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1 && node.classList?.contains('prompt-card')) {
+          if (node.nodeType === 1 && node.classList?.contains('shorts-prompt-card')) {
             observer.observe(node);
           } else if (node.nodeType === 1) {
-            node.querySelectorAll?.('.prompt-card').forEach(card => {
+            node.querySelectorAll?.('.shorts-prompt-card').forEach(card => {
               observer.observe(card);
             });
           }
@@ -448,337 +1264,13 @@ class EngagementManager {
           'Content-Type': 'application/json',
         }
       });
-      
-      // Update the view count in the UI
-      this.updatePromptCount(promptId, 'views', 1);
     } catch (error) {
       console.error('Error tracking view:', error);
     }
   }
-
-  async toggleLike(promptId, currentLikes, isCurrentlyLiked) {
-    try {
-      const action = isCurrentlyLiked ? 'unlike' : 'like';
-      const userId = this.user?.uid || 'anonymous';
-      
-      const response = await fetch(`/api/prompt/${promptId}/like`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId, action })
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        const likeChange = action === 'like' ? 1 : -1;
-        
-        // Update UI immediately
-        this.updatePromptCount(promptId, 'likes', likeChange);
-        this.updateLikeButton(promptId, !isCurrentlyLiked);
-        
-        return true;
-      }
-    } catch (error) {
-      console.error('Error toggling like:', error);
-      showNotification('Failed to update like. Please try again.', 'error');
-    }
-    return false;
-  }
-
-  async trackUse(promptId) {
-    try {
-      const userId = this.user?.uid || 'anonymous';
-      
-      const response = await fetch(`/api/prompt/${promptId}/use`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId })
-      });
-
-      if (response.ok) {
-        // Update UI immediately
-        this.updatePromptCount(promptId, 'uses', 1);
-        showNotification('Prompt marked as used!', 'success');
-        return true;
-      }
-    } catch (error) {
-      console.error('Error tracking use:', error);
-      showNotification('Failed to mark as used. Please try again.', 'error');
-    }
-    return false;
-  }
-
-  updatePromptCount(promptId, type, change) {
-    // Update in prompt cards
-    const promptCards = document.querySelectorAll(`[data-prompt-id="${promptId}"]`);
-    promptCards.forEach(card => {
-      const counterElement = card.querySelector(`.${type}-count`);
-      if (counterElement) {
-        const currentCount = parseInt(counterElement.textContent) || 0;
-        const newCount = Math.max(0, currentCount + change);
-        counterElement.textContent = newCount;
-        
-        // Add animation
-        counterElement.style.transform = 'scale(1.2)';
-        setTimeout(() => {
-          counterElement.style.transform = 'scale(1)';
-        }, 300);
-      }
-    });
-
-    // Update in individual prompt pages
-    const metaItems = document.querySelectorAll(`.meta-item[data-type="${type}"]`);
-    metaItems.forEach(item => {
-      const counterElement = item.querySelector('span');
-      if (counterElement && counterElement.classList.contains(`${type}-count`)) {
-        const currentCount = parseInt(counterElement.textContent) || 0;
-        const newCount = Math.max(0, currentCount + change);
-        counterElement.textContent = newCount;
-      }
-    });
-  }
-
-  updateLikeButton(promptId, isLiked) {
-    const likeButtons = document.querySelectorAll(`[data-prompt-id="${promptId}"] .like-btn`);
-    likeButtons.forEach(button => {
-      if (isLiked) {
-        button.classList.add('liked');
-        button.innerHTML = '<i class="fas fa-heart"></i> Liked';
-      } else {
-        button.classList.remove('liked');
-        button.innerHTML = '<i class="far fa-heart"></i> Like';
-      }
-    });
-  }
-
-  createEngagementButtons(prompt, promptUrl) {
-    const isLiked = prompt.userLiked || false;
-    
-    return `
-      <div class="engagement-buttons">
-        <button class="engagement-btn like-btn ${isLiked ? 'liked' : ''}" 
-                data-prompt-id="${prompt.id}">
-          <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
-          <span class="likes-count">${prompt.likes || 0}</span>
-        </button>
-        
-        <button class="engagement-btn use-btn" 
-                data-prompt-id="${prompt.id}"
-                title="Mark as used">
-          <i class="fas fa-download"></i>
-          <span class="uses-count">${prompt.uses || 0}</span>
-        </button>
-        
-        <button class="engagement-btn share-btn" 
-                data-prompt-url="${promptUrl}"
-                title="Share prompt">
-          <i class="fas fa-share"></i>
-        </button>
-        
-        <a href="${promptUrl}" class="engagement-btn view-btn" target="_blank" title="View details">
-          <i class="fas fa-expand"></i>
-          <span class="views-count">${prompt.views || 0}</span>
-        </a>
-      </div>
-    `;
-  }
 }
 
-// Initialize engagement manager
-const engagementManager = new EngagementManager();
-
-// SEO Tracking and Optimization
-class SEOTracker {
-  static trackUserEngagement(promptId) {
-    if (!promptId) return;
-    
-    let startTime = Date.now();
-    let maxScroll = 0;
-    
-    // Track time spent
-    window.addEventListener('beforeunload', () => {
-      const timeSpent = Date.now() - startTime;
-      if (timeSpent > 3000) {
-        this.sendEngagementData(promptId, 'time_spent', timeSpent);
-      }
-    });
-    
-    // Track scroll depth
-    window.addEventListener('scroll', () => {
-      const scrollDepth = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
-      maxScroll = Math.max(maxScroll, scrollDepth);
-    });
-    
-    window.addEventListener('beforeunload', () => {
-      if (maxScroll > 25) {
-        this.sendEngagementData(promptId, 'scroll_depth', maxScroll);
-      }
-    });
-  }
-  
-  static async sendEngagementData(promptId, type, value, platform = null) {
-    try {
-      const data = { promptId, type, value };
-      if (platform) data.platform = platform;
-      
-      const response = await fetch('/api/track-engagement', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error tracking engagement:', error);
-    }
-  }
-}
-
-// Enhanced prompt card creation with engagement features
-function createPromptCard(prompt) {
-  const promptCard = document.createElement('div');
-  promptCard.className = 'prompt-card';
-  promptCard.id = `prompt-${prompt.id}`;
-  promptCard.setAttribute('data-prompt-id', prompt.id);
-  
-  // Add schema.org microdata
-  promptCard.setAttribute('itemscope', '');
-  promptCard.setAttribute('itemtype', 'https://schema.org/CreativeWork');
-  
-  const promptUrl = prompt.promptUrl || `https://home.promptseen.co/prompt/${prompt.id}`;
-  const imageUrl = prompt.imageUrl || 'https://via.placeholder.com/350x550/4e54c8/white?text=Prompt+Seen';
-  
-  promptCard.innerHTML = `
-    <div class="prompt-image" style="background-image: url('${imageUrl}')" 
-         itemprop="image" itemscope itemtype="https://schema.org/ImageObject">
-      <meta itemprop="url" content="${imageUrl}">
-      <meta itemprop="width" content="800">
-      <meta itemprop="height" content="600">
-      ${prompt.likes > 1000 ? `<div class="viral-badge">
-        <i class="fas fa-fire"></i> Viral
-      </div>` : ''}
-      ${prompt.likes < 100 ? `<div class="viral-badge" style="background: #20bf6b">
-        <i class="fas fa-user"></i> Prompt Seen
-      </div>` : ''}
-    </div>
-    <div class="prompt-content" itemprop="mainEntityOfPage" itemscope itemtype="https://schema.org/WebPage">
-      <link itemprop="url" href="${promptUrl}">
-      <div class="prompt-meta">
-        <span><i class="fas fa-eye"></i> <span class="views-count">${prompt.views || 0}</span> Views</span>
-        <span><i class="fas fa-download"></i> <span class="uses-count">${prompt.uses || 0}</span> Uses</span>
-      </div>
-      <h3 class="prompt-title" itemprop="headline">${prompt.title || 'Untitled Prompt'}</h3>
-      <div class="prompt-text" itemprop="description">
-        ${prompt.promptText ? (prompt.promptText.length > 200 ? prompt.promptText.substring(0, 200) + '...' : prompt.promptText) : 'No prompt text available.'}
-      </div>
-      <div class="prompt-analysis">
-        <h4>Why this prompt works:</h4>
-        <p>This prompt demonstrates effective AI prompt engineering techniques with ${prompt.keywords ? prompt.keywords.slice(0, 3).join(', ') : 'optimal'} parameters for best results.</p>
-      </div>
-      
-      <!-- Engagement Buttons -->
-      ${engagementManager.createEngagementButtons(prompt, promptUrl)}
-      
-      <div class="seo-meta" style="display: none;">
-        <meta itemprop="datePublished" content="${prompt.createdAt || new Date().toISOString()}">
-        <meta itemprop="dateModified" content="${prompt.updatedAt || prompt.createdAt || new Date().toISOString()}">
-        <meta itemprop="author" content="${prompt.userName || 'Prompt Seen Community'}">
-        <div itemprop="publisher" itemscope itemtype="https://schema.org/Organization">
-          <meta itemprop="name" content="Prompt Seen">
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // Add engagement event listeners
-  setTimeout(() => {
-    setupEngagementEventListeners(promptCard, prompt);
-  }, 100);
-  
-  // Track engagement for this prompt
-  SEOTracker.trackUserEngagement(prompt.id);
-  
-  return promptCard;
-}
-
-// Setup engagement event listeners
-function setupEngagementEventListeners(promptCard, prompt) {
-  // Like button
-  const likeBtn = promptCard.querySelector('.like-btn');
-  if (likeBtn) {
-    likeBtn.addEventListener('click', async () => {
-      const user = await getCurrentUser();
-      if (!user) {
-        showNotification('Please login to like prompts', 'error');
-        return;
-      }
-      
-      const isCurrentlyLiked = likeBtn.classList.contains('liked');
-      const currentLikes = parseInt(promptCard.querySelector('.likes-count').textContent) || 0;
-      
-      await engagementManager.toggleLike(prompt.id, currentLikes, isCurrentlyLiked);
-    });
-  }
-  
-  // Use button
-  const useBtn = promptCard.querySelector('.use-btn');
-  if (useBtn) {
-    useBtn.addEventListener('click', async () => {
-      const user = await getCurrentUser();
-      if (!user) {
-        showNotification('Please login to mark prompts as used', 'error');
-        return;
-      }
-      
-      await engagementManager.trackUse(prompt.id);
-    });
-  }
-  
-  // Share button
-  const shareBtn = promptCard.querySelector('.share-btn');
-  if (shareBtn) {
-    shareBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const promptUrl = shareBtn.dataset.promptUrl;
-      sharePrompt(prompt, promptUrl);
-    });
-  }
-}
-
-// Share prompt function
-function sharePrompt(prompt, promptUrl) {
-  if (navigator.share) {
-    // Web Share API
-    navigator.share({
-      title: prompt.title,
-      text: prompt.promptText?.substring(0, 100) + '...',
-      url: promptUrl,
-    })
-    .then(() => console.log('Successful share'))
-    .catch((error) => console.log('Error sharing:', error));
-  } else {
-    // Fallback to copy to clipboard
-    const shareText = `${prompt.title}\n\n${prompt.promptText?.substring(0, 200)}...\n\nView more: ${promptUrl}`;
-    
-    navigator.clipboard.writeText(shareText).then(() => {
-      showNotification('Prompt copied to clipboard!', 'success');
-    }).catch(() => {
-      // Fallback to old method
-      const textArea = document.createElement('textarea');
-      textArea.value = shareText;
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-      showNotification('Prompt copied to clipboard!', 'success');
-    });
-  }
-}
-
-// Search functionality
+// Search Manager Class
 class SearchManager {
     constructor() {
         this.currentSearchTerm = '';
@@ -820,12 +1312,10 @@ class SearchManager {
         const categoryFilter = document.getElementById('categoryFilter');
         const clearSearch = document.getElementById('clearSearch');
 
-        // Search on button click
         if (searchButton) {
             searchButton.addEventListener('click', () => this.performSearch());
         }
 
-        // Search on Enter key
         if (searchInput) {
             searchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') {
@@ -834,7 +1324,6 @@ class SearchManager {
             });
         }
 
-        // Filter and sort changes
         if (sortBy) {
             sortBy.addEventListener('change', () => {
                 this.currentSort = sortBy.value;
@@ -853,7 +1342,6 @@ class SearchManager {
             });
         }
 
-        // Clear search
         if (clearSearch) {
             clearSearch.addEventListener('click', () => this.clearSearch());
         }
@@ -879,7 +1367,6 @@ class SearchManager {
 
         this.isSearching = true;
 
-        // Show loading state
         if (promptsContainer) {
             promptsContainer.innerHTML = `
                 <div class="search-loading">
@@ -889,12 +1376,10 @@ class SearchManager {
             `;
         }
 
-        // Simulate search delay for better UX
         setTimeout(() => {
             const filteredPrompts = this.filterPrompts();
             this.displaySearchResults(filteredPrompts);
             
-            // Update results info
             if (resultsCount && resultsInfo) {
                 resultsCount.textContent = `Found ${filteredPrompts.length} prompts matching your search`;
                 resultsInfo.style.display = 'flex';
@@ -907,7 +1392,6 @@ class SearchManager {
     filterPrompts() {
         let filtered = [...this.allPrompts];
 
-        // Filter by search term (case-insensitive)
         if (this.currentSearchTerm) {
             const searchTerm = this.currentSearchTerm.toLowerCase();
             filtered = filtered.filter(prompt => {
@@ -921,14 +1405,12 @@ class SearchManager {
             });
         }
 
-        // Filter by category
         if (this.currentCategory !== 'all') {
             filtered = filtered.filter(prompt => 
                 prompt.category === this.currentCategory
             );
         }
 
-        // Sort results
         filtered = this.sortPrompts(filtered);
 
         return filtered;
@@ -971,16 +1453,13 @@ class SearchManager {
         promptsContainer.innerHTML = '';
         
         prompts.forEach((prompt, index) => {
-            const promptCard = createPromptCard(prompt);
-            
-            // Add animation
+            const promptCard = window.youtubePrompts.createShortsPrompt(prompt, index);
             promptCard.style.opacity = '0';
             promptCard.style.transform = 'translateY(20px)';
             promptCard.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
             
             promptsContainer.appendChild(promptCard);
             
-            // Animate in
             setTimeout(() => {
                 promptCard.style.opacity = '1';
                 promptCard.style.transform = 'translateY(0)';
@@ -1005,15 +1484,16 @@ class SearchManager {
         if (resultsInfo) resultsInfo.style.display = 'none';
         this.isSearching = false;
         
-        // Reload default prompts
-        loadUploads(1);
+        // Reload YouTube-style prompts
+        if (window.youtubePrompts) {
+            youtubePrompts.currentPage = 1;
+            youtubePrompts.hasMore = true;
+            youtubePrompts.loadInitialPrompts();
+        }
     }
 }
 
-// Initialize search manager
-const searchManager = new SearchManager();
-
-// Mobile Navigation Toggle
+// Mobile Navigation Functions
 function initMobileNavigation() {
   const mobileToggle = document.querySelector('.mobile-toggle');
   const navLinks = document.querySelector('.nav-links');
@@ -1025,13 +1505,47 @@ function initMobileNavigation() {
       mobileToggle.querySelector('i').classList.toggle('fa-times');
     });
     
-    // Close mobile menu when clicking on a link
     navLinks.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
         navLinks.classList.remove('active');
         mobileToggle.querySelector('i').classList.add('fa-bars');
         mobileToggle.querySelector('i').classList.remove('fa-times');
       });
+    });
+  }
+}
+
+function addMobileNavigation() {
+  if (window.innerWidth <= 768) {
+    const mobileNav = document.createElement('div');
+    mobileNav.className = 'mobile-nav';
+    mobileNav.innerHTML = `
+      <a href="index.html" class="nav-item active">
+        <i class="fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <a href="#showcase" class="nav-item">
+        <i class="fas fa-play-circle"></i>
+        <span>Top</span>
+      </a>
+      <button class="nav-item" id="mobileUploadBtn">
+        <i class="fas fa-plus-circle"></i>
+        <span>Upload</span>
+      </button>
+      <a href="chatbot.html" class="nav-item">
+        <i class="fas fa-exchange-alt"></i>
+        <span>Create</span>
+      </a>
+      <a href="login.html" class="nav-item">
+        <i class="fas fa-user"></i>
+        <span>Login</span>
+      </a>
+    `;
+    
+    document.body.appendChild(mobileNav);
+    
+    document.getElementById('mobileUploadBtn').addEventListener('click', () => {
+      document.getElementById('openUploadModal').click();
     });
   }
 }
@@ -1045,35 +1559,14 @@ function initFilterButtons() {
       filterBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       
-      // Simple filtering based on button text
       const filter = btn.textContent.toLowerCase();
-      const cards = document.querySelectorAll('.prompt-card');
       
-      cards.forEach(card => {
-        if (filter === 'all') {
-          card.style.display = 'block';
-          setTimeout(() => {
-            card.style.opacity = '1';
-            card.style.transform = 'translateY(0)';
-          }, 50);
-        } else {
-          const title = card.querySelector('.prompt-title').textContent.toLowerCase();
-          const text = card.querySelector('.prompt-text').textContent.toLowerCase();
-          if (title.includes(filter) || text.includes(filter)) {
-            card.style.display = 'block';
-            setTimeout(() => {
-              card.style.opacity = '1';
-              card.style.transform = 'translateY(0)';
-            }, 50);
-          } else {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            setTimeout(() => {
-              card.style.display = 'none';
-            }, 300);
-          }
-        }
-      });
+      // This will be handled by the YouTubeStylePrompts category filtering
+      if (window.youtubePrompts) {
+        youtubePrompts.currentPage = 1;
+        youtubePrompts.hasMore = true;
+        youtubePrompts.loadInitialPrompts();
+      }
     });
   });
 }
@@ -1150,7 +1643,6 @@ function initUploadModal() {
       }
     });
     
-    // Drag and drop functionality
     const fileUploadArea = document.querySelector('.file-upload');
     if (fileUploadArea) {
       fileUploadArea.addEventListener('dragover', (e) => {
@@ -1269,11 +1761,6 @@ async function handleUploadSubmit(e) {
     const result = await response.json();
     
     if (result.success) {
-      const promptsContainer = document.getElementById('promptsContainer');
-      if (promptsContainer) {
-        addPromptToShowcase(result.upload);
-      }
-      
       const uploadModal = document.getElementById('uploadModal');
       const uploadForm = document.getElementById('uploadForm');
       const imagePreview = document.getElementById('imagePreview');
@@ -1283,8 +1770,14 @@ async function handleUploadSubmit(e) {
       uploadForm.reset();
       imagePreview.style.display = 'none';
       
-      // Show success message
       showNotification('Upload successful! Your creation is now visible in the showcase.', 'success');
+      
+      // Refresh the prompts to show the new upload
+      if (window.youtubePrompts) {
+        youtubePrompts.currentPage = 1;
+        youtubePrompts.hasMore = true;
+        youtubePrompts.loadInitialPrompts();
+      }
     } else {
       throw new Error(result.error || 'Upload failed');
     }
@@ -1314,7 +1807,6 @@ async function handleUploadSubmit(e) {
 
 // Show notification
 function showNotification(message, type = 'info') {
-  // Remove existing notification
   const existingNotification = document.querySelector('.notification');
   if (existingNotification) {
     existingNotification.remove();
@@ -1330,7 +1822,6 @@ function showNotification(message, type = 'info') {
     </div>
   `;
   
-  // Add styles if not already added
   if (!document.querySelector('#notification-styles')) {
     const styles = document.createElement('style');
     styles.id = 'notification-styles';
@@ -1366,13 +1857,16 @@ function showNotification(message, type = 'info') {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
       }
+      @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+      }
     `;
     document.head.appendChild(styles);
   }
   
   document.body.appendChild(notification);
   
-  // Auto remove after 5 seconds
   setTimeout(() => {
     if (notification.parentNode) {
       notification.style.animation = 'slideOut 0.3s ease';
@@ -1380,157 +1874,9 @@ function showNotification(message, type = 'info') {
     }
   }, 5000);
   
-  // Close button
   notification.querySelector('.notification-close').addEventListener('click', () => {
     notification.remove();
   });
-}
-
-function addPromptToShowcase(prompt) {
-  const promptCard = createPromptCard(prompt);
-  const promptsContainer = document.getElementById('promptsContainer');
-  
-  if (promptsContainer) {
-    // Add animation
-    promptCard.style.opacity = '0';
-    promptCard.style.transform = 'translateY(20px)';
-    promptCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-    
-    promptsContainer.prepend(promptCard);
-    
-    // Animate in
-    setTimeout(() => {
-      promptCard.style.opacity = '1';
-      promptCard.style.transform = 'translateY(0)';
-    }, 50);
-  }
-}
-
-// Load uploads from server with pagination
-async function loadUploads(page = 1) {
-  const promptsContainer = document.getElementById('promptsContainer');
-  
-  try {
-    if (promptsContainer) {
-      promptsContainer.innerHTML = `
-        <div class="loading" style="text-align: center; padding: 60px; color: #666;">
-          <i class="fas fa-spinner fa-spin fa-2x" style="margin-bottom: 20px;"></i>
-          <p>Loading AI creations...</p>
-        </div>
-      `;
-    }
-    
-    const user = await getCurrentUser();
-    const userId = user?.uid || null;
-    const params = new URLSearchParams({
-      page: page.toString(),
-      ...(userId && { userId })
-    });
-    
-    const response = await fetch(`/api/uploads?${params}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to load uploads: ${response.status}`);
-    }
-    
-    const data = await response.json();
-    
-    if (promptsContainer) {
-      promptsContainer.innerHTML = '';
-      
-      if (data.uploads.length === 0) {
-        promptsContainer.innerHTML = `
-          <div class="no-content" style="text-align: center; padding: 60px; color: #666;">
-            <i class="fas fa-image fa-3x" style="margin-bottom: 20px; opacity: 0.5;"></i>
-            <h3>No creations yet</h3>
-            <p>Be the first to upload your AI creation!</p>
-            <button class="cta-button" id="firstUploadBtn" style="margin-top: 20px;">
-              <i class="fas fa-cloud-upload-alt"></i> Upload Your First Creation
-            </button>
-          </div>
-        `;
-        
-        document.getElementById('firstUploadBtn').addEventListener('click', () => {
-          const uploadBtn = document.getElementById('openUploadModal');
-          if (uploadBtn) uploadBtn.click();
-        });
-        
-        return;
-      }
-      
-      data.uploads.forEach((upload, index) => {
-        const promptCard = createPromptCard(upload);
-        
-        // Add staggered animation
-        promptCard.style.opacity = '0';
-        promptCard.style.transform = 'translateY(20px)';
-        promptCard.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
-        
-        promptsContainer.appendChild(promptCard);
-        
-        // Animate in
-        setTimeout(() => {
-          promptCard.style.opacity = '1';
-          promptCard.style.transform = 'translateY(0)';
-        }, 100 + (index * 100));
-      });
-    }
-    
-    updatePagination(data.currentPage, data.totalPages);
-  } catch (error) {
-    console.error('Error loading uploads:', error);
-    if (promptsContainer) {
-      promptsContainer.innerHTML = `
-        <div class="error" style="text-align: center; padding: 60px; color: #ff6b6b;">
-          <i class="fas fa-exclamation-triangle fa-2x" style="margin-bottom: 20px;"></i>
-          <h3>Error loading content</h3>
-          <p>Please try again later</p>
-          <button class="btn-outline" onclick="loadUploads(1)" style="margin-top: 20px;">
-            <i class="fas fa-redo"></i> Retry
-          </button>
-        </div>
-      `;
-    }
-  }
-}
-
-function updatePagination(currentPage, totalPages) {
-  const pagination = document.getElementById('pagination');
-  if (!pagination || totalPages <= 1) return;
-  
-  pagination.innerHTML = '';
-  
-  // Previous button
-  if (currentPage > 1) {
-    const prevBtn = document.createElement('button');
-    prevBtn.className = 'pagination-btn';
-    prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i> Prev';
-    prevBtn.addEventListener('click', () => loadUploads(currentPage - 1));
-    pagination.appendChild(prevBtn);
-  }
-  
-  // Page numbers
-  const startPage = Math.max(1, currentPage - 2);
-  const endPage = Math.min(totalPages, startPage + 4);
-  
-  for (let i = startPage; i <= endPage; i++) {
-    const pageBtn = document.createElement('button');
-    pageBtn.className = `pagination-btn ${i === currentPage ? 'active' : ''}`;
-    pageBtn.textContent = i;
-    pageBtn.addEventListener('click', () => {
-      if (i !== currentPage) loadUploads(i);
-    });
-    pagination.appendChild(pageBtn);
-  }
-  
-  // Next button
-  if (currentPage < totalPages) {
-    const nextBtn = document.createElement('button');
-    nextBtn.className = 'pagination-btn';
-    nextBtn.innerHTML = 'Next <i class="fas fa-chevron-right"></i>';
-    nextBtn.addEventListener('click', () => loadUploads(currentPage + 1));
-    pagination.appendChild(nextBtn);
-  }
 }
 
 // Quick Fix for Case-Insensitive Search
@@ -1538,16 +1884,16 @@ function setupCaseInsensitiveSearch() {
   const searchInput = document.getElementById('searchInput');
   
   if (searchInput) {
-    // Normalize input for search while preserving display
     searchInput.addEventListener('input', function(e) {
-      // The search logic now handles case-insensitive matching
-      // No need to modify the input value for display
+      // Search logic handles case-insensitive matching
     });
   }
 }
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
+  console.log('Initializing Prompt Seen...');
+  
   await initializeFirebase();
   showAuthElements();
   
@@ -1557,10 +1903,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   initScrollEffects();
   initUploadModal();
   
+  // Initialize YouTube-style prompts with infinite scroll
+  window.youtubePrompts = new YouTubeStylePrompts();
+  
   // Initialize engagement manager
+  const engagementManager = new EngagementManager();
   await engagementManager.init();
   
   // Initialize search functionality
+  window.searchManager = new SearchManager();
   await searchManager.init();
   
   // Initialize YouTube-style header
@@ -1569,10 +1920,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Setup case-insensitive search
   setupCaseInsensitiveSearch();
   
-  // Load uploads if on showcase page
-  if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-    await loadUploads(1);
-  }
+  // Add mobile bottom navigation
+  addMobileNavigation();
   
   // Add structured data for homepage
   const structuredData = {
@@ -1593,86 +1942,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   script.textContent = JSON.stringify(structuredData);
   document.head.appendChild(script);
   
-  // Add CSS for animations and engagement buttons
-  const animationStyles = document.createElement('style');
-  animationStyles.textContent = `
-    .prompt-card {
-      transition: opacity 0.5s ease, transform 0.5s ease;
-    }
-    
-    .engagement-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px solid #f0f0f0;
-    }
-    
-    .engagement-btn {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      padding: 8px 12px;
-      border: 1px solid #ddd;
-      border-radius: 20px;
-      background: white;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      font-size: 0.9rem;
-      text-decoration: none;
-      color: inherit;
-    }
-    
-    .engagement-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    
-    .like-btn.liked {
-      background: #ff6b6b;
-      color: white;
-      border-color: #ff6b6b;
-    }
-    
-    .use-btn:hover {
-      background: #20bf6b;
-      color: white;
-      border-color: #20bf6b;
-    }
-    
-    .share-btn:hover {
-      background: #4e54c8;
-      color: white;
-      border-color: #4e54c8;
-    }
-    
-    .view-btn:hover {
-      background: #8f94fb;
-      color: white;
-      border-color: #8f94fb;
-    }
-    
-    @keyframes slideOut {
-      from { transform: translateX(0); opacity: 1; }
-      to { transform: translateX(100%); opacity: 0; }
-    }
-    
-    .count-animation {
-      animation: countPop 0.3s ease;
-    }
-    
-    @keyframes countPop {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.2); }
-      100% { transform: scale(1); }
-    }
-  `;
-  document.head.appendChild(animationStyles);
+  console.log('Prompt Seen initialization complete');
 });
-
-// Make functions available globally for onclick handlers
-window.loadUploads = loadUploads;
-window.searchManager = searchManager;
 
 // Mobile Navigation Toggle
 document.addEventListener('DOMContentLoaded', function() {
@@ -1680,25 +1951,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const navLinks = document.querySelector('.nav-links');
     const mobileOverlay = document.createElement('div');
     
-    // Create mobile overlay
     mobileOverlay.className = 'mobile-overlay';
     document.body.appendChild(mobileOverlay);
     
-    // Toggle mobile navigation
     mobileToggle.addEventListener('click', function() {
         navLinks.classList.toggle('active');
         mobileOverlay.classList.toggle('active');
         document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
     });
     
-    // Close mobile navigation when clicking overlay
     mobileOverlay.addEventListener('click', function() {
         navLinks.classList.remove('active');
         mobileOverlay.classList.remove('active');
         document.body.style.overflow = '';
     });
     
-    // Close mobile navigation when clicking a link
     const navLinksItems = document.querySelectorAll('.nav-links a');
     navLinksItems.forEach(link => {
         link.addEventListener('click', function() {
@@ -1708,7 +1975,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Handle window resize
     window.addEventListener('resize', function() {
         if (window.innerWidth > 768) {
             navLinks.classList.remove('active');
@@ -1717,3 +1983,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Make functions available globally
+window.loadUploads = () => {
+  if (window.youtubePrompts) {
+    youtubePrompts.currentPage = 1;
+    youtubePrompts.hasMore = true;
+    youtubePrompts.loadInitialPrompts();
+  }
+};
+window.searchManager = window.searchManager || {};
