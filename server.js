@@ -138,7 +138,7 @@ class SEOOptimizer {
       "keywords": prompt.keywords.join(', '),
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": `https://home.promptseen.co/prompt/${prompt.id}`
+        "@id": `https://promptseen.co/prompt/${prompt.id}`
       }
     };
   }
@@ -1034,7 +1034,7 @@ function generatePromptHTML(promptData) {
     <meta property="og:title" content="${promptData.seoTitle}">
     <meta property="og:description" content="${promptData.metaDescription}">
     <meta property="og:image" content="${promptData.imageUrl}">
-    <meta property="og:url" content="https://home.promptseen.co/prompt/${promptData.id}">
+    <meta property="og:url" content="https://promptseen.co/prompt/${promptData.id}">
     <meta property="og:type" content="article">
     
     <!-- Twitter Card -->
