@@ -53,6 +53,7 @@ function showAuthElements() {
   const user = checkAuth();
   const authSection = document.getElementById('authSection');
   const uploadButton = document.getElementById('openUploadModal');
+  const newsUploadButton = document.getElementById('openNewsModal');
   
   if (authSection) {
     if (user) {
@@ -91,6 +92,233 @@ function showAuthElements() {
   if (uploadButton) {
     uploadButton.style.display = user ? 'flex' : 'none';
   }
+  
+  if (newsUploadButton) {
+    newsUploadButton.style.display = user ? 'flex' : 'none';
+  }
+}
+
+// News Manager Class
+class NewsManager {
+  constructor() {
+    this.currentPage = 1;
+    this.hasMore = true;
+    this.isLoading = false;
+  }
+  
+  async loadNews() {
+    try {
+      this.showLoading();
+      const response = await fetch(`/api/news?page=${this.currentPage}&limit=6`);
+      const data = await response.json();
+      
+      this.displayNews(data.news);
+      this.hasMore = data.hasMore;
+    } catch (error) {
+      console.error('Error loading news:', error);
+      this.showError();
+    }
+  }
+  
+  displayNews(news) {
+    const newsContainer = document.getElementById('newsContainer');
+    if (!newsContainer) return;
+    
+    if (news.length === 0) {
+      newsContainer.innerHTML = `
+        <div class="no-news" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+          <i class="fas fa-newspaper" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
+          <h3>No News Yet</h3>
+          <p>Be the first to publish AI news and updates!</p>
+        </div>
+      `;
+      return;
+    }
+    
+    newsContainer.innerHTML = news.map(item => `
+      <div class="news-card" data-news-id="${item.id}">
+        ${item.isBreaking ? '<span class="breaking-badge">BREAKING</span>' : ''}
+        ${item.isFeatured ? '<span class="featured-badge">FEATURED</span>' : ''}
+        <img src="${item.imageUrl}" alt="${item.title}" class="news-image" loading="lazy">
+        <div class="news-content">
+          <h3 class="news-title">${item.title}</h3>
+          <p class="news-excerpt">${item.excerpt}</p>
+          <div class="news-meta">
+            <span class="news-author">By ${item.author}</span>
+            <span class="news-date">${new Date(item.publishedAt).toLocaleDateString()}</span>
+          </div>
+          <div class="news-stats">
+            <span class="news-views"><i class="fas fa-eye"></i> ${this.formatCount(item.views)}</span>
+            <a href="/news/${item.id}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  showLoading() {
+    const newsContainer = document.getElementById('newsContainer');
+    if (!newsContainer) return;
+    
+    newsContainer.innerHTML = `
+      <div class="news-loading" style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+        <div class="spinner"></div>
+        <p>Loading latest news...</p>
+      </div>
+    `;
+  }
+  
+  showError() {
+    const newsContainer = document.getElementById('newsContainer');
+    if (!newsContainer) return;
+    
+    newsContainer.innerHTML = `
+      <div class="news-error" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 3rem; margin-bottom: 20px;"></i>
+        <h3>Failed to load news</h3>
+        <p>Please try again later</p>
+        <button onclick="newsManager.loadNews()" class="retry-btn" style="margin-top: 15px;">
+          <i class="fas fa-redo"></i> Retry
+        </button>
+      </div>
+    `;
+  }
+  
+  formatCount(count) {
+    if (count >= 1000000) {
+      return (count / 1000000).toFixed(1) + 'M';
+    } else if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'K';
+    }
+    return count.toString();
+  }
+}
+
+// News Upload Modal Functionality
+function initNewsUploadModal() {
+  const newsModal = document.getElementById('newsUploadModal');
+  const openNewsBtn = document.getElementById('openNewsModal');
+  const closeNewsModalBtn = document.getElementById('closeNewsModal');
+  const newsForm = document.getElementById('newsForm');
+  
+  if (openNewsBtn && newsModal) {
+    openNewsBtn.addEventListener('click', () => {
+      const user = checkAuth();
+      if (!user) {
+        alert('Please login to publish news');
+        window.location.href = 'login.html?returnUrl=' + encodeURIComponent(window.location.href);
+        return;
+      }
+      
+      newsModal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    });
+  }
+  
+  if (closeNewsModalBtn && newsModal) {
+    closeNewsModalBtn.addEventListener('click', () => {
+      newsModal.classList.remove('active');
+      document.body.style.overflow = '';
+    });
+  }
+  
+  if (newsModal) {
+    newsModal.addEventListener('click', (e) => {
+      if (e.target === newsModal) {
+        newsModal.classList.remove('active');
+        document.body.style.overflow = '';
+      }
+    });
+  }
+  
+  if (newsForm) {
+    newsForm.addEventListener('submit', handleNewsSubmit);
+  }
+}
+
+async function handleNewsSubmit(e) {
+  e.preventDefault();
+  
+  const user = checkAuth();
+  if (!user) {
+    alert('Please login to publish news');
+    return;
+  }
+  
+  const title = document.getElementById('newsTitle').value;
+  const content = document.getElementById('newsContent').value;
+  const excerpt = document.getElementById('newsExcerpt').value;
+  const category = document.getElementById('newsCategory').value;
+  const tags = document.getElementById('newsTags').value;
+  const isBreaking = document.getElementById('isBreaking').checked;
+  const isFeatured = document.getElementById('isFeatured').checked;
+  const file = document.getElementById('newsImageUpload').files[0];
+  
+  if (!title || !content) {
+    alert('Please fill in title and content');
+    return;
+  }
+  
+  try {
+    const submitBtn = document.querySelector('#newsForm .submit-btn');
+    const originalBtnText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publishing...';
+    submitBtn.disabled = true;
+    
+    await initializeFirebase();
+    const firebaseUser = await getCurrentUser();
+    
+    if (!firebaseUser) {
+      throw new Error('User not authenticated');
+    }
+    
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('excerpt', excerpt);
+    formData.append('category', category);
+    formData.append('tags', tags);
+    formData.append('isBreaking', isBreaking);
+    formData.append('isFeatured', isFeatured);
+    formData.append('author', user.name);
+    if (file) formData.append('image', file);
+    
+    const response = await fetch('/api/upload-news', {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error(`News publication failed with status ${response.status}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      const newsModal = document.getElementById('newsUploadModal');
+      const newsForm = document.getElementById('newsForm');
+      
+      newsModal.classList.remove('active');
+      document.body.style.overflow = '';
+      newsForm.reset();
+      
+      showNotification('News published successfully!', 'success');
+      
+      // Refresh news section
+      if (window.newsManager) {
+        newsManager.loadNews();
+      }
+    }
+  } catch (error) {
+    console.error('News publication error:', error);
+    showNotification(`News publication failed: ${error.message}`, 'error');
+  } finally {
+    const submitBtn = document.querySelector('#newsForm .submit-btn');
+    if (submitBtn) {
+      submitBtn.innerHTML = '<i class="fas fa-newspaper"></i> Publish News';
+      submitBtn.disabled = false;
+    }
+  }
 }
 
 // YouTube-style Prompts with Infinite Scroll
@@ -113,320 +341,319 @@ class YouTubeStylePrompts {
     console.log('YouTubeStylePrompts initialized');
   }
 
- // Replace the injectCriticalCSS method in the YouTubeStylePrompts class with this:
-
-injectCriticalCSS() {
-  const criticalCSS = `
-    /* YouTube Shorts Critical Styles with !important */
-    .shorts-container {
-      display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
-      gap: 20px !important;
-      padding: 20px !important;
-      max-width: 100% !important;
-      margin: 0 auto !important;
-      width: 100% !important;
-    }
-
-    .shorts-prompt-card {
-      position: relative !important;
-      background: white !important;
-      border-radius: 12px !important;
-      overflow: hidden !important;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
-      width: 100% !important;
-      margin: 0 !important;
-      display: block !important;
-      transition: transform 0.3s ease !important;
-    }
-
-    .shorts-prompt-card:hover {
-      transform: translateY(-5px) !important;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-    }
-
-    .shorts-video-container {
-      position: relative !important;
-      width: 100% !important;
-      height: 400px !important;
-      background: #000 !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-    }
-
-    .shorts-image {
-      width: 100% !important;
-      height: 100% !important;
-      object-fit: cover !important;
-      display: block !important;
-    }
-
-    .shorts-engagement {
-      position: absolute !important;
-      right: 12px !important;
-      bottom: 80px !important;
-      display: flex !important;
-      flex-direction: column !important;
-      gap: 15px !important;
-      align-items: center !important;
-      z-index: 10 !important;
-    }
-
-    .engagement-action {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
-      gap: 4px !important;
-      color: white !important;
-      background: none !important;
-      border: none !important;
-      cursor: pointer !important;
-      padding: 0 !important;
-      font-size: 12px !important;
-      transition: transform 0.2s ease !important;
-    }
-
-    .engagement-action:hover {
-      transform: scale(1.1) !important;
-    }
-
-    .engagement-action i {
-      font-size: 18px !important;
-      background: rgba(0, 0, 0, 0.5) !important;
-      border-radius: 50% !important;
-      padding: 8px !important;
-      width: 36px !important;
-      height: 36px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      backdrop-filter: blur(10px) !important;
-    }
-
-    .engagement-count {
-      font-size: 11px !important;
-      font-weight: 500 !important;
-      text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
-    }
-
-    .shorts-info {
-      padding: 15px !important;
-      background: white !important;
-      display: block !important;
-    }
-
-    .shorts-prompt-text {
-      font-size: 14px !important;
-      line-height: 1.4 !important;
-      margin-bottom: 10px !important;
-      display: -webkit-box !important;
-      -webkit-line-clamp: 3 !important;
-      -webkit-box-orient: vertical !important;
-      overflow: hidden !important;
-      color: #0f0f0f !important;
-      min-height: 60px !important;
-    }
-
-    .shorts-meta {
-      display: flex !important;
-      justify-content: space-between !important;
-      align-items: center !important;
-      font-size: 12px !important;
-      color: #606060 !important;
-      margin-bottom: 8px !important;
-    }
-
-    .prompt-actions {
-      margin-top: 10px !important;
-      display: flex !important;
-      gap: 10px !important;
-      width: 100% !important;
-      align-items: center !important;
-    }
-
-    .copy-prompt-btn {
-      padding: 8px 16px !important;
-      border: 1px solid #ddd !important;
-      border-radius: 20px !important;
-      background: white !important;
-      font-size: 12px !important;
-      cursor: pointer !important;
-      transition: all 0.3s ease !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 6px !important;
-      font-weight: 500 !important;
-    }
-
-    .copy-prompt-btn:hover {
-      background: #4e54c8 !important;
-      color: white !important;
-      border-color: #4e54c8 !important;
-    }
-
-    /* Loading states */
-    .loading-shorts {
-      display: flex !important;
-      justify-content: center !important;
-      align-items: center !important;
-      padding: 40px !important;
-      color: #666 !important;
-      width: 100% !important;
-      grid-column: 1 / -1 !important;
-    }
-
-    .loading-shorts .spinner {
-      width: 24px !important;
-      height: 24px !important;
-      border: 3px solid #f3f3f3 !important;
-      border-top: 3px solid #4e54c8 !important;
-      border-radius: 50% !important;
-      animation: spin 1s linear infinite !important;
-      margin-right: 12px !important;
-    }
-
-    .loading-prompt .shorts-video-container {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
-      background-size: 200% 100% !important;
-      animation: loading 1.5s infinite !important;
-    }
-
-    .loading-text {
-      background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
-      background-size: 200% 100% !important;
-      animation: loading 1.5s infinite !important;
-      border-radius: 4px !important;
-    }
-
-    /* Desktop specific styles */
-    @media (min-width: 1024px) {
+  injectCriticalCSS() {
+    const criticalCSS = `
+      /* YouTube Shorts Critical Styles with !important */
       .shorts-container {
-        grid-template-columns: repeat(4, 1fr) !important;
-        gap: 24px !important;
-        padding: 24px !important;
-        max-width: 1400px !important;
-      }
-
-      .shorts-video-container {
-        height: 350px !important;
-      }
-
-      .shorts-prompt-text {
-        -webkit-line-clamp: 4 !important;
-        min-height: 80px !important;
-      }
-    }
-
-    @media (min-width: 768px) and (max-width: 1023px) {
-      .shorts-container {
-        grid-template-columns: repeat(2, 1fr) !important;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)) !important;
         gap: 20px !important;
         padding: 20px !important;
+        max-width: 100% !important;
+        margin: 0 auto !important;
+        width: 100% !important;
       }
 
-      .shorts-video-container {
-        height: 400px !important;
-      }
-    }
-
-    /* Mobile responsive */
-    @media (max-width: 767px) {
-      .shorts-container {
-        grid-template-columns: 1fr !important;
-        gap: 16px !important;
-        padding: 16px !important;
-      }
-      
-      .shorts-video-container {
-        height: 500px !important;
-      }
-      
       .shorts-prompt-card {
-        border-radius: 8px !important;
-      }
-      
-      .engagement-action i {
-        font-size: 20px !important;
-        width: 40px !important;
-        height: 40px !important;
+        position: relative !important;
+        background: white !important;
+        border-radius: 12px !important;
+        overflow: hidden !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        width: 100% !important;
+        margin: 0 !important;
+        display: block !important;
+        transition: transform 0.3s ease !important;
       }
 
-      .shorts-prompt-text {
-        -webkit-line-clamp: 2 !important;
-        min-height: 50px !important;
+      .shorts-prompt-card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
       }
-    }
 
-    @media (max-width: 480px) {
       .shorts-video-container {
-        height: 450px !important;
+        position: relative !important;
+        width: 100% !important;
+        height: 400px !important;
+        background: #000 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
-      
+
+      .shorts-image {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: cover !important;
+        display: block !important;
+      }
+
+      .shorts-engagement {
+        position: absolute !important;
+        right: 12px !important;
+        bottom: 80px !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 15px !important;
+        align-items: center !important;
+        z-index: 10 !important;
+      }
+
+      .engagement-action {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: 4px !important;
+        color: white !important;
+        background: none !important;
+        border: none !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        font-size: 12px !important;
+        transition: transform 0.2s ease !important;
+      }
+
+      .engagement-action:hover {
+        transform: scale(1.1) !important;
+      }
+
+      .engagement-action i {
+        font-size: 18px !important;
+        background: rgba(0, 0, 0, 0.5) !important;
+        border-radius: 50% !important;
+        padding: 8px !important;
+        width: 36px !important;
+        height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        backdrop-filter: blur(10px) !important;
+      }
+
+      .engagement-count {
+        font-size: 11px !important;
+        font-weight: 500 !important;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
+      }
+
       .shorts-info {
-        padding: 12px !important;
+        padding: 15px !important;
+        background: white !important;
+        display: block !important;
       }
-      
+
       .shorts-prompt-text {
-        font-size: 13px !important;
+        font-size: 14px !important;
+        line-height: 1.4 !important;
+        margin-bottom: 10px !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 3 !important;
+        -webkit-box-orient: vertical !important;
+        overflow: hidden !important;
+        color: #0f0f0f !important;
+        min-height: 60px !important;
       }
-    }
 
-    /* Animations */
-    @keyframes spin {
-      0% { transform: rotate(0deg) !important; }
-      100% { transform: rotate(360deg) !important; }
-    }
+      .shorts-meta {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        font-size: 12px !important;
+        color: #606060 !important;
+        margin-bottom: 8px !important;
+      }
 
-    @keyframes loading {
-      0% { background-position: 200% 0 !important; }
-      100% { background-position: -200% 0 !important; }
-    }
+      .prompt-actions {
+        margin-top: 10px !important;
+        display: flex !important;
+        gap: 10px !important;
+        width: 100% !important;
+        align-items: center !important;
+      }
 
-    .count-animation {
-      animation: countPop 0.3s ease !important;
-    }
+      .copy-prompt-btn {
+        padding: 8px 16px !important;
+        border: 1px solid #ddd !important;
+        border-radius: 20px !important;
+        background: white !important;
+        font-size: 12px !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        font-weight: 500 !important;
+      }
 
-    @keyframes countPop {
-      0% { transform: scale(1) !important; }
-      50% { transform: scale(1.2) !important; }
-      100% { transform: scale(1) !important; }
-    }
+      .copy-prompt-btn:hover {
+        background: #4e54c8 !important;
+        color: white !important;
+        border-color: #4e54c8 !important;
+      }
 
-    /* Override any grid layouts */
-    #promptsContainer {
-      display: grid !important;
-      width: 100% !important;
-    }
+      /* Loading states */
+      .loading-shorts {
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        padding: 40px !important;
+        color: #666 !important;
+        width: 100% !important;
+        grid-column: 1 / -1 !important;
+      }
 
-    /* Hide any existing grid styles */
-    .prompts-grid {
-      display: none !important;
-    }
+      .loading-shorts .spinner {
+        width: 24px !important;
+        height: 24px !important;
+        border: 3px solid #f3f3f3 !important;
+        border-top: 3px solid #4e54c8 !important;
+        border-radius: 50% !important;
+        animation: spin 1s linear infinite !important;
+        margin-right: 12px !important;
+      }
 
-    .prompt-card {
-      display: none !important;
-    }
+      .loading-prompt .shorts-video-container {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
+        background-size: 200% 100% !important;
+        animation: loading 1.5s infinite !important;
+      }
 
-    /* Ensure proper image loading */
-    .shorts-image {
-      transition: opacity 0.3s ease !important;
-    }
+      .loading-text {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
+        background-size: 200% 100% !important;
+        animation: loading 1.5s infinite !important;
+        border-radius: 4px !important;
+      }
 
-    .shorts-image:not([src]) {
-      opacity: 0 !important;
-    }
+      /* Desktop specific styles */
+      @media (min-width: 1024px) {
+        .shorts-container {
+          grid-template-columns: repeat(4, 1fr) !important;
+          gap: 24px !important;
+          padding: 24px !important;
+          max-width: 1400px !important;
+        }
 
-    .shorts-image[src] {
-      opacity: 1 !important;
-    }
-  `;
+        .shorts-video-container {
+          height: 350px !important;
+        }
 
-  const style = document.createElement('style');
-  style.id = 'youtube-shorts-critical-css';
-  style.textContent = criticalCSS;
-  document.head.appendChild(style);
-}
+        .shorts-prompt-text {
+          -webkit-line-clamp: 4 !important;
+          min-height: 80px !important;
+        }
+      }
+
+      @media (min-width: 768px) and (max-width: 1023px) {
+        .shorts-container {
+          grid-template-columns: repeat(2, 1fr) !important;
+          gap: 20px !important;
+          padding: 20px !important;
+        }
+
+        .shorts-video-container {
+          height: 400px !important;
+        }
+      }
+
+      /* Mobile responsive */
+      @media (max-width: 767px) {
+        .shorts-container {
+          grid-template-columns: 1fr !important;
+          gap: 16px !important;
+          padding: 16px !important;
+        }
+        
+        .shorts-video-container {
+          height: 500px !important;
+        }
+        
+        .shorts-prompt-card {
+          border-radius: 8px !important;
+        }
+        
+        .engagement-action i {
+          font-size: 20px !important;
+          width: 40px !important;
+          height: 40px !important;
+        }
+
+        .shorts-prompt-text {
+          -webkit-line-clamp: 2 !important;
+          min-height: 50px !important;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .shorts-video-container {
+          height: 450px !important;
+        }
+        
+        .shorts-info {
+          padding: 12px !important;
+        }
+        
+        .shorts-prompt-text {
+          font-size: 13px !important;
+        }
+      }
+
+      /* Animations */
+      @keyframes spin {
+        0% { transform: rotate(0deg) !important; }
+        100% { transform: rotate(360deg) !important; }
+      }
+
+      @keyframes loading {
+        0% { background-position: 200% 0 !important; }
+        100% { background-position: -200% 0 !important; }
+      }
+
+      .count-animation {
+        animation: countPop 0.3s ease !important;
+      }
+
+      @keyframes countPop {
+        0% { transform: scale(1) !important; }
+        50% { transform: scale(1.2) !important; }
+        100% { transform: scale(1) !important; }
+      }
+
+      /* Override any grid layouts */
+      #promptsContainer {
+        display: grid !important;
+        width: 100% !important;
+      }
+
+      /* Hide any existing grid styles */
+      .prompts-grid {
+        display: none !important;
+      }
+
+      .prompt-card {
+        display: none !important;
+      }
+
+      /* Ensure proper image loading */
+      .shorts-image {
+        transition: opacity 0.3s ease !important;
+      }
+
+      .shorts-image:not([src]) {
+        opacity: 0 !important;
+      }
+
+      .shorts-image[src] {
+        opacity: 1 !important;
+      }
+    `;
+
+    const style = document.createElement('style');
+    style.id = 'youtube-shorts-critical-css';
+    style.textContent = criticalCSS;
+    document.head.appendChild(style);
+  }
+
   setupInfiniteScroll() {
     let ticking = false;
     
@@ -468,32 +695,31 @@ injectCriticalCSS() {
   }
 
   async loadInitialPrompts() {
-  const promptsContainer = document.getElementById('promptsContainer');
-  if (!promptsContainer) {
-    console.error('Prompts container not found');
-    return;
+    const promptsContainer = document.getElementById('promptsContainer');
+    if (!promptsContainer) {
+      console.error('Prompts container not found');
+      return;
+    }
+
+    console.log('Loading initial prompts...');
+    
+    // Clear any existing content and apply critical styles
+    promptsContainer.innerHTML = '';
+    promptsContainer.className = 'shorts-container';
+    
+    // Add loading skeletons - ensure 4 loading cards for desktop
+    promptsContainer.innerHTML = this.createLoadingShorts();
+
+    try {
+      await this.loadAllPrompts();
+      const initialPrompts = this.allPrompts.slice(0, this.promptsPerPage);
+      console.log(`Loaded ${initialPrompts.length} initial prompts`);
+      this.displayPrompts(initialPrompts, true);
+    } catch (error) {
+      console.error('Error loading initial prompts:', error);
+      this.showErrorState();
+    }
   }
-
-  console.log('Loading initial prompts...');
-  
-  // Clear any existing content and apply critical styles
-  promptsContainer.innerHTML = '';
-  promptsContainer.className = 'shorts-container';
-  
-  // Add loading skeletons - ensure 4 loading cards for desktop
-  promptsContainer.innerHTML = this.createLoadingShorts();
-
-  try {
-    await this.loadAllPrompts();
-    const initialPrompts = this.allPrompts.slice(0, this.promptsPerPage);
-    console.log(`Loaded ${initialPrompts.length} initial prompts`);
-    this.displayPrompts(initialPrompts, true);
-  } catch (error) {
-    console.error('Error loading initial prompts:', error);
-    this.showErrorState();
-  }
-}
-
 
   async loadAllPrompts() {
     try {
@@ -848,29 +1074,30 @@ injectCriticalCSS() {
     }
   }
 
- createLoadingShorts() {
-  // Create 4 loading cards for desktop grid
-  const loadingCards = Array(4).fill(0).map((_, i) => `
-    <div class="shorts-prompt-card loading-prompt" style="opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease ${i * 0.1}s, transform 0.5s ease ${i * 0.1}s">
-      <div class="shorts-video-container">
-        <div class="loading-placeholder"></div>
-      </div>
-      <div class="shorts-info">
-        <div class="shorts-prompt-text loading-text" style="height: 60px; margin-bottom: 10px;"></div>
-        <div class="shorts-meta">
-          <span class="loading-text" style="width: 100px; height: 12px; display: inline-block;"></span>
-          <span class="loading-text" style="width: 80px; height: 12px; display: inline-block;"></span>
+  createLoadingShorts() {
+    // Create 4 loading cards for desktop grid
+    const loadingCards = Array(4).fill(0).map((_, i) => `
+      <div class="shorts-prompt-card loading-prompt" style="opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease ${i * 0.1}s, transform 0.5s ease ${i * 0.1}s">
+        <div class="shorts-video-container">
+          <div class="loading-placeholder"></div>
         </div>
-        <div class="prompt-actions">
-          <div class="loading-text" style="width: 120px; height: 32px; border-radius: 20px;"></div>
-          <div class="loading-text" style="width: 60px; height: 12px; margin-left: auto;"></div>
+        <div class="shorts-info">
+          <div class="shorts-prompt-text loading-text" style="height: 60px; margin-bottom: 10px;"></div>
+          <div class="shorts-meta">
+            <span class="loading-text" style="width: 100px; height: 12px; display: inline-block;"></span>
+            <span class="loading-text" style="width: 80px; height: 12px; display: inline-block;"></span>
+          </div>
+          <div class="prompt-actions">
+            <div class="loading-text" style="width: 120px; height: 32px; border-radius: 20px;"></div>
+            <div class="loading-text" style="width: 60px; height: 12px; margin-left: auto;"></div>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `).join('');
 
-  return loadingCards;
-}
+    return loadingCards;
+  }
+
   showLoadingIndicator() {
     let loader = document.getElementById('infinite-scroll-loader');
     if (!loader) {
@@ -1524,9 +1751,9 @@ function addMobileNavigation() {
         <i class="fas fa-home"></i>
         <span>Home</span>
       </a>
-      <a href="#showcase" class="nav-item">
+      <a href="news.html" class="nav-item">
         <i class="fas fa-play-circle"></i>
-        <span>Top</span>
+        <span>News</span>
       </a>
       <button class="nav-item" id="mobileUploadBtn">
         <i class="fas fa-plus-circle"></i>
@@ -1902,6 +2129,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   initFilterButtons();
   initScrollEffects();
   initUploadModal();
+  initNewsUploadModal();
   
   // Initialize YouTube-style prompts with infinite scroll
   window.youtubePrompts = new YouTubeStylePrompts();
@@ -1913,6 +2141,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize search functionality
   window.searchManager = new SearchManager();
   await searchManager.init();
+  
+  // Initialize news functionality
+  window.newsManager = new NewsManager();
+  
+  // Load news if news container exists
+  if (document.getElementById('newsContainer')) {
+    newsManager.loadNews();
+  }
   
   // Initialize YouTube-style header
   const youTubeHeader = new YouTubeStyleHeader();
@@ -1992,4 +2228,6 @@ window.loadUploads = () => {
     youtubePrompts.loadInitialPrompts();
   }
 };
+
 window.searchManager = window.searchManager || {};
+window.newsManager = window.newsManager || {};

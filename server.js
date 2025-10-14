@@ -144,6 +144,53 @@ class SEOOptimizer {
   }
 }
 
+// News-specific SEO Optimizer
+class NewsSEOOptimizer {
+  static generateNewsTitle(title) {
+    return `${title} - Prompt Seen News`;
+  }
+
+  static generateNewsDescription(content) {
+    const cleanContent = content.replace(/[^\w\s]/gi, ' ').substring(0, 150);
+    return `${cleanContent}... Read more AI prompt news and updates.`;
+  }
+
+  static generateNewsSlug(title) {
+    return title.toLowerCase()
+      .replace(/[^\w\s]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 60) + '-' + Date.now();
+  }
+
+  static generateNewsStructuredData(news) {
+    return {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": news.title,
+      "description": news.metaDescription,
+      "image": news.imageUrl || 'https://promptseen.co/logo.png',
+      "datePublished": news.createdAt,
+      "dateModified": news.updatedAt,
+      "author": {
+        "@type": "Person",
+        "name": news.author || "Prompt Seen Editor"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Prompt Seen",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://promptseen.co/logo.png"
+        }
+      },
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": `https://promptseen.co/news/${news.id}`
+      }
+    };
+  }
+}
+
 // Sitemap Generator Class
 class SitemapGenerator {
   static generateSitemap(urls) {
@@ -156,6 +203,29 @@ class SitemapGenerator {
       if (url.lastmod) xml += `  <lastmod>${url.lastmod}</lastmod>\n`;
       if (url.changefreq) xml += `  <changefreq>${url.changefreq}</changefreq>\n`;
       if (url.priority) xml += `  <priority>${url.priority}</priority>\n`;
+      xml += `</url>\n`;
+    });
+    
+    xml += `</urlset>`;
+    return xml;
+  }
+
+  static generateNewsSitemap(newsUrls) {
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n`;
+    xml += `        xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">\n`;
+    
+    newsUrls.forEach(url => {
+      xml += `<url>\n`;
+      xml += `  <loc>${this.escapeXml(url.loc)}</loc>\n`;
+      xml += `  <news:news>\n`;
+      xml += `    <news:publication>\n`;
+      xml += `      <news:name>Prompt Seen</news:name>\n`;
+      xml += `      <news:language>en</news:language>\n`;
+      xml += `    </news:publication>\n`;
+      xml += `    <news:publication_date>${new Date(url.lastmod).toISOString().split('T')[0]}</news:publication_date>\n`;
+      xml += `    <news:title>${this.escapeXml(url.title || 'AI News')}</news:title>\n`;
+      xml += `  </news:news>\n`;
       xml += `</url>\n`;
     });
     
@@ -226,6 +296,42 @@ const mockPrompts = [
   }
 ];
 
+// Generate mock news
+function generateMockNews(count) {
+  const news = [];
+  const categories = ['ai-news', 'prompt-tips', 'industry-updates', 'tutorials'];
+  const authors = ['AI News Team', 'Prompt Master', 'Tech Editor', 'Community Manager'];
+  
+  for (let i = 1; i <= count; i++) {
+    const category = categories[Math.floor(Math.random() * categories.length)];
+    const author = authors[Math.floor(Math.random() * authors.length)];
+    
+    news.push({
+      id: `news-${i}`,
+      title: `Breaking: New AI Prompt Technique Revolutionizes ${category.replace('-', ' ')}`,
+      content: `This is a detailed news article about the latest developments in AI prompt engineering. The content discusses new techniques, tools, and best practices that are transforming how we interact with artificial intelligence. This breakthrough promises to make AI more accessible and effective for creators worldwide.`,
+      excerpt: `Discover the latest breakthrough in AI prompt engineering that's changing how creators interact with artificial intelligence...`,
+      imageUrl: `https://picsum.photos/800/400?random=${i}`,
+      author: author,
+      category: category,
+      tags: ['ai', 'prompts', 'innovation', 'technology'],
+      views: Math.floor(Math.random() * 1000),
+      likes: Math.floor(Math.random() * 100),
+      shares: Math.floor(Math.random() * 50),
+      isBreaking: i <= 3,
+      isFeatured: i <= 2,
+      createdAt: new Date(Date.now() - i * 3600000).toISOString(),
+      updatedAt: new Date().toISOString(),
+      publishedAt: new Date(Date.now() - i * 3600000).toISOString()
+    });
+  }
+  
+  return news;
+}
+
+// Initialize global mock news
+global.mockNews = generateMockNews(10);
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   res.json({ 
@@ -246,37 +352,29 @@ Disallow: /admin/
 Disallow: /private/
 Disallow: /api/
 
+# Google News bot
+User-agent: Googlebot-News
+Allow: /news/
+Allow: /sitemap-news.xml
+Crawl-delay: 1
+
+# Regular Googlebot
+User-agent: Googlebot
+Allow: /news/
+Allow: /sitemap-news.xml
+Crawl-delay: 2
+
 # Sitemaps
 Sitemap: ${baseUrl}/sitemap.xml
+Sitemap: ${baseUrl}/sitemap-news.xml
 Sitemap: ${baseUrl}/sitemap-posts.xml
+Sitemap: ${baseUrl}/sitemap-pages.xml
 
-# Crawl delay (optional)
-Crawl-delay: 1
-
-# Allow bots for SEO pages
-User-agent: Googlebot
-Allow: /prompt/
-Allow: /category/
-Crawl-delay: 2
-
-User-agent: Bingbot
-Allow: /prompt/
-Allow: /category/
-Crawl-delay: 2
-
-User-agent: Twitterbot
-Allow: /prompt/
-Allow: /category/
-Crawl-delay: 1
-
-# Block AI scrapers (optional)
+# Block AI scrapers
 User-agent: ChatGPT-User
 Disallow: /
 
 User-agent: GPTBot
-Disallow: /
-
-User-agent: CCBot
 Disallow: /`;
 
   res.set('Content-Type', 'text/plain');
@@ -296,6 +394,10 @@ app.get('/sitemap.xml', async (req, res) => {
   </sitemap>
   <sitemap>
     <loc>${baseUrl}/sitemap-posts.xml</loc>
+    <lastmod>${new Date().toISOString()}</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>${baseUrl}/sitemap-news.xml</loc>
     <lastmod>${new Date().toISOString()}</lastmod>
   </sitemap>
 </sitemapindex>`;
@@ -419,6 +521,271 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     const sitemap = SitemapGenerator.generateSitemap(fallbackUrls);
     res.set('Content-Type', 'application/xml');
     res.send(sitemap);
+  }
+});
+
+// News Sitemap
+app.get('/sitemap-news.xml', async (req, res) => {
+  try {
+    const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+    let news = [];
+
+    if (db && db.collection) {
+      const snapshot = await db.collection('news')
+        .orderBy('publishedAt', 'desc')
+        .limit(1000)
+        .get();
+
+      news = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+        };
+      });
+    } else {
+      news = global.mockNews;
+    }
+
+    const newsUrls = news.map(newsItem => ({
+      loc: `${baseUrl}/news/${newsItem.id}`,
+      lastmod: newsItem.updatedAt || newsItem.publishedAt || new Date().toISOString(),
+      title: newsItem.title
+    }));
+
+    const sitemap = SitemapGenerator.generateNewsSitemap(newsUrls);
+    res.set('Content-Type', 'application/xml');
+    res.send(sitemap);
+    
+  } catch (error) {
+    console.error('❌ News sitemap error:', error);
+    res.status(500).send('Error generating news sitemap');
+  }
+});
+
+// News upload endpoint
+app.post('/api/upload-news', async (req, res) => {
+  console.log('📰 News upload request received');
+  
+  const busboy = Busboy({ headers: req.headers });
+  const fields = {};
+  let fileBuffer = null;
+  let fileName = null;
+  let fileType = null;
+
+  busboy.on('field', (fieldname, val) => {
+    fields[fieldname] = val;
+    console.log(`📝 News field ${fieldname}: ${val.substring(0, 50)}...`);
+  });
+
+  busboy.on('file', (fieldname, file, info) => {
+    if (fieldname !== 'image') {
+      return res.status(400).json({ error: 'Only image files are allowed' });
+    }
+
+    const { filename, encoding, mimeType } = info;
+    console.log(`📁 News image upload: ${filename}, type: ${mimeType}`);
+    
+    fileName = filename;
+    fileType = mimeType;
+    
+    const chunks = [];
+    file.on('data', (data) => {
+      chunks.push(data);
+    });
+
+    file.on('end', () => {
+      fileBuffer = Buffer.concat(chunks);
+      
+      if (fileBuffer.length > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: 'File size exceeds 5MB limit' });
+      }
+    });
+  });
+
+  busboy.on('finish', async () => {
+    try {
+      // Validate required fields
+      if (!fields.title || !fields.content) {
+        return res.status(400).json({ error: 'Title and content are required' });
+      }
+
+      let imageUrl = 'https://via.placeholder.com/800x400/4e54c8/white?text=Prompt+Seen+News';
+
+      if (fileBuffer && bucket) {
+        // Upload to Firebase Storage
+        const fileExtension = fileName.split('.').pop();
+        const newFileName = `news/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExtension}`;
+        const file = bucket.file(newFileName);
+
+        await file.save(fileBuffer, {
+          metadata: {
+            contentType: fileType,
+            metadata: {
+              uploadedBy: fields.author || 'editor',
+              uploadedAt: new Date().toISOString()
+            }
+          }
+        });
+
+        await file.makePublic();
+        imageUrl = `https://storage.googleapis.com/${bucket.name}/${newFileName}`;
+        console.log('✅ News image uploaded to Firebase Storage:', imageUrl);
+      }
+
+      // Generate SEO metadata for news
+      const newsTitle = NewsSEOOptimizer.generateNewsTitle(fields.title);
+      const metaDescription = NewsSEOOptimizer.generateNewsDescription(fields.content);
+      const slug = NewsSEOOptimizer.generateNewsSlug(fields.title);
+      const keywords = SEOOptimizer.extractKeywords(fields.title + ' ' + fields.content);
+
+      // Create news data
+      const newsData = {
+        title: fields.title,
+        content: fields.content,
+        excerpt: fields.excerpt || fields.content.substring(0, 200) + '...',
+        imageUrl: imageUrl,
+        author: fields.author || 'Prompt Seen Editor',
+        category: fields.category || 'ai-news',
+        tags: fields.tags ? fields.tags.split(',').map(tag => tag.trim()) : [],
+        keywords: keywords,
+        seoTitle: newsTitle,
+        metaDescription: metaDescription,
+        slug: slug,
+        isBreaking: fields.isBreaking === 'true',
+        isFeatured: fields.isFeatured === 'true',
+        views: 0,
+        likes: 0,
+        shares: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        publishedAt: new Date().toISOString()
+      };
+
+      let docRef;
+      
+      if (db && db.collection) {
+        docRef = await db.collection('news').add(newsData);
+        console.log('✅ News saved to Firestore with ID:', docRef.id);
+      } else {
+        docRef = { id: 'news-' + Date.now() };
+        // Add to mock news array
+        global.mockNews.unshift({
+          id: docRef.id,
+          ...newsData
+        });
+        console.log('🎭 Development mode: Mock news created with ID:', docRef.id);
+      }
+
+      const responseData = {
+        id: docRef.id,
+        ...newsData,
+        newsUrl: `/news/${docRef.id}`
+      };
+
+      res.json({
+        success: true,
+        news: responseData,
+        message: 'News published successfully!'
+      });
+
+    } catch (error) {
+      console.error('❌ News upload error:', error);
+      res.status(500).json({ 
+        error: 'News publication failed', 
+        details: error.message
+      });
+    }
+  });
+
+  req.pipe(busboy);
+});
+
+// Get news articles
+app.get('/api/news', async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const category = req.query.category;
+    
+    let news = [];
+
+    if (db && db.collection) {
+      let query = db.collection('news').orderBy('publishedAt', 'desc');
+      
+      if (category && category !== 'all') {
+        query = query.where('category', '==', category);
+      }
+
+      const snapshot = await query.get();
+      news = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+        newsUrl: `/news/${doc.id}`
+      }));
+    } else {
+      news = global.mockNews;
+      
+      if (category && category !== 'all') {
+        news = news.filter(item => item.category === category);
+      }
+    }
+
+    // Pagination
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedNews = news.slice(startIndex, endIndex);
+
+    res.json({
+      news: paginatedNews,
+      currentPage: page,
+      totalPages: Math.ceil(news.length / limit),
+      totalCount: news.length,
+      hasMore: endIndex < news.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching news:', error);
+    res.status(500).json({ error: 'Failed to fetch news' });
+  }
+});
+
+// Individual news page
+app.get('/news/:id', async (req, res) => {
+  try {
+    const newsId = req.params.id;
+    console.log(`📄 Serving news page for ID: ${newsId}`);
+    
+    let newsData;
+
+    if (db && db.collection) {
+      const doc = await db.collection('news').doc(newsId).get();
+      
+      if (!doc.exists) {
+        return sendNewsNotFound(res, newsId);
+      }
+
+      const news = doc.data();
+      newsData = createNewsData(news, doc.id);
+      
+      // Update view count
+      await db.collection('news').doc(newsId).update({
+        views: (news.views || 0) + 1,
+        updatedAt: new Date().toISOString()
+      });
+    } else {
+      const mockNews = global.mockNews.find(n => n.id === newsId) || global.mockNews[0];
+      newsData = createNewsData(mockNews, newsId);
+    }
+
+    const html = generateNewsHTML(newsData);
+    res.set('Content-Type', 'text/html');
+    res.send(html);
+
+  } catch (error) {
+    console.error('❌ Error serving news page:', error);
+    sendNewsErrorPage(res, error);
   }
 });
 
@@ -930,71 +1297,141 @@ app.get('/category/:category', async (req, res) => {
   }
 });
 
-// Helper function to generate category page HTML
-function generateCategoryHTML(category, baseUrl) {
-  const categoryNames = {
-    'art': 'AI Art',
-    'photography': 'AI Photography', 
-    'design': 'AI Design',
-    'writing': 'AI Writing',
-    'other': 'Other AI Creations'
+// Helper functions
+function createNewsData(news, id) {
+  return {
+    id: id,
+    title: news.title || 'AI News Update',
+    content: news.content || 'No content available.',
+    excerpt: news.excerpt || (news.content ? news.content.substring(0, 200) + '...' : ''),
+    imageUrl: news.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=Prompt+Seen+News',
+    author: news.author || 'Prompt Seen Editor',
+    category: news.category || 'ai-news',
+    tags: news.tags || ['ai', 'news'],
+    views: news.views || 0,
+    likes: news.likes || 0,
+    shares: news.shares || 0,
+    isBreaking: news.isBreaking || false,
+    isFeatured: news.isFeatured || false,
+    createdAt: news.createdAt || new Date().toISOString(),
+    publishedAt: news.publishedAt || new Date().toISOString(),
+    seoTitle: news.seoTitle || news.title || 'AI News - Prompt Seen',
+    metaDescription: news.metaDescription || (news.content ? 
+      news.content.substring(0, 155) + '...' : 
+      'Latest AI news and prompt engineering updates from Prompt Seen.')
   };
-  
-  const categoryName = categoryNames[category] || 'AI Prompts';
-  const description = `Explore ${categoryName} prompts and AI-generated content. Discover the best prompt engineering techniques for ${categoryName.toLowerCase()}.`;
+}
 
+function generateNewsHTML(newsData) {
   return `
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${categoryName} Prompts - Prompt Seen</title>
-    <meta name="description" content="${description}">
-    <meta name="robots" content="index, follow">
+    <title>${newsData.seoTitle}</title>
+    <meta name="description" content="${newsData.metaDescription}">
+    <meta name="robots" content="index, follow, max-image-preview:large">
     
-    <!-- Open Graph -->
-    <meta property="og:title" content="${categoryName} Prompts - Prompt Seen">
-    <meta property="og:description" content="${description}">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="${baseUrl}/category/${category}">
+    <!-- News-specific meta tags -->
+    <meta property="og:type" content="article">
+    <meta property="article:published_time" content="${newsData.publishedAt}">
+    <meta property="article:modified_time" content="${newsData.updatedAt}">
+    <meta property="article:author" content="${newsData.author}">
+    <meta property="article:section" content="${newsData.category}">
+    ${newsData.tags.map(tag => `<meta property="article:tag" content="${tag}">`).join('')}
     
-    <!-- JSON-LD Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "CollectionPage",
-      "name": "${categoryName} Prompts",
-      "description": "${description}",
-      "url": "${baseUrl}/category/${category}",
-      "mainEntity": {
-        "@type": "ItemList",
-        "name": "${categoryName} AI Prompts"
-      }
-    }
-    </script>
+    <!-- Google News specific tags -->
+    <meta name="news_keywords" content="${newsData.tags.join(', ')}">
     
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; }
-        h1 { color: #4e54c8; margin-bottom: 20px; }
-        p { color: #666; line-height: 1.6; margin-bottom: 30px; }
-        .back-link { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; }
-        .back-link:hover { background: #4e54c8; color: white; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background: #f5f7fa; padding: 20px; }
+        .news-article { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .news-header { text-align: center; margin-bottom: 30px; }
+        .news-title { font-size: 2.5rem; color: #2d334a; margin-bottom: 15px; line-height: 1.3; }
+        .news-meta { color: #666; margin-bottom: 20px; font-size: 1rem; }
+        .news-image { width: 100%; height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 30px; }
+        .news-content { line-height: 1.8; font-size: 1.1rem; }
+        .news-content p { margin-bottom: 20px; }
+        .breaking-badge { background: #ff6b6b; color: white; padding: 8px 20px; border-radius: 25px; font-weight: bold; display: inline-block; margin-bottom: 15px; }
+        .back-link { display: inline-block; margin-top: 30px; color: #4e54c8; text-decoration: none; font-weight: 600; }
+        .back-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>${categoryName} Prompts</h1>
-        <p>${description}</p>
-        <p>This category page is automatically generated for SEO purposes. The actual ${categoryName.toLowerCase()} content is available on our main showcase page.</p>
-        <a href="/" class="back-link">← Back to Prompt Showcase</a>
-    </div>
+    <article class="news-article">
+        <header class="news-header">
+            ${newsData.isBreaking ? '<span class="breaking-badge">BREAKING NEWS</span>' : ''}
+            <h1 class="news-title">${newsData.title}</h1>
+            <div class="news-meta">
+                By ${newsData.author} | ${new Date(newsData.publishedAt).toLocaleDateString()} | 
+                ${newsData.views} views | ${newsData.category}
+            </div>
+        </header>
+        
+        <img src="${newsData.imageUrl}" alt="${newsData.title}" class="news-image">
+        
+        <div class="news-content">
+            ${newsData.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
+        </div>
+        
+        <a href="/" class="back-link">← Back to Prompt Seen</a>
+    </article>
 </body>
 </html>`;
 }
 
-// Helper function to create prompt data
+function sendNewsNotFound(res, newsId) {
+  res.status(404).send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>News Not Found - Prompt Seen</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
+        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: #ff6b6b; margin-bottom: 20px; }
+        a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>News Article Not Found</h1>
+        <p>The news article you're looking for doesn't exist or may have been removed.</p>
+        <p><small>News ID: ${newsId}</small></p>
+        <a href="/">← Return to Prompt Seen</a>
+    </div>
+</body>
+</html>`);
+}
+
+function sendNewsErrorPage(res, error) {
+  res.status(500).send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error - Prompt Seen News</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
+        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: #ff6b6b; margin-bottom: 20px; }
+        a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Error Loading News</h1>
+        <p>There was an error loading this news article. Please try again later.</p>
+        <a href="/">← Return to Home</a>
+    </div>
+</body>
+</html>`);
+}
+
+// Existing helper functions (keep your original ones)
 function createPromptData(prompt, id) {
   return {
     id: id,
@@ -1240,6 +1677,72 @@ function generatePromptHTML(promptData) {
 </html>`;
 }
 
+
+// Helper function to generate category page HTML
+function generateCategoryHTML(category, baseUrl) {
+  const categoryNames = {
+    'art': 'AI Art',
+    'photography': 'AI Photography', 
+    'design': 'AI Design',
+    'writing': 'AI Writing',
+    'other': 'Other AI Creations'
+  };
+  
+  const categoryName = categoryNames[category] || 'AI Prompts';
+  const description = `Explore ${categoryName} prompts and AI-generated content. Discover the best prompt engineering techniques for ${categoryName.toLowerCase()}.`;
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${categoryName} Prompts - Prompt Seen</title>
+    <meta name="description" content="${description}">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="${categoryName} Prompts - Prompt Seen">
+    <meta property="og:description" content="${description}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="${baseUrl}/category/${category}">
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "${categoryName} Prompts",
+      "description": "${description}",
+      "url": "${baseUrl}/category/${category}",
+      "mainEntity": {
+        "@type": "ItemList",
+        "name": "${categoryName} AI Prompts"
+      }
+    }
+    </script>
+    
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); text-align: center; }
+        h1 { color: #4e54c8; margin-bottom: 20px; }
+        p { color: #666; line-height: 1.6; margin-bottom: 30px; }
+        .back-link { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; }
+        .back-link:hover { background: #4e54c8; color: white; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>${categoryName} Prompts</h1>
+        <p>${description}</p>
+        <p>This category page is automatically generated for SEO purposes. The actual ${categoryName.toLowerCase()} content is available on our main showcase page.</p>
+        <a href="/" class="back-link">← Back to Prompt Showcase</a>
+    </div>
+</body>
+</html>`;
+}
+
+
 // Helper function for 404 page
 function sendPromptNotFound(res, promptId) {
   res.status(404).send(`
@@ -1291,6 +1794,32 @@ function sendErrorPage(res, error) {
 </html>`);
 }
 
+
+// Helper function for error page
+function sendErrorPage(res, error) {
+  res.status(500).send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error - Prompt Seen</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
+        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: #ff6b6b; margin-bottom: 20px; }
+        a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Error Loading Prompt</h1>
+        <p>There was an error loading this prompt. Please try again later.</p>
+        <a href="/">← Return to Home</a>
+    </div>
+</body>
+</html>`);
+}
+
 // Serve main page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -1315,6 +1844,10 @@ app.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Base URL: http://localhost:${port}`);
+  console.log(`📰 News routes: http://localhost:${port}/news/:id`);
+  console.log(`🗞️  News API: http://localhost:${port}/api/news`);
+  console.log(`📤 News upload: http://localhost:${port}/api/upload-news`);
+  console.log(`🗺️  News sitemap: http://localhost:${port}/sitemap-news.xml`);
   console.log(`🔗 Prompt routes: http://localhost:${port}/prompt/:id`);
   console.log(`📤 Upload endpoint: http://localhost:${port}/api/upload`);
   console.log(`❤️  Engagement endpoints:`);
@@ -1328,6 +1861,10 @@ app.listen(port, () => {
   
   if (!db || !db.collection) {
     console.log(`🎭 Running in DEVELOPMENT mode with mock data`);
+    console.log(`📰 Sample news articles:`);
+    global.mockNews.slice(0, 3).forEach(news => {
+      console.log(`   → http://localhost:${port}/news/${news.id}`);
+    });
     console.log(`📝 Sample prompts:`);
     mockPrompts.forEach(prompt => {
       console.log(`   → http://localhost:${port}/prompt/${prompt.id}`);
