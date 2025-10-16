@@ -22,7 +22,120 @@ body {
     overflow-x: hidden;
 }
 
+/* YouTube-style Categories */
+.categories-container {
+    position: relative;
+    margin: 15px 0;
+    padding: 0 40px;
+    overflow: hidden;
+}
 
+.categories-scroll {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    scroll-behavior: smooth;
+}
+
+.categories-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.categories-track {
+    display: flex;
+    gap: 12px;
+    padding: 5px 0;
+    min-width: min-content;
+}
+
+.category-btn {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    background: #f0f0f0;
+    border: none;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.category-btn:hover {
+    background: #e5e5e5;
+}
+
+.category-btn.active {
+    background: #333;
+    color: white;
+}
+
+.category-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    background: white;
+    border: none;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    transition: all 0.3s ease;
+}
+
+.category-nav:hover {
+    background: #f8f8f8;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.category-prev {
+    left: 0;
+}
+
+.category-next {
+    right: 0;
+}
+
+.category-nav.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .categories-container {
+        padding: 0 30px;
+        margin: 10px 0;
+    }
+    
+    .category-btn {
+        padding: 6px 14px;
+        font-size: 13px;
+    }
+    
+    .category-nav {
+        width: 32px;
+        height: 32px;
+         /* Hide arrows on mobile */
+    }
+    
+    .categories-scroll {
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .categories-container {
+        padding: 0 35px;
+    }
+}
 /* Mobile Responsive News Upload Form - IMPORTANT */
 @media (max-width: 768px) {
     /* Modal container adjustments */

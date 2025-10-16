@@ -98,6 +98,210 @@ function showAuthElements() {
   }
 }
 
+// YouTube-style Category Manager
+class CategoryManager {
+    constructor() {
+        this.defaultCategories = ['photography'];
+        this.searchCategories = [];
+        this.maxSearchCategories = 10;
+        this.currentCategory = 'all';
+        this.init();
+    }
+
+    init() {
+        this.loadUserCategories();
+        this.renderCategories();
+        this.setupEventListeners();
+        this.updateNavigation();
+    }
+
+    loadUserCategories() {
+        // Load user's search history categories
+        const userCategories = localStorage.getItem('userSearchCategories');
+        if (userCategories) {
+            this.searchCategories = JSON.parse(userCategories);
+        }
+    }
+
+    saveUserCategories() {
+        localStorage.setItem('userSearchCategories', JSON.stringify(this.searchCategories));
+    }
+
+    addSearchCategory(searchTerm) {
+        if (!searchTerm || searchTerm.trim() === '') return;
+
+        const category = searchTerm.toLowerCase().trim();
+        
+        // Don't add if it's already in default categories
+        if (this.defaultCategories.includes(category)) return;
+
+        // Remove if already exists (to move to front)
+        const existingIndex = this.searchCategories.indexOf(category);
+        if (existingIndex > -1) {
+            this.searchCategories.splice(existingIndex, 1);
+        }
+
+        // Add to beginning
+        this.searchCategories.unshift(category);
+
+        // Limit the number of search categories
+        if (this.searchCategories.length > this.maxSearchCategories) {
+            this.searchCategories = this.searchCategories.slice(0, this.maxSearchCategories);
+        }
+
+        this.saveUserCategories();
+        this.renderCategories();
+    }
+
+    renderCategories() {
+        const categoriesTrack = document.getElementById('categoriesTrack');
+        if (!categoriesTrack) return;
+
+        const allCategories = [...this.defaultCategories, ...this.searchCategories];
+        
+        categoriesTrack.innerHTML = allCategories.map(category => {
+            const displayName = this.getCategoryDisplayName(category);
+            const isActive = category === this.currentCategory;
+            
+            return `
+                <button class="category-btn ${isActive ? 'active' : ''}" 
+                        data-category="${category}">
+                    ${displayName}
+                </button>
+            `;
+        }).join('');
+    }
+
+    getCategoryDisplayName(category) {
+        const displayNames = {
+          
+            'photography': 'Photography',
+            
+        };
+        
+        return displayNames[category] || this.capitalizeFirstLetter(category);
+    }
+
+    capitalizeFirstLetter(string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
+
+    setupEventListeners() {
+        // Category button clicks
+        document.addEventListener('click', (e) => {
+            if (e.target.closest('.category-btn')) {
+                const categoryBtn = e.target.closest('.category-btn');
+                const category = categoryBtn.dataset.category;
+                this.selectCategory(category);
+            }
+        });
+
+        // Navigation arrows
+        const prevBtn = document.getElementById('categoryPrev');
+        const nextBtn = document.getElementById('categoryNext');
+        const scrollContainer = document.getElementById('categoriesScroll');
+
+        if (prevBtn && nextBtn && scrollContainer) {
+            prevBtn.addEventListener('click', () => {
+                this.scrollCategories(-200);
+            });
+
+            nextBtn.addEventListener('click', () => {
+                this.scrollCategories(200);
+            });
+
+            // Show/hide arrows based on scroll position
+            scrollContainer.addEventListener('scroll', () => {
+                this.updateNavigation();
+            });
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            this.updateNavigation();
+        });
+    }
+
+    scrollCategories(distance) {
+        const scrollContainer = document.getElementById('categoriesScroll');
+        if (scrollContainer) {
+            scrollContainer.scrollBy({
+                left: distance,
+                behavior: 'smooth'
+            });
+        }
+    }
+
+    updateNavigation() {
+        if (window.innerWidth <= 768) return; // Don't show arrows on mobile
+
+        const scrollContainer = document.getElementById('categoriesScroll');
+        const prevBtn = document.getElementById('categoryPrev');
+        const nextBtn = document.getElementById('categoryNext');
+
+        if (!scrollContainer || !prevBtn || !nextBtn) return;
+
+        const scrollLeft = scrollContainer.scrollLeft;
+        const scrollWidth = scrollContainer.scrollWidth;
+        const clientWidth = scrollContainer.clientWidth;
+
+        // Show/hide previous button
+        if (scrollLeft <= 10) {
+            prevBtn.classList.add('hidden');
+        } else {
+            prevBtn.classList.remove('hidden');
+        }
+
+        // Show/hide next button
+        if (scrollLeft >= scrollWidth - clientWidth - 10) {
+            nextBtn.classList.add('hidden');
+        } else {
+            nextBtn.classList.remove('hidden');
+        }
+    }
+
+    selectCategory(category) {
+        this.currentCategory = category;
+        
+        // Update active state
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        const activeBtn = document.querySelector(`[data-category="${category}"]`);
+        if (activeBtn) {
+            activeBtn.classList.add('active');
+        }
+
+        // Filter prompts based on category
+        this.filterPromptsByCategory(category);
+        
+        // Show notification for search-based categories
+        if (!this.defaultCategories.includes(category)) {
+            showNotification(`Showing results for: ${this.getCategoryDisplayName(category)}`, 'info');
+        }
+    }
+
+    filterPromptsByCategory(category) {
+        if (window.youtubePrompts) {
+            // Reset to first page
+            youtubePrompts.currentPage = 1;
+            youtubePrompts.hasMore = true;
+            
+            if (category === 'all') {
+                // Show all prompts
+                youtubePrompts.loadInitialPrompts();
+            } else if (this.defaultCategories.includes(category)) {
+                // Filter by default category
+                youtubePrompts.filterByCategory(category);
+            } else {
+                // Filter by search term (dynamic category)
+                youtubePrompts.filterBySearchTerm(category);
+            }
+        }
+    }
+}
+
 // News Manager Class
 class NewsManager {
   constructor() {
@@ -389,6 +593,7 @@ class YouTubeStylePrompts {
     this.hasMore = true;
     this.promptsPerPage = 4;
     this.allPrompts = [];
+    this.filteredPrompts = null;
     this.loadedPrompts = new Set();
     this.init();
   }
@@ -822,8 +1027,9 @@ class YouTubeStylePrompts {
       // Simulate API delay for better UX
       await new Promise(resolve => setTimeout(resolve, 800));
       
+      const promptsToUse = this.filteredPrompts || this.allPrompts;
       const startIndex = this.currentPage * this.promptsPerPage;
-      const nextPrompts = this.allPrompts.slice(startIndex, startIndex + this.promptsPerPage);
+      const nextPrompts = promptsToUse.slice(startIndex, startIndex + this.promptsPerPage);
       
       if (nextPrompts.length > 0) {
         console.log(`Displaying ${nextPrompts.length} more prompts`);
@@ -847,9 +1053,70 @@ class YouTubeStylePrompts {
     }
   }
 
+  filterByCategory(category) {
+    const filteredPrompts = this.allPrompts.filter(prompt => 
+      prompt.category === category
+    );
+    
+    this.displayFilteredPrompts(filteredPrompts);
+  }
+
+  filterBySearchTerm(searchTerm) {
+    const filteredPrompts = this.allPrompts.filter(prompt => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        prompt.title.toLowerCase().includes(searchLower) ||
+        prompt.promptText.toLowerCase().includes(searchLower) ||
+        (prompt.keywords && prompt.keywords.some(keyword => 
+          keyword.toLowerCase().includes(searchLower)
+        ))
+      );
+    });
+    
+    this.displayFilteredPrompts(filteredPrompts);
+  }
+
+  displayFilteredPrompts(filteredPrompts) {
+    const promptsContainer = document.getElementById('promptsContainer');
+    if (!promptsContainer) return;
+
+    promptsContainer.innerHTML = '';
+    this.loadedPrompts.clear();
+
+    if (filteredPrompts.length === 0) {
+      this.showNoResults();
+      return;
+    }
+
+    const initialPrompts = filteredPrompts.slice(0, this.promptsPerPage);
+    this.displayPrompts(initialPrompts, true);
+    
+    // Update infinite scroll to use filtered prompts
+    this.filteredPrompts = filteredPrompts;
+    this.hasMore = filteredPrompts.length > this.promptsPerPage;
+  }
+
+  showNoResults() {
+    const promptsContainer = document.getElementById('promptsContainer');
+    if (promptsContainer) {
+      promptsContainer.innerHTML = `
+        <div class="no-results" style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+          <i class="fas fa-search" style="font-size: 3rem; color: #ccc; margin-bottom: 20px;"></i>
+          <h3 style="color: #666; margin-bottom: 10px;">No prompts found</h3>
+          <p style="color: #888;">Try adjusting your search or browse different categories</p>
+          <button onclick="categoryManager.selectCategory('all')" 
+                  class="cta-button" 
+                  style="margin-top: 20px;">
+            Show All Prompts
+          </button>
+        </div>
+      `;
+    }
+  }
+
   generateMockPrompts(count) {
     const prompts = [];
-    const categories = ['art', 'photography', 'design', 'writing'];
+    const categories = ['photography', 'design'];
     const styles = ['cyberpunk', 'fantasy', 'minimalist', 'realistic', 'anime', 'painting'];
     const adjectives = ['amazing', 'stunning', 'beautiful', 'epic', 'magnificent', 'breathtaking'];
     
@@ -1433,6 +1700,11 @@ class YouTubeStyleHeader {
   performSearch(query) {
     if (!query.trim()) return;
     
+    // Add search term to categories
+    if (window.categoryManager) {
+      categoryManager.addSearchCategory(query);
+    }
+    
     this.addToRecentSearches(query);
     
     const searchInput = document.getElementById('searchInput');
@@ -1467,12 +1739,9 @@ class YouTubeStyleHeader {
 
   getCategoryName(category) {
     const categories = {
-      'all': 'All',
-      'art': 'AI Art',
+      
       'photography': 'Photography',
-      'design': 'Design',
-      'writing': 'Writing',
-      'trending': 'Trending'
+      
     };
     return categories[category] || category;
   }
@@ -2194,6 +2463,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize YouTube-style prompts with infinite scroll
   window.youtubePrompts = new YouTubeStylePrompts();
   
+  // Initialize category manager
+  window.categoryManager = new CategoryManager();
+  
   // Initialize engagement manager
   const engagementManager = new EngagementManager();
   await engagementManager.init();
@@ -2291,3 +2563,4 @@ window.loadUploads = () => {
 
 window.searchManager = window.searchManager || {};
 window.newsManager = window.newsManager || {};
+window.categoryManager = window.categoryManager || {};

@@ -74,15 +74,14 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
 </head>
 <body>
-   <header>
+  <header>
     <div class="container">
         <nav>
             <div class="nav-left">
-               
-              <a href="index.html" class="logo">
-    <img src="logo.png" alt="Prompt Seen Logo - AI Prompt Engineering" style="width:50px;height:50px;">
-    <span>Prompt Seen</span>
-</a>
+                <a href="index.html" class="logo">
+                    <img src="logo.png" alt="Prompt Seen Logo - AI Prompt Engineering" style="width:50px;height:50px;">
+                    <span>Prompt Seen</span>
+                </a>
             </div>
             
             <!-- YouTube-style Search Bar -->
@@ -96,9 +95,29 @@
                 <div class="search-suggestions" id="searchSuggestions"></div>
             </div>
 
-          
+            <div class="nav-right">
+                <!-- Other navigation elements can go here -->
             </div>
         </nav>
+        
+        <!-- MOVED: Categories container outside of nav but inside header -->
+        <div class="categories-container">
+            <div class="categories-scroll" id="categoriesScroll">
+                <div class="categories-track" id="categoriesTrack">
+                    <!-- Default categories -->
+                    <button class="category-btn" data-category="photography">All</button>
+                    <!-- Dynamic search-based categories will be added here -->
+                </div>
+            </div>
+            
+            <!-- Navigation arrows for desktop -->
+            <button class="category-nav category-prev" id="categoryPrev">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            <button class="category-nav category-next" id="categoryNext">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        </div>
     </div>
 </header>
 
@@ -183,9 +202,7 @@
                 <p>Scroll to discover prompt seen • Copy & paste prompts to make your photo like this</p>
             </div>
             <div class="filter-controls desktop-only">
-                <button class="filter-btn active">All</button>
-                <button class="filter-btn">Art</button>
-                <button class="filter-btn">Photography</button>
+               
                 <button class="upload-btn" id="openUploadModal">
                     <i class="fas fa-cloud-upload-alt"></i> Upload
                 </button>
