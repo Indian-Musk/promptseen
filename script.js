@@ -9,6 +9,35 @@ const firebaseConfig = {
   measurementId: "G-C3CMBQR6GH"
 };
 
+// Add this to your existing script.js file or include it in a script tag
+document.addEventListener('DOMContentLoaded', function() {
+    // Add scroll effect to header for desktop
+    const header = document.getElementById('mainHeader');
+    
+    function handleScroll() {
+        if (window.scrollY > 10) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    }
+    
+    // Apply scroll effect for desktop
+    if (window.innerWidth >= 769) {
+        window.addEventListener('scroll', handleScroll);
+    }
+    
+    // Re-apply on resize
+    window.addEventListener('resize', function() {
+        if (window.innerWidth >= 769) {
+            window.addEventListener('scroll', handleScroll);
+        } else {
+            window.removeEventListener('scroll', handleScroll);
+            header.classList.remove('scrolled');
+        }
+    });
+});
+
 // Track Firebase initialization state
 let firebaseInitialized = false;
 

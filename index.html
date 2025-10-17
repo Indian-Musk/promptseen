@@ -72,149 +72,291 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    
+    <!-- Mobile Header Optimization Styles -->
+    <style>
+        /* Mobile Header Optimization */
+        @media (max-width: 768px) {
+            header {
+                padding: 8px 0 !important;
+            }
+            
+            nav {
+                flex-wrap: nowrap !important;
+                gap: 8px !important;
+                padding: 0 !important;
+            }
+            
+            .logo {
+                flex-shrink: 0 !important;
+            }
+            
+            .logo img {
+                width: 32px !important;
+                height: 32px !important;
+            }
+            
+            .logo span {
+                font-size: 1.2rem !important;
+            }
+            
+            .search-container {
+                flex: 1 !important;
+                min-width: 0 !important;
+                margin: 0 !important;
+                order: 2 !important;
+		padding-left:10px !important;
+            }
+            
+            .search-box {
+                border-radius: 18px !important;
+            }
+            
+            #searchInput {
+                padding: 8px 12px !important;
+                font-size: 14px !important;
+            }
+            
+            .search-btn {
+                padding: 8px 12px !important;
+                flex-shrink: 0 !important;
+            }
+            
+            .nav-right {
+                order: 3 !important;
+                flex-shrink: 0 !important;
+                gap: 8px !important;
+            }
+            
+            .authSection {
+                display: flex !important;
+                align-items: center !important;
+            }
+            
+            .login-btn {
+                padding: 6px 12px !important;
+                font-size: 0.85rem !important;
+                border-radius: 15px !important;
+                white-space: nowrap !important;
+            }
+            
+            .user-profile {
+                gap: 6px !important;
+            }
+ .category-nav {
+      display: none; /* Hide arrows on mobile */
+  }
+            
+            .user-avatar {
+                width: 28px !important;
+                height: 28px !important;
+            }
+            
+            .logout-btn {
+                font-size: 1rem !important;
+                padding: 4px !important;
+            }
+            
+            /* Categories adjustment for mobile */
+            .categories-container {
+                margin: 8px 0 !important;
+                padding: 0 10px !important;
+            }
+            
+            .category-btn {
+                padding: 5px 10px !important;
+                font-size: 11px !important;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .logo span {
+                font-size: 1.1rem !important;
+            }
+            
+            .logo img {
+                width: 28px !important;
+                height: 28px !important;
+            }
+            
+            #searchInput {
+                padding: 6px 10px !important;
+                font-size: 13px !important;
+            }
+            
+            .search-btn {
+                padding: 6px 10px !important;
+            }
+            
+            .login-btn {
+                padding: 5px 10px !important;
+                font-size: 0.8rem !important;
+            }
+            
+            .categories-container {
+                padding: 0 5px !important;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .logo span {
+                display: none !important;
+            }
+            
+            .logo {
+                gap: 0 !important;
+            }
+        }
+        
+        /* Ensure header stays compact on scroll */
+        header.scrolled {
+            padding: 5px 0 !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <div class="container">
-        <nav>
-            <div class="nav-left">
-                <a href="index.html" class="logo">
-                    <img src="logo.png" alt="Prompt Seen Logo - AI Prompt Engineering" style="width:50px;height:50px;">
-                    <span>Prompt Seen</span>
-                </a>
-            </div>
-            
-            <!-- YouTube-style Search Bar -->
-            <div class="search-container">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search...e.g. happy diwali">
-                    <button class="search-btn" id="searchButton">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-                <div class="search-suggestions" id="searchSuggestions"></div>
-            </div>
-
-            <div class="nav-right">
-                <!-- Other navigation elements can go here -->
-            </div>
-        </nav>
-        
-        <!-- MOVED: Categories container outside of nav but inside header -->
-        <div class="categories-container">
-            <div class="categories-scroll" id="categoriesScroll">
-                <div class="categories-track" id="categoriesTrack">
-                    <!-- Default categories -->
-                    <button class="category-btn" data-category="photography">All</button>
-                    <!-- Dynamic search-based categories will be added here -->
-                </div>
-            </div>
-            
-            <!-- Navigation arrows for desktop -->
-            <button class="category-nav category-prev" id="categoryPrev">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-            <button class="category-nav category-next" id="categoryNext">
-                <i class="fas fa-chevron-right"></i>
-            </button>
-        </div>
-    </div>
-</header>
-
-
-
-<!-- News Upload Modal -->
-<div class="modal-overlay" id="newsUploadModal">
-    <div class="upload-modal">
-        <div class="modal-header">
-            <h2><i class="fas fa-newspaper"></i> Publish News Article</h2>
-            <button class="close-modal" id="closeNewsModal">&times;</button>
-        </div>
-        <form class="upload-form" id="newsForm">
-            <div class="form-group">
-                <label for="newsTitle">News Title *</label>
-                <input type="text" id="newsTitle" placeholder="Enter compelling news headline" required>
-            </div>
-            
-            <div class="form-group">
-                <label for="newsExcerpt">Excerpt</label>
-                <textarea id="newsExcerpt" placeholder="Brief summary of the news (appears in listings)" rows="3"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="newsContent">News Content *</label>
-                <textarea id="newsContent" placeholder="Write your news article here..." rows="10" required></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label for="newsImageUpload">News Image</label>
-                <div class="file-upload">
-                    <i class="fas fa-image"></i>
-                    <p>Upload news header image</p>
-                    <p style="font-size: 0.9rem; color: #777;">JPG, PNG or WebP (Max. 5MB)</p>
-                    <input type="file" id="newsImageUpload" accept="image/*">
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="newsCategory">Category</label>
-                    <select id="newsCategory">
-                        <option value="ai-news">AI News</option>
-                        <option value="prompt-tips">Prompt Tips</option>
-                        <option value="industry-updates">Industry Updates</option>
-                        <option value="tutorials">Tutorials</option>
-                    </select>
+    <header id="mainHeader">
+        <div class="container">
+            <nav>
+                <div class="nav-left">
+                    <a href="index.html" class="logo">
+                        <img src="logo.png" alt="Prompt Seen Logo - AI Prompt Engineering" style="width:50px;height:50px;">
+                        <span>Prompt Seen</span>
+                    </a>
                 </div>
                 
-                <div class="form-group">
-                    <label for="newsTags">Tags</label>
-                    <input type="text" id="newsTags" placeholder="ai, prompts, news, technology">
-                    <small>Separate tags with commas</small>
+                <!-- YouTube-style Search Bar -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search...e.g.happy diwali">
+                        <button class="search-btn" id="searchButton">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="search-suggestions" id="searchSuggestions"></div>
                 </div>
-            </div>
+
+                <div class="nav-right">
+                    <div class="auth-section" id="authSection">
+                        <!-- Auth content will be populated by JavaScript -->
+                    </div>
+                </div>
+            </nav>
             
-            <div class="form-row">
-                <div class="form-check">
-                    <input type="checkbox" id="isBreaking">
-                    <label for="isBreaking">Breaking News</label>
+            <!-- Categories container -->
+            <div class="categories-container">
+                <div class="categories-scroll" id="categoriesScroll">
+                    <div class="categories-track" id="categoriesTrack">
+                        <!-- Default categories -->
+                        <button class="category-btn" data-category="photography">All</button>
+                        <!-- Dynamic search-based categories will be added here -->
+                    </div>
                 </div>
                 
-                <div class="form-check">
-                    <input type="checkbox" id="isFeatured">
-                    <label for="isFeatured">Featured Article</label>
-                </div>
-            </div>
-            
-            <button type="submit" class="submit-btn">
-                <i class="fas fa-newspaper"></i> Publish News
-            </button>
-        </form>
-    </div>
-</div>
-  
-    <!-- Replace the showcase section with this -->
-<section class="showcase" id="showcase">
-    <div class="container">
-        <div class="trending-header">
-            <div class="section-title" style="text-align: left; margin: 0;">
-                <h2>Prompt seen (Official)</h2>
-                <p>Scroll to discover prompt seen • Copy & paste prompts to make your photo like this</p>
-            </div>
-            <div class="filter-controls desktop-only">
-               
-                <button class="upload-btn" id="openUploadModal">
-                    <i class="fas fa-cloud-upload-alt"></i> Upload
+                <!-- Navigation arrows for desktop -->
+                <button class="category-nav category-prev" id="categoryPrev">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="category-nav category-next" id="categoryNext">
+                    <i class="fas fa-chevron-right"></i>
                 </button>
             </div>
         </div>
-        
-        <!-- YouTube Shorts Style Container -->
-        <div class="shorts-container" id="promptsContainer">
-            <!-- Prompts will be loaded here automatically -->
+    </header>
+
+    <!-- News Upload Modal -->
+    <div class="modal-overlay" id="newsUploadModal">
+        <div class="upload-modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-newspaper"></i> Publish News Article</h2>
+                <button class="close-modal" id="closeNewsModal">&times;</button>
+            </div>
+            <form class="upload-form" id="newsForm">
+                <div class="form-group">
+                    <label for="newsTitle">News Title *</label>
+                    <input type="text" id="newsTitle" placeholder="Enter compelling news headline" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newsExcerpt">Excerpt</label>
+                    <textarea id="newsExcerpt" placeholder="Brief summary of the news (appears in listings)" rows="3"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newsContent">News Content *</label>
+                    <textarea id="newsContent" placeholder="Write your news article here..." rows="10" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="newsImageUpload">News Image</label>
+                    <div class="file-upload">
+                        <i class="fas fa-image"></i>
+                        <p>Upload news header image</p>
+                        <p style="font-size: 0.9rem; color: #777;">JPG, PNG or WebP (Max. 5MB)</p>
+                        <input type="file" id="newsImageUpload" accept="image/*">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="newsCategory">Category</label>
+                        <select id="newsCategory">
+                            <option value="ai-news">AI News</option>
+                            <option value="prompt-tips">Prompt Tips</option>
+                            <option value="industry-updates">Industry Updates</option>
+                            <option value="tutorials">Tutorials</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="newsTags">Tags</label>
+                        <input type="text" id="newsTags" placeholder="ai, prompts, news, technology">
+                        <small>Separate tags with commas</small>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-check">
+                        <input type="checkbox" id="isBreaking">
+                        <label for="isBreaking">Breaking News</label>
+                    </div>
+                    
+                    <div class="form-check">
+                        <input type="checkbox" id="isFeatured">
+                        <label for="isFeatured">Featured Article</label>
+                    </div>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-newspaper"></i> Publish News
+                </button>
+            </form>
         </div>
     </div>
-</section>
+  
+    <!-- Replace the showcase section with this -->
+    <section class="showcase" id="showcase">
+        <div class="container">
+            <div class="trending-header">
+                <div class="section-title" style="text-align: left; margin-top:-20px">
+                    <h2>Prompt seen (Official)</h2>
+                    <p>Scroll to discover prompt seen • Copy & paste prompts to make your photo like this</p>
+                </div>
+                <div class="filter-controls desktop-only">
+                   
+                    <button class="upload-btn" id="openUploadModal">
+                        <i class="fas fa-cloud-upload-alt"></i> Upload
+                    </button>
+                </div>
+            </div>
+            
+            <!-- YouTube Shorts Style Container -->
+            <div class="shorts-container" id="promptsContainer" >
+                <!-- Prompts will be loaded here automatically -->
+            </div>
+        </div>
+    </section>
 
     <!-- Upload Modal -->
     <div class="modal-overlay" id="uploadModal">
@@ -270,9 +412,32 @@
         </div>
     </div>
 
-  
     <!-- Scripts -->
     <script src="script.js"></script>
-
+    
+    <!-- Mobile Header Optimization Script -->
+    <script>
+        // Add scroll effect to header
+        window.addEventListener('scroll', function() {
+            const header = document.getElementById('mainHeader');
+            if (window.scrollY > 10) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+        });
+        
+        // Ensure mobile layout on load and resize
+        function checkMobileLayout() {
+            if (window.innerWidth <= 768) {
+                document.body.style.paddingTop = '70px';
+            } else {
+                document.body.style.paddingTop = '';
+            }
+        }
+        
+        window.addEventListener('load', checkMobileLayout);
+        window.addEventListener('resize', checkMobileLayout);
+    </script>
 </body>
 </html>

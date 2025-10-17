@@ -22,6 +22,75 @@ body {
     overflow-x: hidden;
 }
 
+
+/* Add this to your existing styles.css file */
+
+/* Reduce desktop header height */
+@media (min-width: 769px) {
+    header {
+        padding: 8px 0 !important;
+    }
+    
+    nav {
+        padding: 10px 0 !important;
+    }
+    
+    .categories-container {
+        margin: 8px 0 !important;
+        padding: 0 20px !important;
+    }
+    
+    .category-btn {
+        padding: 6px 12px !important;
+        font-size: 13px !important;
+    }
+    
+    .search-box {
+        border-radius: 18px !important;
+    }
+    
+    #searchInput {
+        padding: 10px 15px !important;
+        font-size: 14px !important;
+    }
+    
+    .search-btn {
+        padding: 10px 15px !important;
+    }
+    
+    /* Make logo slightly smaller */
+    .logo img {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .logo span {
+        font-size: 1.5rem !important;
+    }
+    
+    /* Adjust user profile elements */
+    .user-avatar {
+        width: 32px !important;
+        height: 32px !important;
+    }
+    
+    .logout-btn {
+        font-size: 1.1rem !important;
+    }
+    
+    /* Ensure header stays compact on scroll */
+    header.scrolled {
+        padding: 5px 0 !important;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1) !important;
+    }
+}
+
+/* Additional optimization for very large screens */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1100px !important;
+    }
+}
 /* YouTube-style Categories */
 .categories-container {
     position: relative;
