@@ -22,6 +22,40 @@ body {
     overflow-x: hidden;
 }
 
+/* Desktop-only heading styles */
+.desktop-only {
+    display: block;
+    padding: 20px 0;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    text-align: center;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.desktop-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--dark);
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none !important;
+    }
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .desktop-title {
+        font-size: 2.2rem;
+    }
+}
+
 
 /* Add this to your existing styles.css file */
 
@@ -2482,6 +2516,7 @@ nav {
     display: flex;
     align-items: center;
     gap: 8px;
+	display:none;
 }
 
 .upload-btn:hover {
