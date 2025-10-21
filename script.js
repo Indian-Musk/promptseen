@@ -1,4 +1,4 @@
-// Firebase Configuration
+﻿// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDWDn4T6tkk8ihjLX8Y_YHMkz7y2Uw9paQ",
   authDomain: "clone-8d83d.firebaseapp.com",
@@ -2110,7 +2110,7 @@ function addMobileNavigation() {
         <span>Home</span>
       </a>
       <a href="news.html" class="nav-item">
-        <i class="fas fa-play-circle"></i>
+        <i class="fas fa-cloud-upload-alt"></i>
         <span>News</span>
       </a>
       <button class="nav-item" id="mobileUploadBtn">

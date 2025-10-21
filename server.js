@@ -1,4 +1,4 @@
-﻿﻿const express = require('express');
+﻿const express = require('express');
 const path = require('path');
 const admin = require('firebase-admin');
 const Busboy = require('busboy');
@@ -92,6 +92,82 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from current directory
 app.use(express.static(__dirname));
+
+// AdSense Helper Functions
+function generateAdSenseCode() {
+  const clientId = process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724';
+  
+  return `
+    <!-- Google AdSense Auto Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}" crossorigin="anonymous"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "${clientId}",
+        enable_page_level_ads: true,
+        overlays: {bottom: true}
+      });
+    </script>
+  `;
+}
+
+function generateManualAdPlacement(adUnit = 'default') {
+  return `
+    <!-- Manual Ad Placement -->
+    <div class="ad-container">
+      <div class="ad-label">Advertisement</div>
+      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724" crossorigin="anonymous"></script>
+      <ins class="adsbygoogle"
+           style="display:block"
+           data-ad-client="ca-pub-5992381116749724"
+           data-ad-slot="YOUR_AD_SLOT_ID"
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+      <script>
+           (adsbygoogle = window.adsbygoogle || []).push({});
+      </script>
+    </div>
+  `;
+}
+
+// Migration function for existing prompts
+async function migrateExistingPromptsForAdSense() {
+  try {
+    console.log('🔄 Starting AdSense migration for existing prompts...');
+    
+    if (db && db.collection) {
+      // Get all existing prompts
+      const snapshot = await db.collection('uploads').get();
+      let migratedCount = 0;
+      
+      // Process each prompt
+      for (const doc of snapshot.docs) {
+        const promptData = doc.data();
+        
+        // Check if this prompt needs migration
+        if (!promptData.adsenseMigrated) {
+          // Mark prompts as migrated
+          await db.collection('uploads').doc(doc.id).update({
+            adsenseMigrated: true,
+            migratedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString() // Force cache refresh
+          });
+          
+          migratedCount++;
+          console.log(`✅ Migrated prompt: ${doc.id}`);
+        }
+      }
+      
+      console.log(`🎉 AdSense migration completed! Migrated ${migratedCount} prompts.`);
+      return migratedCount;
+    } else {
+      console.log('🎭 Development mode: Mock prompts will use new AdSense templates');
+      return mockPrompts.length;
+    }
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+    throw error;
+  }
+}
 
 // SEO Optimization Class
 class SEOOptimizer {
@@ -262,7 +338,8 @@ const mockPrompts = [
     category: 'art',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    seoScore: 85
+    seoScore: 85,
+    adsenseMigrated: true // Mark mock data as migrated
   },
   {
     id: 'demo-2',
@@ -277,7 +354,8 @@ const mockPrompts = [
     category: 'art',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    seoScore: 92
+    seoScore: 92,
+    adsenseMigrated: true
   },
   {
     id: 'demo-3',
@@ -292,7 +370,8 @@ const mockPrompts = [
     category: 'photography',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    seoScore: 78
+    seoScore: 78,
+    adsenseMigrated: true
   }
 ];
 
@@ -338,8 +417,42 @@ app.get('/health', (req, res) => {
     status: 'OK', 
     timestamp: new Date().toISOString(),
     service: 'Prompt Seen API',
-    mode: db ? 'production' : 'development'
+    mode: db ? 'production' : 'development',
+    adsense: {
+      enabled: true,
+      clientId: process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724',
+      migration: 'available at /admin/migrate-adsense'
+    }
   });
+});
+
+// AdSense Migration Endpoint
+app.get('/admin/migrate-adsense', async (req, res) => {
+  try {
+    console.log('🚀 Starting AdSense migration via admin endpoint...');
+    
+    const migratedCount = await migrateExistingPromptsForAdSense();
+    
+    res.json({
+      success: true,
+      message: `🎉 Successfully migrated ${migratedCount} prompts for AdSense monetization`,
+      migratedCount: migratedCount,
+      timestamp: new Date().toISOString(),
+      nextSteps: [
+        'All existing prompts now use AdSense-enabled templates',
+        'New uploads automatically include AdSense',
+        'Visit prompt pages to verify ads are displaying',
+        'Check Google AdSense dashboard for impressions'
+      ]
+    });
+  } catch (error) {
+    console.error('❌ Migration endpoint error:', error);
+    res.status(500).json({ 
+      error: 'Migration failed', 
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 // Dynamic Robots.txt
@@ -446,6 +559,12 @@ app.get('/sitemap-pages.xml', async (req, res) => {
         lastmod: new Date().toISOString(),
         changefreq: 'monthly',
         priority: '0.5'
+      },
+      {
+        loc: baseUrl + '/admin/migrate-adsense',
+        lastmod: new Date().toISOString(),
+        changefreq: 'yearly',
+        priority: '0.1'
       }
     ];
 
@@ -1110,7 +1229,7 @@ app.post('/api/upload', async (req, res) => {
       const keywords = SEOOptimizer.extractKeywords(fields.title + ' ' + fields.promptText);
       const slug = SEOOptimizer.generateSlug(fields.title);
 
-      // Create prompt data
+      // Create prompt data - NEW UPLOADS AUTOMATICALLY GET ADSENSE
       const promptData = {
         title: fields.title,
         promptText: fields.promptText,
@@ -1125,6 +1244,7 @@ app.post('/api/upload', async (req, res) => {
         metaDescription: metaDescription,
         slug: slug,
         seoScore: Math.floor(Math.random() * 30) + 70,
+        adsenseMigrated: true, // ✅ New uploads automatically marked as migrated
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -1155,7 +1275,7 @@ app.post('/api/upload', async (req, res) => {
       res.json({
         success: true,
         upload: responseData,
-        message: 'Upload successful! Your creation is now live.'
+        message: 'Upload successful! Your creation is now live with AdSense monetization.'
       });
 
     } catch (error) {
@@ -1212,7 +1332,12 @@ app.get('/api/uploads', async (req, res) => {
         uploads,
         currentPage: page,
         totalPages: Math.ceil(allUploads.length / limit),
-        totalCount: allUploads.length
+        totalCount: allUploads.length,
+        adsenseInfo: {
+          migrated: allUploads.filter(u => u.adsenseMigrated).length,
+          total: allUploads.length,
+          percentage: Math.round((allUploads.filter(u => u.adsenseMigrated).length / allUploads.length) * 100) || 0
+        }
       });
     } else {
       // Development mode with mock data
@@ -1228,7 +1353,12 @@ app.get('/api/uploads', async (req, res) => {
         uploads,
         currentPage: page,
         totalPages: Math.ceil(mockPrompts.length / limit),
-        totalCount: mockPrompts.length
+        totalCount: mockPrompts.length,
+        adsenseInfo: {
+          migrated: mockPrompts.filter(u => u.adsenseMigrated).length,
+          total: mockPrompts.length,
+          percentage: 100
+        }
       });
     }
   } catch (error) {
@@ -1242,16 +1372,21 @@ app.get('/api/uploads', async (req, res) => {
       })),
       currentPage: 1,
       totalPages: 1,
-      totalCount: mockPrompts.length
+      totalCount: mockPrompts.length,
+      adsenseInfo: {
+        migrated: mockPrompts.length,
+        total: mockPrompts.length,
+        percentage: 100
+      }
     });
   }
 });
 
-// Individual prompt pages for SEO
+// Individual prompt pages for SEO - UPDATED TO ALWAYS USE ADSENSE TEMPLATES
 app.get('/prompt/:id', async (req, res) => {
   try {
     const promptId = req.params.id;
-    console.log(`📄 Serving prompt page for ID: ${promptId}`);
+    console.log(`📄 Serving prompt page for ID: ${promptId} with AdSense`);
     
     let promptData;
 
@@ -1265,12 +1400,19 @@ app.get('/prompt/:id', async (req, res) => {
 
       const prompt = doc.data();
       promptData = createPromptData(prompt, doc.id);
+      
+      // Update view count
+      await db.collection('uploads').doc(promptId).update({
+        views: (prompt.views || 0) + 1,
+        updatedAt: new Date().toISOString()
+      });
     } else {
       // Development mode - use mock data
       const mockPrompt = mockPrompts.find(p => p.id === promptId) || mockPrompts[0];
       promptData = createPromptData(mockPrompt, promptId);
     }
 
+    // ✅ This will ALWAYS use the new AdSense-enabled template for ALL prompts
     const html = generatePromptHTML(promptData);
     res.set('Content-Type', 'text/html');
     res.send(html);
@@ -1323,6 +1465,8 @@ function createNewsData(news, id) {
 }
 
 function generateNewsHTML(newsData) {
+  const adsenseCode = generateAdSenseCode();
+  
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -1332,6 +1476,9 @@ function generateNewsHTML(newsData) {
     <title>${newsData.seoTitle}</title>
     <meta name="description" content="${newsData.metaDescription}">
     <meta name="robots" content="index, follow, max-image-preview:large">
+    
+    <!-- Google AdSense Auto Ads -->
+    ${adsenseCode}
     
     <!-- News-specific meta tags -->
     <meta property="og:type" content="article">
@@ -1357,9 +1504,36 @@ function generateNewsHTML(newsData) {
         .breaking-badge { background: #ff6b6b; color: white; padding: 8px 20px; border-radius: 25px; font-weight: bold; display: inline-block; margin-bottom: 15px; }
         .back-link { display: inline-block; margin-top: 30px; color: #4e54c8; text-decoration: none; font-weight: 600; }
         .back-link:hover { text-decoration: underline; }
+        
+        /* Ad Container Styles */
+        .ad-container {
+            margin: 25px 0;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .ad-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .news-article { padding: 20px; }
+            .news-title { font-size: 1.8rem; }
+            .news-image { height: 250px; }
+        }
     </style>
 </head>
 <body>
+    <!-- Auto Ads will be placed here automatically by Google -->
+    
     <article class="news-article">
         <header class="news-header">
             ${newsData.isBreaking ? '<span class="breaking-badge">BREAKING NEWS</span>' : ''}
@@ -1370,10 +1544,28 @@ function generateNewsHTML(newsData) {
             </div>
         </header>
         
+        <!-- Top Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+        
         <img src="${newsData.imageUrl}" alt="${newsData.title}" class="news-image">
+        
+        <!-- Middle Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
         
         <div class="news-content">
             ${newsData.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
+        </div>
+        
+        <!-- Bottom Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
         </div>
         
         <a href="/" class="back-link">← Back to Prompt Seen</a>
@@ -1431,7 +1623,7 @@ function sendNewsErrorPage(res, error) {
 </html>`);
 }
 
-// Existing helper functions (keep your original ones)
+// Existing helper functions
 function createPromptData(prompt, id) {
   return {
     id: id,
@@ -1450,12 +1642,15 @@ function createPromptData(prompt, id) {
     createdAt: prompt.createdAt ? 
       (typeof prompt.createdAt === 'string' ? prompt.createdAt : prompt.createdAt.toISOString()) : 
       new Date().toISOString(),
-    seoScore: prompt.seoScore || 0
+    seoScore: prompt.seoScore || 0,
+    adsenseMigrated: prompt.adsenseMigrated || false // Track migration status
   };
 }
 
 // Helper function to generate prompt HTML
 function generatePromptHTML(promptData) {
+  const adsenseCode = generateAdSenseCode();
+  
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -1466,6 +1661,9 @@ function generatePromptHTML(promptData) {
     <meta name="description" content="${promptData.metaDescription}">
     <meta name="keywords" content="${promptData.keywords.join(', ')}">
     <meta name="robots" content="index, follow, max-image-preview:large">
+    
+    <!-- Google AdSense Auto Ads -->
+    ${adsenseCode}
     
     <!-- Open Graph -->
     <meta property="og:title" content="${promptData.seoTitle}">
@@ -1487,6 +1685,25 @@ function generatePromptHTML(promptData) {
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f7fa; line-height: 1.6; color: #2d334a; }
         .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        /* Ad Container Styles */
+        .ad-container {
+            margin: 20px 0;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .ad-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
         h1 { color: #4e54c8; margin-bottom: 20px; font-size: 2rem; line-height: 1.3; }
         .user-info { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; color: #666; font-size: 0.9rem; }
         .prompt-image { width: 100%; height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 20px; background: #f0f4f8; }
@@ -1516,14 +1733,23 @@ function generatePromptHTML(promptData) {
     </style>
 </head>
 <body>
+    <!-- Auto Ads will be placed here automatically by Google -->
+    
     <div class="container">
         <div class="user-info">
             <i class="fas fa-user-circle"></i>
             <span>Created by: ${promptData.userName}</span>
             ${promptData.seoScore ? `<span class="seo-score">Prompt seen: ${promptData.seoScore}/100</span>` : ''}
+            ${promptData.adsenseMigrated ? `<span style="font-size: 0.7rem; background: #4e54c8; color: white; padding: 2px 8px; border-radius: 10px; margin-left: 5px;">AdSense</span>` : ''}
         </div>
         
         <h1>${promptData.title}</h1>
+        
+        <!-- Top Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
         
         <img src="${promptData.imageUrl}" 
              alt="${promptData.title} - AI Generated Image" 
@@ -1534,6 +1760,12 @@ function generatePromptHTML(promptData) {
         <div class="prompt-content">
             <h2><i class="fas fa-magic"></i> Prompt Used:</h2>
             <div class="prompt-text">${promptData.promptText}</div>
+        </div>
+        
+        <!-- Middle Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
         </div>
         
         <div class="prompt-meta">
@@ -1565,6 +1797,12 @@ function generatePromptHTML(promptData) {
             <button class="engagement-btn share-btn" onclick="handleShare('${promptData.id}')">
                 <i class="fas fa-share"></i> Share
             </button>
+        </div>
+        
+        <!-- Bottom Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
         </div>
         
         <a href="/" class="back-link">
@@ -1691,6 +1929,8 @@ function generateCategoryHTML(category, baseUrl) {
   const categoryName = categoryNames[category] || 'AI Prompts';
   const description = `Explore ${categoryName} prompts and AI-generated content. Discover the best prompt engineering techniques for ${categoryName.toLowerCase()}.`;
 
+  const adsenseCode = generateAdSenseCode();
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -1700,6 +1940,9 @@ function generateCategoryHTML(category, baseUrl) {
     <title>${categoryName} Prompts - Prompt Seen</title>
     <meta name="description" content="${description}">
     <meta name="robots" content="index, follow">
+    
+    <!-- Google AdSense Auto Ads -->
+    ${adsenseCode}
     
     <!-- Open Graph -->
     <meta property="og:title" content="${categoryName} Prompts - Prompt Seen">
@@ -1729,14 +1972,53 @@ function generateCategoryHTML(category, baseUrl) {
         p { color: #666; line-height: 1.6; margin-bottom: 30px; }
         .back-link { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; }
         .back-link:hover { background: #4e54c8; color: white; }
+        
+        /* Ad Container Styles */
+        .ad-container {
+            margin: 25px 0;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .ad-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
     </style>
 </head>
 <body>
+    <!-- Auto Ads will be placed here automatically by Google -->
+    
     <div class="container">
+        <!-- Top Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+        
         <h1>${categoryName} Prompts</h1>
         <p>${description}</p>
         <p>This category page is automatically generated for SEO purposes. The actual ${categoryName.toLowerCase()} content is available on our main showcase page.</p>
+        
+        <!-- Middle Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+        
         <a href="/" class="back-link">← Back to Prompt Showcase</a>
+        
+        <!-- Bottom Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
     </div>
 </body>
 </html>`;
@@ -1794,32 +2076,6 @@ function sendErrorPage(res, error) {
 </html>`);
 }
 
-
-// Helper function for error page
-function sendErrorPage(res, error) {
-  res.status(500).send(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Error - Prompt Seen</title>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
-        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h1 { color: #ff6b6b; margin-bottom: 20px; }
-        a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Error Loading Prompt</h1>
-        <p>There was an error loading this prompt. Please try again later.</p>
-        <a href="/">← Return to Home</a>
-    </div>
-</body>
-</html>`);
-}
-
 // Serve main page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -1840,7 +2096,7 @@ app.use((req, res) => {
 });
 
 // Start server
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`🚀 Server running on port ${port}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Base URL: http://localhost:${port}`);
@@ -1858,6 +2114,19 @@ app.listen(port, () => {
   console.log(`🗺️  Sitemap: http://localhost:${port}/sitemap.xml`);
   console.log(`🤖 Robots.txt: http://localhost:${port}/robots.txt`);
   console.log(`❤️  Health check: http://localhost:${port}/health`);
+  console.log(`💰 AdSense Client ID: ${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}`);
+  console.log(`🔄 AdSense Migration: http://localhost:${port}/admin/migrate-adsense`);
+  
+  // Auto-migrate on startup (optional - remove if you want manual control)
+  if (process.env.AUTO_MIGRATE_ADSENSE === 'true') {
+    console.log('🔄 Auto-migrating existing prompts for AdSense...');
+    try {
+      const migratedCount = await migrateExistingPromptsForAdSense();
+      console.log(`✅ Auto-migration completed: ${migratedCount} prompts migrated`);
+    } catch (error) {
+      console.error('❌ Auto-migration failed:', error);
+    }
+  }
   
   if (!db || !db.collection) {
     console.log(`🎭 Running in DEVELOPMENT mode with mock data`);
