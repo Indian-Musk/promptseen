@@ -9,6 +9,11 @@ const firebaseConfig = {
   measurementId: "G-C3CMBQR6GH"
 };
 
+// Global variables for synchronized feeds
+let allPrompts = [];
+let lastPromptUpdate = 0;
+const PROMPT_CACHE_DURATION = 30000; // 30 seconds
+
 // Add this to your existing script.js file or include it in a script tag
 document.addEventListener('DOMContentLoaded', function() {
     // Add scroll effect to header for desktop
@@ -89,10 +94,10 @@ function showAuthElements() {
       authSection.innerHTML = `
         <div class="user-profile">
           <img src="${user.avatar || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHZpZXdCb3g9IjAgMCAzNiAzNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTgiIGN5PSIxOCIgcj0iMTgiIGZpbGw9IiM0ZTU0YzgiLz4KPGNpcmNsZSBjeD0iMTgiIGN5PSIxNCIgcj0iNSIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTI2IDI4QzI2IDI0LjY4NjMgMjIuNDE4MyAyMiAxOCAyMkMxMy41ODE3IDIyIDEwIDI0LjY4NjMgMTAgMjgiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo='}"  
-               alt="${user.name}" 
+               alt="${user.name || 'User'}" 
                class="user-avatar"
                onerror="this.src='https://via.placeholder.com/36x36/4e54c8/white?text=U'">
-          <span>${user.name}</span>
+          <span>${user.name || 'User'}</span>
           <button class="logout-btn" title="Logout"><i class="fas fa-sign-out-alt"></i></button>
         </div>
       `;
@@ -125,6 +130,411 @@ function showAuthElements() {
   if (newsUploadButton) {
     newsUploadButton.style.display = user ? 'flex' : 'none';
   }
+}
+
+// YouTube Shorts Style Horizontal Feed - UPDATED
+class ShortsHorizontalFeed {
+    constructor() {
+        this.currentPosition = 0;
+        this.track = null;
+        this.items = [];
+        this.isLoading = false;
+        this.hasMore = true;
+        this.last24hPrompts = [];
+        this.init();
+    }
+
+    init() {
+        this.createShortsFeed();
+        this.setupEventListeners();
+        this.loadLatestPrompts();
+    }
+
+    createShortsFeed() {
+        const feedHTML = `
+            <section class="shorts-horizontal-feed" id="shortsHorizontalFeed">
+                <div class="container">
+                    <div class="shorts-feed-header">
+                        <h3>Latest Prompt <span class="new-badge">Seen</span></h3>
+                        <div class="shorts-controls">
+                            <button class="shorts-control-btn" id="shortsPrevBtn">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button class="shorts-control-btn" id="shortsNextBtn">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="shorts-track-container">
+                        <div class="shorts-track" id="shortsTrack">
+                            <div class="shorts-loading">
+                                <div class="shorts-skeleton"></div>
+                                <div class="shorts-skeleton"></div>
+                                <div class="shorts-skeleton"></div>
+                                <div class="shorts-skeleton"></div>
+                                <div class="shorts-skeleton"></div>
+                                <div class="shorts-skeleton"></div>
+                                <div class="shorts-skeleton"></div>
+                                <div class="shorts-skeleton"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        `;
+
+        // Insert after header
+        const header = document.getElementById('mainHeader');
+        if (header) {
+            header.insertAdjacentHTML('afterend', feedHTML);
+        }
+        
+        this.track = document.getElementById('shortsTrack');
+    }
+
+    setupEventListeners() {
+        const prevBtn = document.getElementById('shortsPrevBtn');
+        const nextBtn = document.getElementById('shortsNextBtn');
+        const trackContainer = document.querySelector('.shorts-track-container');
+
+        if (prevBtn && nextBtn) {
+            prevBtn.addEventListener('click', () => this.scrollShorts(-1));
+            nextBtn.addEventListener('click', () => this.scrollShorts(1));
+        }
+
+        // Touch/swipe support for mobile
+        if (trackContainer) {
+            let startX = 0;
+            let scrollLeft = 0;
+
+            trackContainer.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].pageX;
+                scrollLeft = this.track.scrollLeft;
+            });
+
+            trackContainer.addEventListener('touchmove', (e) => {
+                if (!startX) return;
+                const x = e.touches[0].pageX;
+                const walk = (x - startX) * 2;
+                this.track.scrollLeft = scrollLeft - walk;
+            });
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') this.scrollShorts(-1);
+            if (e.key === 'ArrowRight') this.scrollShorts(1);
+        });
+
+        // Infinite scroll detection
+        this.setupInfiniteScroll();
+    }
+
+    async loadLatestPrompts() {
+        try {
+            this.isLoading = true;
+            
+            // Show loading state for at least 1 second
+            const loadingPromise = new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Get fresh prompts data
+            await this.loadAllPrompts();
+            
+            // Filter prompts from last 24 hours with safe date handling
+            const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+            this.last24hPrompts = allPrompts.filter(prompt => {
+                if (!prompt || !prompt.createdAt) return false;
+                
+                try {
+                    let promptDate;
+                    if (typeof prompt.createdAt === 'string') {
+                        promptDate = new Date(prompt.createdAt);
+                    } else if (prompt.createdAt.toDate && typeof prompt.createdAt.toDate === 'function') {
+                        promptDate = prompt.createdAt.toDate();
+                    } else {
+                        promptDate = new Date();
+                    }
+                    
+                    return promptDate > twentyFourHoursAgo;
+                } catch (error) {
+                    console.error('Error parsing date for prompt:', prompt.id, error);
+                    return false;
+                }
+            }).sort((a, b) => {
+                // Safe sorting
+                try {
+                    const dateA = a.createdAt ? new Date(a.createdAt) : new Date();
+                    const dateB = b.createdAt ? new Date(b.createdAt) : new Date();
+                    return dateB - dateA;
+                } catch (error) {
+                    return 0;
+                }
+            });
+
+            // Wait for minimum loading time
+            await loadingPromise;
+
+            this.displayShorts();
+            
+        } catch (error) {
+            console.error('Error loading latest prompts:', error);
+            // On error, show empty state
+            this.last24hPrompts = [];
+            this.displayShorts();
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    // Add this method to load all prompts
+    async loadAllPrompts() {
+        const now = Date.now();
+        // Use cache if data is fresh
+        if (now - lastPromptUpdate < PROMPT_CACHE_DURATION && allPrompts.length > 0) {
+            return allPrompts;
+        }
+
+        try {
+            const user = await getCurrentUser();
+            const userId = user?.uid || null;
+            const params = new URLSearchParams({
+                page: '1',
+                limit: '1000',
+                ...(userId && { userId })
+            });
+            
+            const response = await fetch(`/api/uploads?${params}`);
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Validate and sanitize the data
+                allPrompts = (data.uploads || []).map(prompt => ({
+                    id: prompt.id || `unknown-${Date.now()}-${Math.random()}`,
+                    title: prompt.title || 'Untitled Prompt',
+                    promptText: prompt.promptText || 'No prompt text available.',
+                    imageUrl: prompt.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=AI+Image',
+                    userName: prompt.userName || 'Anonymous',
+                    likes: parseInt(prompt.likes) || 0,
+                    views: parseInt(prompt.views) || 0,
+                    uses: parseInt(prompt.uses) || 0,
+                    keywords: Array.isArray(prompt.keywords) ? prompt.keywords : ['AI', 'prompt'],
+                    category: prompt.category || 'general',
+                    createdAt: prompt.createdAt || new Date().toISOString(),
+                    updatedAt: prompt.updatedAt || new Date().toISOString()
+                }));
+                
+                lastPromptUpdate = now;
+                console.log(`Loaded ${allPrompts.length} prompts for feeds`);
+            } else {
+                throw new Error('Failed to fetch prompts');
+            }
+        } catch (error) {
+            console.error('Error loading prompts for feeds:', error);
+            // Keep existing data if available, otherwise use empty array
+            if (allPrompts.length === 0) {
+                allPrompts = [];
+            }
+        }
+        
+        return allPrompts;
+    }
+
+    displayShorts() {
+        if (!this.track) return;
+
+        if (this.last24hPrompts.length === 0) {
+            this.track.innerHTML = `
+                <div class="no-prompts" style="text-align: center; padding: 40px; color: #666; width: 100%;">
+                    <i class="fas fa-clock" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
+                    <p>No recent prompts in the last 24 hours</p>
+                    <p style="font-size: 0.9rem; margin-top: 5px;">Upload a prompt to see it here!</p>
+                </div>
+            `;
+            return;
+        }
+
+        const shortsHTML = this.last24hPrompts.map(prompt => this.createShortItem(prompt)).join('');
+        this.track.innerHTML = shortsHTML;
+
+        // Add click handlers
+        this.track.querySelectorAll('.shorts-item').forEach((item, index) => {
+            item.addEventListener('click', () => {
+                this.openPromptPage(this.last24hPrompts[index].id);
+            });
+        });
+
+        this.updateNavigation();
+    }
+
+    createShortItem(prompt) {
+        // Safe data access
+        const safePrompt = prompt || {};
+        const promptId = safePrompt.id || 'unknown';
+        const title = safePrompt.title || 'Untitled Prompt';
+        const imageUrl = safePrompt.imageUrl || 'https://via.placeholder.com/120x160/4e54c8/white?text=Prompt';
+        const views = safePrompt.views || 0;
+        const createdAt = safePrompt.createdAt || new Date().toISOString();
+        
+        const timeAgo = this.getTimeAgo(createdAt);
+        const isNew = this.isWithinLastHour(createdAt);
+
+        return `
+            <div class="shorts-item" data-prompt-id="${promptId}">
+                <div class="shorts-thumbnail">
+                    <img src="${imageUrl}" 
+                         alt="${title}"
+                         loading="lazy"
+                         onerror="this.src='https://via.placeholder.com/120x160/4e54c8/white?text=Prompt'">
+                    <div class="shorts-views">
+                        <i class="fas fa-eye"></i> ${this.formatCount(views)}
+                    </div>
+                    ${isNew ? '<div class="shorts-new-indicator"></div>' : ''}
+                </div>
+                <div class="shorts-info">
+                    <div class="shorts-title">${title}</div>
+                    <div class="shorts-meta">
+                        <span class="shorts-time">View Prompt</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    getTimeAgo(dateString) {
+        if (!dateString) return 'Unknown';
+        
+        try {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffInHours = Math.floor((now - date) / (1000 * 60 * 60));
+            
+            if (diffInHours < 1) return 'Now';
+            if (diffInHours < 24) return `${diffInHours}h`;
+            
+            const diffInDays = Math.floor(diffInHours / 24);
+            return `${diffInDays}d`;
+        } catch (error) {
+            console.error('Error calculating time ago:', error);
+            return 'Unknown';
+        }
+    }
+
+    isWithinLastHour(dateString) {
+        if (!dateString) return false;
+        
+        try {
+            const date = new Date(dateString);
+            const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+            return date > oneHourAgo;
+        } catch (error) {
+            console.error('Error checking if within last hour:', error);
+            return false;
+        }
+    }
+
+    scrollShorts(direction) {
+        if (!this.track) return;
+
+        const itemWidth = 132; // 120px + 12px gap
+        const visibleItems = Math.floor(this.track.parentElement.offsetWidth / itemWidth);
+        const scrollAmount = itemWidth * visibleItems * direction;
+
+        this.track.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+
+        this.updateNavigation();
+    }
+
+    updateNavigation() {
+        const prevBtn = document.getElementById('shortsPrevBtn');
+        const nextBtn = document.getElementById('shortsNextBtn');
+
+        if (!this.track || !prevBtn || !nextBtn) return;
+
+        const scrollLeft = this.track.scrollLeft;
+        const scrollWidth = this.track.scrollWidth;
+        const clientWidth = this.track.clientWidth;
+
+        prevBtn.disabled = scrollLeft <= 10;
+        nextBtn.disabled = scrollLeft >= scrollWidth - clientWidth - 10;
+    }
+
+    setupInfiniteScroll() {
+        // Load more when near the end of horizontal scroll
+        if (this.track) {
+            this.track.addEventListener('scroll', () => {
+                const scrollLeft = this.track.scrollLeft;
+                const scrollWidth = this.track.scrollWidth;
+                const clientWidth = this.track.clientWidth;
+
+                if (scrollLeft + clientWidth >= scrollWidth - 100 && this.hasMore && !this.isLoading) {
+                    this.loadMoreShorts();
+                }
+            });
+        }
+    }
+
+    async loadMoreShorts() {
+        // This can be extended to load more prompts if needed
+        console.log('Loading more shorts...');
+        // Implementation for infinite horizontal loading
+    }
+
+    openPromptPage(promptId) {
+        if (promptId && promptId !== 'unknown') {
+            window.open(`/prompt/${promptId}`, '_blank');
+        }
+    }
+
+    formatCount(count) {
+        // Handle undefined, null, or non-numeric values
+        if (count === undefined || count === null || isNaN(count)) {
+            return '0';
+        }
+        
+        const numCount = typeof count === 'number' ? count : parseInt(count);
+        
+        if (isNaN(numCount)) {
+            return '0';
+        }
+        
+        if (numCount >= 1000000) {
+            return (numCount / 1000000).toFixed(1) + 'M';
+        } else if (numCount >= 1000) {
+            return (numCount / 1000).toFixed(1) + 'K';
+        }
+        return numCount.toString();
+    }
+
+    showErrorState() {
+        if (this.track) {
+            this.track.innerHTML = `
+                <div class="shorts-error" style="text-align: center; padding: 40px; color: #666;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p>Failed to load latest prompts</p>
+                    <button onclick="shortsHorizontalFeed.loadLatestPrompts()" 
+                            style="margin-top: 10px; padding: 8px 16px; background: #4e54c8; color: white; border: none; border-radius: 20px; cursor: pointer;">
+                        Retry
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    // Method to refresh the feed with new prompts
+    async refreshFeed() {
+        await this.loadAllPrompts(); // Refresh the global data first
+        await this.loadLatestPrompts();
+    }
+
+    // Auto-refresh every 2 minutes to check for new prompts
+    startAutoRefresh() {
+        setInterval(async () => {
+            await this.refreshFeed();
+        }, 2 * 60 * 1000);
+    }
 }
 
 // YouTube-style Category Manager
@@ -203,15 +613,14 @@ class CategoryManager {
 
     getCategoryDisplayName(category) {
         const displayNames = {
-          
-            'photography': 'Photography',
-            
+            'photography': 'All',
         };
         
         return displayNames[category] || this.capitalizeFirstLetter(category);
     }
 
     capitalizeFirstLetter(string) {
+        if (!string) return '';
         return string.charAt(0).toUpperCase() + string.slice(1);
     }
 
@@ -357,7 +766,7 @@ class NewsManager {
     const newsContainer = document.getElementById('newsContainer');
     if (!newsContainer) return;
     
-    if (news.length === 0) {
+    if (!news || news.length === 0) {
       newsContainer.innerHTML = `
         <div class="no-news" style="grid-column: 1 / -1; text-align: center; padding: 40px; color: #666;">
           <i class="fas fa-newspaper" style="font-size: 3rem; margin-bottom: 20px; opacity: 0.5;"></i>
@@ -368,25 +777,32 @@ class NewsManager {
       return;
     }
     
-    newsContainer.innerHTML = news.map(item => `
-      <div class="news-card" data-news-id="${item.id}">
-        ${item.isBreaking ? '<span class="breaking-badge">BREAKING</span>' : ''}
-        ${item.isFeatured ? '<span class="featured-badge">FEATURED</span>' : ''}
-        <img src="${item.imageUrl}" alt="${item.title}" class="news-image" loading="lazy">
-        <div class="news-content">
-          <h3 class="news-title">${item.title}</h3>
-          <p class="news-excerpt">${item.excerpt}</p>
-          <div class="news-meta">
-            <span class="news-author">By ${item.author}</span>
-            <span class="news-date">${new Date(item.publishedAt).toLocaleDateString()}</span>
-          </div>
-          <div class="news-stats">
-            <span class="news-views"><i class="fas fa-eye"></i> ${this.formatCount(item.views)}</span>
-            <a href="/news/${item.id}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+    newsContainer.innerHTML = news.map(item => {
+      const safeItem = item || {};
+      return `
+        <div class="news-card" data-news-id="${safeItem.id || 'unknown'}">
+          ${safeItem.isBreaking ? '<span class="breaking-badge">BREAKING</span>' : ''}
+          ${safeItem.isFeatured ? '<span class="featured-badge">FEATURED</span>' : ''}
+          <img src="${safeItem.imageUrl || 'https://via.placeholder.com/300x200/4e54c8/white?text=News'}" 
+               alt="${safeItem.title || 'News'}" 
+               class="news-image" 
+               loading="lazy"
+               onerror="this.src='https://via.placeholder.com/300x200/4e54c8/white?text=News'">
+          <div class="news-content">
+            <h3 class="news-title">${safeItem.title || 'Untitled News'}</h3>
+            <p class="news-excerpt">${safeItem.excerpt || 'No excerpt available.'}</p>
+            <div class="news-meta">
+              <span class="news-author">By ${safeItem.author || 'Unknown'}</span>
+              <span class="news-date">${safeItem.publishedAt ? new Date(safeItem.publishedAt).toLocaleDateString() : 'Unknown date'}</span>
+            </div>
+            <div class="news-stats">
+              <span class="news-views"><i class="fas fa-eye"></i> ${this.formatCount(safeItem.views)}</span>
+              <a href="/news/${safeItem.id || 'unknown'}" class="read-more">Read More <i class="fas fa-arrow-right"></i></a>
+            </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   }
   
   showLoading() {
@@ -418,12 +834,23 @@ class NewsManager {
   }
   
   formatCount(count) {
-    if (count >= 1000000) {
-      return (count / 1000000).toFixed(1) + 'M';
-    } else if (count >= 1000) {
-      return (count / 1000).toFixed(1) + 'K';
+    // Handle undefined, null, or non-numeric values
+    if (count === undefined || count === null || isNaN(count)) {
+      return '0';
     }
-    return count.toString();
+    
+    const numCount = typeof count === 'number' ? count : parseInt(count);
+    
+    if (isNaN(numCount)) {
+      return '0';
+    }
+    
+    if (numCount >= 1000000) {
+      return (numCount / 1000000).toFixed(1) + 'M';
+    } else if (numCount >= 1000) {
+      return (numCount / 1000).toFixed(1) + 'K';
+    }
+    return numCount.toString();
   }
 }
 
@@ -532,14 +959,14 @@ async function handleNewsSubmit(e) {
     return;
   }
   
-  const title = document.getElementById('newsTitle').value;
-  const content = document.getElementById('newsContent').value;
-  const excerpt = document.getElementById('newsExcerpt').value;
-  const category = document.getElementById('newsCategory').value;
-  const tags = document.getElementById('newsTags').value;
-  const isBreaking = document.getElementById('isBreaking').checked;
-  const isFeatured = document.getElementById('isFeatured').checked;
-  const file = document.getElementById('newsImageUpload').files[0];
+  const title = document.getElementById('newsTitle')?.value || '';
+  const content = document.getElementById('newsContent')?.value || '';
+  const excerpt = document.getElementById('newsExcerpt')?.value || '';
+  const category = document.getElementById('newsCategory')?.value || 'ai-news';
+  const tags = document.getElementById('newsTags')?.value || '';
+  const isBreaking = document.getElementById('isBreaking')?.checked || false;
+  const isFeatured = document.getElementById('isFeatured')?.checked || false;
+  const file = document.getElementById('newsImageUpload')?.files[0];
   
   if (!title || !content) {
     alert('Please fill in title and content');
@@ -567,7 +994,7 @@ async function handleNewsSubmit(e) {
     formData.append('tags', tags);
     formData.append('isBreaking', isBreaking);
     formData.append('isFeatured', isFeatured);
-    formData.append('author', user.name);
+    formData.append('author', user.name || 'User');
     if (file) formData.append('image', file);
     
     const response = await fetch('/api/upload-news', {
@@ -614,15 +1041,13 @@ async function handleNewsSubmit(e) {
   }
 }
 
-// YouTube-style Prompts with Infinite Scroll
+// YouTube-style Prompts with Infinite Scroll - UPDATED
 class YouTubeStylePrompts {
   constructor() {
     this.currentPage = 1;
     this.isLoading = false;
     this.hasMore = true;
-    this.promptsPerPage = 4;
-    this.allPrompts = [];
-    this.filteredPrompts = null;
+    this.promptsPerPage = 12;
     this.loadedPrompts = new Set();
     this.init();
   }
@@ -995,19 +1420,20 @@ class YouTubeStylePrompts {
       return;
     }
 
-    console.log('Loading initial prompts...');
+    console.log('Loading initial prompts for vertical feed...');
     
     // Clear any existing content and apply critical styles
     promptsContainer.innerHTML = '';
     promptsContainer.className = 'shorts-container';
     
-    // Add loading skeletons - ensure 4 loading cards for desktop
+    // Add loading skeletons
     promptsContainer.innerHTML = this.createLoadingShorts();
 
     try {
       await this.loadAllPrompts();
-      const initialPrompts = this.allPrompts.slice(0, this.promptsPerPage);
-      console.log(`Loaded ${initialPrompts.length} initial prompts`);
+      const olderPrompts = this.getOlderPrompts(); // Get prompts older than 24h
+      const initialPrompts = olderPrompts.slice(0, this.promptsPerPage);
+      console.log(`Loaded ${initialPrompts.length} older prompts for vertical feed`);
       this.displayPrompts(initialPrompts, true);
     } catch (error) {
       console.error('Error loading initial prompts:', error);
@@ -1016,30 +1442,87 @@ class YouTubeStylePrompts {
   }
 
   async loadAllPrompts() {
+    const now = Date.now();
+    // Use cache if data is fresh
+    if (now - lastPromptUpdate < PROMPT_CACHE_DURATION && allPrompts.length > 0) {
+      return allPrompts;
+    }
+
     try {
-      console.log('Fetching all prompts from API...');
       const user = await getCurrentUser();
       const userId = user?.uid || null;
       const params = new URLSearchParams({
         page: '1',
-        limit: '100',
+        limit: '1000',
         ...(userId && { userId })
       });
       
       const response = await fetch(`/api/uploads?${params}`);
       if (response.ok) {
         const data = await response.json();
-        this.allPrompts = data.uploads || [];
-        console.log(`Loaded ${this.allPrompts.length} prompts from API`);
+        
+        // Validate and sanitize the data
+        allPrompts = (data.uploads || []).map(prompt => ({
+          id: prompt.id || `unknown-${Date.now()}-${Math.random()}`,
+          title: prompt.title || 'Untitled Prompt',
+          promptText: prompt.promptText || 'No prompt text available.',
+          imageUrl: prompt.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=AI+Image',
+          userName: prompt.userName || 'Anonymous',
+          likes: parseInt(prompt.likes) || 0,
+          views: parseInt(prompt.views) || 0,
+          uses: parseInt(prompt.uses) || 0,
+          keywords: Array.isArray(prompt.keywords) ? prompt.keywords : ['AI', 'prompt'],
+          category: prompt.category || 'general',
+          createdAt: prompt.createdAt || new Date().toISOString(),
+          updatedAt: prompt.updatedAt || new Date().toISOString()
+        }));
+        
+        lastPromptUpdate = now;
+        console.log(`Loaded ${allPrompts.length} prompts for vertical feed`);
       } else {
         throw new Error('Failed to fetch prompts');
       }
     } catch (error) {
       console.error('API fetch error:', error);
-      // Fallback to mock data
-      this.allPrompts = this.generateMockPrompts(50);
-      console.log(`Generated ${this.allPrompts.length} mock prompts`);
+      if (allPrompts.length === 0) {
+        allPrompts = [];
+      }
     }
+    
+    return allPrompts;
+  }
+
+  // Get prompts older than 24 hours for vertical feed
+  getOlderPrompts() {
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    return allPrompts.filter(prompt => {
+      if (!prompt || !prompt.createdAt) return true;
+      
+      try {
+        let promptDate;
+        if (typeof prompt.createdAt === 'string') {
+          promptDate = new Date(prompt.createdAt);
+        } else if (prompt.createdAt.toDate && typeof prompt.createdAt.toDate === 'function') {
+          promptDate = prompt.createdAt.toDate();
+        } else {
+          promptDate = new Date();
+        }
+        
+        return promptDate <= twentyFourHoursAgo;
+      } catch (error) {
+        console.error('Error parsing date for prompt:', prompt.id, error);
+        return true;
+      }
+    }).sort((a, b) => {
+      // Safe sorting
+      try {
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date();
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date();
+        return dateB - dateA;
+      } catch (error) {
+        return 0;
+      }
+    });
   }
 
   async loadMorePrompts() {
@@ -1050,25 +1533,25 @@ class YouTubeStylePrompts {
 
     this.isLoading = true;
     this.showLoadingIndicator();
-    console.log(`Loading page ${this.currentPage + 1}...`);
+    console.log(`Loading page ${this.currentPage + 1} for vertical feed...`);
 
     try {
       // Simulate API delay for better UX
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      const promptsToUse = this.filteredPrompts || this.allPrompts;
+      const olderPrompts = this.getOlderPrompts();
       const startIndex = this.currentPage * this.promptsPerPage;
-      const nextPrompts = promptsToUse.slice(startIndex, startIndex + this.promptsPerPage);
+      const nextPrompts = olderPrompts.slice(startIndex, startIndex + this.promptsPerPage);
       
       if (nextPrompts.length > 0) {
-        console.log(`Displaying ${nextPrompts.length} more prompts`);
+        console.log(`Displaying ${nextPrompts.length} more older prompts`);
         this.displayPrompts(nextPrompts, false);
         this.currentPage++;
         
         // Check if we need to load more immediately (for short screens)
         setTimeout(() => this.checkScrollPosition(), 500);
       } else {
-        console.log('No more prompts to load');
+        console.log('No more older prompts to load');
         this.hasMore = false;
         this.hideLoadingIndicator();
         this.showNoMorePrompts();
@@ -1083,7 +1566,7 @@ class YouTubeStylePrompts {
   }
 
   filterByCategory(category) {
-    const filteredPrompts = this.allPrompts.filter(prompt => 
+    const filteredPrompts = allPrompts.filter(prompt => 
       prompt.category === category
     );
     
@@ -1091,14 +1574,18 @@ class YouTubeStylePrompts {
   }
 
   filterBySearchTerm(searchTerm) {
-    const filteredPrompts = this.allPrompts.filter(prompt => {
+    const filteredPrompts = allPrompts.filter(prompt => {
       const searchLower = searchTerm.toLowerCase();
+      const title = (prompt.title || '').toLowerCase();
+      const promptText = (prompt.promptText || '').toLowerCase();
+      const keywords = prompt.keywords || [];
+      
       return (
-        prompt.title.toLowerCase().includes(searchLower) ||
-        prompt.promptText.toLowerCase().includes(searchLower) ||
-        (prompt.keywords && prompt.keywords.some(keyword => 
+        title.includes(searchLower) ||
+        promptText.includes(searchLower) ||
+        keywords.some(keyword => 
           keyword.toLowerCase().includes(searchLower)
-        ))
+        )
       );
     });
     
@@ -1112,7 +1599,7 @@ class YouTubeStylePrompts {
     promptsContainer.innerHTML = '';
     this.loadedPrompts.clear();
 
-    if (filteredPrompts.length === 0) {
+    if (!filteredPrompts || filteredPrompts.length === 0) {
       this.showNoResults();
       return;
     }
@@ -1143,34 +1630,6 @@ class YouTubeStylePrompts {
     }
   }
 
-  generateMockPrompts(count) {
-    const prompts = [];
-    const categories = ['photography', 'design'];
-    const styles = ['cyberpunk', 'fantasy', 'minimalist', 'realistic', 'anime', 'painting'];
-    const adjectives = ['amazing', 'stunning', 'beautiful', 'epic', 'magnificent', 'breathtaking'];
-    
-    for (let i = 1; i <= count; i++) {
-      const style = styles[Math.floor(Math.random() * styles.length)];
-      const category = categories[Math.floor(Math.random() * categories.length)];
-      const adjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-      
-      prompts.push({
-        id: `prompt-${i}`,
-        title: `${adjective} ${style} ${category}`,
-        promptText: `Create a ${style} ${category} image with perfect lighting, highly detailed, professional composition, trending on art station, 4K resolution, masterpiece quality`,
-        imageUrl: `https://picsum.photos/300/500?random=${i}&blur=2`,
-        likes: Math.floor(Math.random() * 1000),
-        views: Math.floor(Math.random() * 5000),
-        uses: Math.floor(Math.random() * 500),
-        userName: `creator${i}`,
-        category: category,
-        createdAt: new Date().toISOString()
-      });
-    }
-    
-    return prompts;
-  }
-
   displayPrompts(prompts, isInitial) {
     const promptsContainer = document.getElementById('promptsContainer');
     if (!promptsContainer) return;
@@ -1185,15 +1644,22 @@ class YouTubeStylePrompts {
       this.hideLoadingIndicator();
     }
 
+    if (!prompts || prompts.length === 0) {
+      this.showNoResults();
+      return;
+    }
+
     prompts.forEach((prompt, index) => {
       // Avoid duplicates
-      if (this.loadedPrompts.has(prompt.id)) {
+      if (!prompt || this.loadedPrompts.has(prompt.id)) {
         return;
       }
       
       const promptElement = this.createShortsPrompt(prompt, index);
-      promptsContainer.appendChild(promptElement);
-      this.loadedPrompts.add(prompt.id);
+      if (promptElement) {
+        promptsContainer.appendChild(promptElement);
+        this.loadedPrompts.add(prompt.id);
+      }
     });
 
     // Animate prompts in
@@ -1203,65 +1669,85 @@ class YouTubeStylePrompts {
 
     // Track views for new prompts
     prompts.forEach(prompt => {
-      this.trackPromptView(prompt.id);
+      if (prompt && prompt.id) {
+        this.trackPromptView(prompt.id);
+      }
     });
 
-    console.log(`Displayed ${prompts.length} prompts, total loaded: ${this.loadedPrompts.size}`);
+    console.log(`Displayed ${prompts.length} prompts in vertical feed, total loaded: ${this.loadedPrompts.size}`);
   }
 
   createShortsPrompt(prompt, index) {
+    // Safe data access
+    const safePrompt = prompt || {};
+    const promptId = safePrompt.id || `unknown-${index}`;
+    const title = safePrompt.title || 'Untitled Prompt';
+    const imageUrl = safePrompt.imageUrl || 'https://via.placeholder.com/300x500/4e54c8/white?text=AI+Image';
+    const promptText = safePrompt.promptText || 'No prompt text available.';
+    const userName = safePrompt.userName || 'Anonymous';
+    const views = safePrompt.views || 0;
+    const likes = safePrompt.likes || 0;
+    const uses = safePrompt.uses || 0;
+    const category = safePrompt.category || 'general';
+    
+    // Safe date handling
+    let createdAt = safePrompt.createdAt;
+    if (!createdAt || typeof createdAt !== 'string') {
+      createdAt = new Date().toISOString();
+    }
+
     const promptDiv = document.createElement('div');
     promptDiv.className = 'shorts-prompt-card';
-    promptDiv.setAttribute('data-prompt-id', prompt.id);
+    promptDiv.setAttribute('data-prompt-id', promptId);
     promptDiv.style.opacity = '0';
     promptDiv.style.transform = 'translateY(20px)';
     promptDiv.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
 
     promptDiv.innerHTML = `
       <div class="shorts-video-container">
-        <img src="${prompt.imageUrl}" 
-             alt="${prompt.title}"
+        <img src="${imageUrl}" 
+             alt="${title}"
              class="shorts-image"
              loading="lazy"
              onerror="this.src='https://via.placeholder.com/300x500/4e54c8/white?text=AI+Image'">
         
         <div class="shorts-engagement">
-          <button class="engagement-action like-btn" data-prompt-id="${prompt.id}" title="Like">
+          <button class="engagement-action like-btn" data-prompt-id="${promptId}" title="Like">
             <i class="far fa-heart"></i>
-            <span class="engagement-count likes-count">${this.formatCount(prompt.likes)}</span>
+            <span class="engagement-count likes-count">${this.formatCount(likes)}</span>
           </button>
           
-          <button class="engagement-action use-btn" data-prompt-id="${prompt.id}" title="Mark as used">
+          <button class="engagement-action use-btn" data-prompt-id="${promptId}" title="Mark as used">
             <i class="fas fa-download"></i>
-            <span class="engagement-count uses-count">${this.formatCount(prompt.uses)}</span>
+            <span class="engagement-count uses-count">${this.formatCount(uses)}</span>
           </button>
           
-          <button class="engagement-action share-btn" data-prompt-id="${prompt.id}" title="Share">
+          <button class="engagement-action share-btn" data-prompt-id="${promptId}" title="Share">
             <i class="fas fa-share"></i>
             <span class="engagement-count">Share</span>
           </button>
           
-          <a href="/prompt/${prompt.id}" class="engagement-action view-btn" target="_blank" title="View details">
+          <a href="/prompt/${promptId}" class="engagement-action view-btn" target="_blank" title="View details">
             <i class="fas fa-expand"></i>
-            <span class="engagement-count views-count">${this.formatCount(prompt.views)}</span>
+            <span class="engagement-count views-count">${this.formatCount(views)}</span>
           </a>
         </div>
       </div>
       
       <div class="shorts-info">
         <div class="shorts-prompt-text">
-          ${prompt.promptText}
+          ${promptText}
         </div>
         <div class="shorts-meta">
-          <span>@${prompt.userName}</span>
-          <span>${this.formatCount(prompt.views)} views</span>
+          <span>@${userName}</span>
+          <span>${this.formatCount(views)} views</span>
         </div>
         <div class="prompt-actions">
-          <button class="copy-prompt-btn" data-prompt-text="${prompt.promptText}">
+          <button class="copy-prompt-btn" data-prompt-text="${promptText}">
             <i class="fas fa-copy"></i> Copy Prompt
           </button>
           <span style="font-size: 11px; color: #888; margin-left: auto;">
-            #${prompt.category}
+            #${category}
           </span>
         </div>
       </div>
@@ -1292,6 +1778,11 @@ class YouTubeStylePrompts {
 
   async handleLike(likeBtn) {
     const promptId = likeBtn.dataset.promptId;
+    if (!promptId || promptId === 'unknown') {
+      showNotification('Invalid prompt', 'error');
+      return;
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       showNotification('Please login to like prompts', 'error');
@@ -1331,6 +1822,11 @@ class YouTubeStylePrompts {
 
   async handleUse(useBtn) {
     const promptId = useBtn.dataset.promptId;
+    if (!promptId || promptId === 'unknown') {
+      showNotification('Invalid prompt', 'error');
+      return;
+    }
+
     const user = await getCurrentUser();
     if (!user) {
       showNotification('Please login to mark prompts as used', 'error');
@@ -1364,6 +1860,8 @@ class YouTubeStylePrompts {
 
   async handleShare(shareBtn) {
     const promptId = shareBtn.dataset.promptId;
+   
+
     const promptUrl = `${window.location.origin}/prompt/${promptId}`;
     
     if (navigator.share) {
@@ -1386,7 +1884,7 @@ class YouTubeStylePrompts {
   }
 
   async handleCopyPrompt(button) {
-    const promptText = button.dataset.promptText;
+    const promptText = button.dataset.promptText || '';
     await this.copyToClipboard(promptText);
     showNotification('Prompt copied to clipboard!', 'success');
     
@@ -1420,6 +1918,8 @@ class YouTubeStylePrompts {
   }
 
   async trackPromptView(promptId) {
+    if (!promptId || promptId === 'unknown') return;
+    
     try {
       await fetch(`/api/prompt/${promptId}/view`, {
         method: 'POST',
@@ -1431,7 +1931,7 @@ class YouTubeStylePrompts {
   }
 
   createLoadingShorts() {
-    // Create 4 loading cards for desktop grid
+    // Create loading cards
     const loadingCards = Array(4).fill(0).map((_, i) => `
       <div class="shorts-prompt-card loading-prompt" style="opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease ${i * 0.1}s, transform 0.5s ease ${i * 0.1}s">
         <div class="shorts-video-container">
@@ -1497,12 +1997,23 @@ class YouTubeStylePrompts {
   }
 
   formatCount(count) {
-    if (count >= 1000000) {
-      return (count / 1000000).toFixed(1) + 'M';
-    } else if (count >= 1000) {
-      return (count / 1000).toFixed(1) + 'K';
+    // Handle undefined, null, or non-numeric values
+    if (count === undefined || count === null || isNaN(count)) {
+      return '0';
     }
-    return count.toString();
+    
+    const numCount = typeof count === 'number' ? count : parseInt(count);
+    
+    if (isNaN(numCount)) {
+      return '0';
+    }
+    
+    if (numCount >= 1000000) {
+      return (numCount / 1000000).toFixed(1) + 'M';
+    } else if (numCount >= 1000) {
+      return (numCount / 1000).toFixed(1) + 'K';
+    }
+    return numCount.toString();
   }
 
   showErrorState() {
@@ -1519,6 +2030,22 @@ class YouTubeStylePrompts {
         </div>
       `;
     }
+  }
+
+  // Method to refresh the vertical feed
+  async refreshFeed() {
+    await this.loadAllPrompts(); // Refresh the global data first
+    this.currentPage = 1;
+    this.hasMore = true;
+    this.loadedPrompts.clear();
+    await this.loadInitialPrompts();
+  }
+
+  // Auto-refresh every 2 minutes to sync with horizontal feed
+  startAutoRefresh() {
+    setInterval(async () => {
+      await this.refreshFeed();
+    }, 2 * 60 * 1000);
   }
 }
 
@@ -1603,7 +2130,7 @@ class YouTubeStyleHeader {
     
     if (!searchSuggestions) return;
     
-    if (!query.trim()) {
+    if (!query || !query.trim()) {
       this.showRecentSearches();
       return;
     }
@@ -1644,7 +2171,7 @@ class YouTubeStyleHeader {
     const searchSuggestions = document.getElementById('searchSuggestions');
     if (!searchSuggestions) return;
     
-    if (suggestions.length === 0) {
+    if (!suggestions || suggestions.length === 0) {
       searchSuggestions.innerHTML = `
         <div class="suggestion-item">
           <i class="fas fa-search suggestion-icon"></i>
@@ -1653,17 +2180,20 @@ class YouTubeStyleHeader {
       `;
     } else {
       searchSuggestions.innerHTML = suggestions.map(suggestion => `
-        <div class="suggestion-item" data-query="${suggestion.text}">
+        <div class="suggestion-item" data-query="${suggestion.text || ''}">
           <i class="fas fa-search suggestion-icon"></i>
-          <div class="suggestion-text">${suggestion.text}</div>
-          <span class="suggestion-category">${suggestion.category}</span>
+          <div class="suggestion-text">${suggestion.text || ''}</div>
+          <span class="suggestion-category">${suggestion.category || 'general'}</span>
         </div>
       `).join('');
 
       searchSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
         item.addEventListener('click', () => {
-          const query = item.dataset.query;
-          document.getElementById('searchInput').value = query;
+          const query = item.dataset.query || '';
+          const searchInput = document.getElementById('searchInput');
+          if (searchInput) {
+            searchInput.value = query;
+          }
           this.performSearch(query);
           searchSuggestions.style.display = 'none';
         });
@@ -1679,7 +2209,7 @@ class YouTubeStyleHeader {
     
     const recentSearches = this.getRecentSearches();
     
-    if (recentSearches.length === 0) {
+    if (!recentSearches || recentSearches.length === 0) {
       searchSuggestions.innerHTML = `
         <div class="suggestion-item">
           <i class="fas fa-clock suggestion-icon"></i>
@@ -1693,17 +2223,20 @@ class YouTubeStyleHeader {
           <span>Recent searches</span>
         </div>
         ${recentSearches.map(search => `
-          <div class="suggestion-item" data-query="${search}">
+          <div class="suggestion-item" data-query="${search || ''}">
             <i class="fas fa-search suggestion-icon"></i>
-            <div class="suggestion-text">${search}</div>
+            <div class="suggestion-text">${search || ''}</div>
           </div>
         `).join('')}
       `;
 
       searchSuggestions.querySelectorAll('.suggestion-item:not(:first-child)').forEach(item => {
         item.addEventListener('click', () => {
-          const query = item.dataset.query;
-          document.getElementById('searchInput').value = query;
+          const query = item.dataset.query || '';
+          const searchInput = document.getElementById('searchInput');
+          if (searchInput) {
+            searchInput.value = query;
+          }
           this.performSearch(query);
           searchSuggestions.style.display = 'none';
         });
@@ -1727,7 +2260,7 @@ class YouTubeStyleHeader {
   }
 
   performSearch(query) {
-    if (!query.trim()) return;
+    if (!query || !query.trim()) return;
     
     // Add search term to categories
     if (window.categoryManager) {
@@ -1754,7 +2287,7 @@ class YouTubeStyleHeader {
   }
 
   selectCategory(category) {
-    this.currentCategory = category;
+    this.currentCategory = category || 'all';
     
     if (window.youtubePrompts) {
       // Filter prompts by category
@@ -1768,23 +2301,30 @@ class YouTubeStyleHeader {
 
   getCategoryName(category) {
     const categories = {
-      
       'photography': 'Photography',
-      
     };
-    return categories[category] || category;
+    return categories[category] || category || 'All';
   }
 
   getRecentSearches() {
-    return JSON.parse(localStorage.getItem('recentSearches') || '[]');
+    try {
+      return JSON.parse(localStorage.getItem('recentSearches') || '[]');
+    } catch (error) {
+      console.error('Error getting recent searches:', error);
+      return [];
+    }
   }
 
   addToRecentSearches(query) {
-    let recent = this.getRecentSearches();
-    recent = recent.filter(item => item !== query);
-    recent.unshift(query);
-    recent = recent.slice(0, 5);
-    localStorage.setItem('recentSearches', JSON.stringify(recent));
+    try {
+      let recent = this.getRecentSearches();
+      recent = recent.filter(item => item !== query);
+      recent.unshift(query);
+      recent = recent.slice(0, 5);
+      localStorage.setItem('recentSearches', JSON.stringify(recent));
+    } catch (error) {
+      console.error('Error adding to recent searches:', error);
+    }
   }
 }
 
@@ -1811,7 +2351,7 @@ class EngagementManager {
           const promptCard = entry.target;
           const promptId = promptCard.dataset.promptId;
           
-          if (promptId && !this.trackedViews.has(promptId)) {
+          if (promptId && promptId !== 'unknown' && !this.trackedViews.has(promptId)) {
             this.trackView(promptId);
             this.trackedViews.add(promptId);
           }
@@ -1830,9 +2370,12 @@ class EngagementManager {
           if (node.nodeType === 1 && node.classList?.contains('shorts-prompt-card')) {
             observer.observe(node);
           } else if (node.nodeType === 1) {
-            node.querySelectorAll?.('.shorts-prompt-card').forEach(card => {
-              observer.observe(card);
-            });
+            const cards = node.querySelectorAll?.('.shorts-prompt-card');
+            if (cards) {
+              cards.forEach(card => {
+                observer.observe(card);
+              });
+            }
           }
         });
       });
@@ -1842,6 +2385,8 @@ class EngagementManager {
   }
 
   async trackView(promptId) {
+    if (!promptId || promptId === 'unknown') return;
+    
     try {
       await fetch(`/api/prompt/${promptId}/view`, {
         method: 'POST',
@@ -1861,7 +2406,6 @@ class SearchManager {
         this.currentSearchTerm = '';
         this.currentCategory = 'all';
         this.currentSort = 'recent';
-        this.allPrompts = [];
         this.isSearching = false;
     }
 
@@ -1883,7 +2427,7 @@ class SearchManager {
             const response = await fetch(`/api/uploads?${params}`);
             if (response.ok) {
                 const data = await response.json();
-                this.allPrompts = data.uploads;
+                allPrompts = data.uploads || [];
             }
         } catch (error) {
             console.error('Error loading prompts for search:', error);
@@ -1911,7 +2455,7 @@ class SearchManager {
 
         if (sortBy) {
             sortBy.addEventListener('change', () => {
-                this.currentSort = sortBy.value;
+                this.currentSort = sortBy.value || 'recent';
                 if (this.currentSearchTerm || this.currentCategory !== 'all') {
                     this.performSearch();
                 }
@@ -1920,7 +2464,7 @@ class SearchManager {
 
         if (categoryFilter) {
             categoryFilter.addEventListener('change', () => {
-                this.currentCategory = categoryFilter.value;
+                this.currentCategory = categoryFilter.value || 'all';
                 if (this.currentSearchTerm || this.currentCategory !== 'all') {
                     this.performSearch();
                 }
@@ -1934,7 +2478,7 @@ class SearchManager {
 
     performSearch() {
         const searchInput = document.getElementById('searchInput');
-        const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
+        const searchTerm = searchInput ? (searchInput.value || '').trim().toLowerCase() : '';
         
         this.currentSearchTerm = searchTerm;
         this.showSearchResults();
@@ -1975,18 +2519,18 @@ class SearchManager {
     }
 
     filterPrompts() {
-        let filtered = [...this.allPrompts];
+        let filtered = [...allPrompts];
 
         if (this.currentSearchTerm) {
             const searchTerm = this.currentSearchTerm.toLowerCase();
             filtered = filtered.filter(prompt => {
-                const title = prompt.title?.toLowerCase() || '';
-                const promptText = prompt.promptText?.toLowerCase() || '';
-                const keywords = prompt.keywords?.map(k => k.toLowerCase()) || [];
+                const title = (prompt.title || '').toLowerCase();
+                const promptText = (prompt.promptText || '').toLowerCase();
+                const keywords = prompt.keywords || [];
                 
                 return title.includes(searchTerm) ||
                        promptText.includes(searchTerm) ||
-                       keywords.some(keyword => keyword.includes(searchTerm));
+                       keywords.some(keyword => keyword.toLowerCase().includes(searchTerm));
             });
         }
 
@@ -2004,13 +2548,21 @@ class SearchManager {
     sortPrompts(prompts) {
         switch (this.currentSort) {
             case 'recent':
-                return prompts.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                return prompts.sort((a, b) => {
+                    const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+                    const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+                    return dateB - dateA;
+                });
             case 'popular':
-                return prompts.sort((a, b) => (b.likes + b.views) - (a.likes + a.views));
+                return prompts.sort((a, b) => {
+                    const aScore = (a.likes || 0) + (a.views || 0);
+                    const bScore = (b.likes || 0) + (b.views || 0);
+                    return bScore - aScore;
+                });
             case 'likes':
-                return prompts.sort((a, b) => b.likes - a.likes);
+                return prompts.sort((a, b) => (b.likes || 0) - (a.likes || 0));
             case 'views':
-                return prompts.sort((a, b) => b.views - a.views);
+                return prompts.sort((a, b) => (b.views || 0) - (a.views || 0));
             default:
                 return prompts;
         }
@@ -2021,7 +2573,7 @@ class SearchManager {
         
         if (!promptsContainer) return;
         
-        if (prompts.length === 0) {
+        if (!prompts || prompts.length === 0) {
             promptsContainer.innerHTML = `
                 <div class="no-results">
                     <i class="fas fa-search"></i>
@@ -2038,17 +2590,21 @@ class SearchManager {
         promptsContainer.innerHTML = '';
         
         prompts.forEach((prompt, index) => {
+            if (!prompt) return;
+            
             const promptCard = window.youtubePrompts.createShortsPrompt(prompt, index);
-            promptCard.style.opacity = '0';
-            promptCard.style.transform = 'translateY(20px)';
-            promptCard.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
-            
-            promptsContainer.appendChild(promptCard);
-            
-            setTimeout(() => {
-                promptCard.style.opacity = '1';
-                promptCard.style.transform = 'translateY(0)';
-            }, 100 + (index * 100));
+            if (promptCard) {
+                promptCard.style.opacity = '0';
+                promptCard.style.transform = 'translateY(20px)';
+                promptCard.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+                
+                promptsContainer.appendChild(promptCard);
+                
+                setTimeout(() => {
+                    promptCard.style.opacity = '1';
+                    promptCard.style.transform = 'translateY(0)';
+                }, 100 + (index * 100));
+            }
         });
     }
 
@@ -2086,15 +2642,22 @@ function initMobileNavigation() {
   if (mobileToggle && navLinks) {
     mobileToggle.addEventListener('click', () => {
       navLinks.classList.toggle('active');
-      mobileToggle.querySelector('i').classList.toggle('fa-bars');
-      mobileToggle.querySelector('i').classList.toggle('fa-times');
+      const icon = mobileToggle.querySelector('i');
+      if (icon) {
+        icon.classList.toggle('fa-bars');
+        icon.classList.toggle('fa-times');
+      }
     });
     
-    navLinks.querySelectorAll('a').forEach(link => {
+    const navLinksItems = navLinks.querySelectorAll('a');
+    navLinksItems.forEach(link => {
       link.addEventListener('click', () => {
         navLinks.classList.remove('active');
-        mobileToggle.querySelector('i').classList.add('fa-bars');
-        mobileToggle.querySelector('i').classList.remove('fa-times');
+        const icon = mobileToggle.querySelector('i');
+        if (icon) {
+          icon.classList.add('fa-bars');
+          icon.classList.remove('fa-times');
+        }
       });
     });
   }
@@ -2129,9 +2692,15 @@ function addMobileNavigation() {
     
     document.body.appendChild(mobileNav);
     
-    document.getElementById('mobileUploadBtn').addEventListener('click', () => {
-      document.getElementById('openUploadModal').click();
-    });
+    const mobileUploadBtn = document.getElementById('mobileUploadBtn');
+    if (mobileUploadBtn) {
+      mobileUploadBtn.addEventListener('click', () => {
+        const uploadModalBtn = document.getElementById('openUploadModal');
+        if (uploadModalBtn) {
+          uploadModalBtn.click();
+        }
+      });
+    }
   }
 }
 
@@ -2144,7 +2713,7 @@ function initFilterButtons() {
       filterBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       
-      const filter = btn.textContent.toLowerCase();
+      const filter = btn.textContent ? btn.textContent.toLowerCase() : 'all';
       
       // This will be handled by the YouTubeStylePrompts category filtering
       if (window.youtubePrompts) {
@@ -2261,7 +2830,7 @@ function initUploadModal() {
   }
 }
 
-// Handle upload form submission
+// Enhanced upload handler to refresh both feeds
 async function handleUploadSubmit(e) {
   e.preventDefault();
   
@@ -2272,10 +2841,10 @@ async function handleUploadSubmit(e) {
     return;
   }
   
-  const title = document.getElementById('promptTitle').value;
-  const promptText = document.getElementById('promptText').value;
-  const category = document.getElementById('category').value;
-  const file = document.getElementById('imageUpload').files[0];
+  const title = document.getElementById('promptTitle')?.value || '';
+  const promptText = document.getElementById('promptText')?.value || '';
+  const category = document.getElementById('category')?.value || '';
+  const file = document.getElementById('imageUpload')?.files[0];
   
   if (!file) {
     alert('Please select an image to upload!');
@@ -2353,16 +2922,25 @@ async function handleUploadSubmit(e) {
       uploadModal.classList.remove('active');
       document.body.style.overflow = '';
       uploadForm.reset();
-      imagePreview.style.display = 'none';
+      if (imagePreview) {
+        imagePreview.style.display = 'none';
+      }
       
       showNotification('Upload successful! Your creation is now visible in the showcase.', 'success');
       
-      // Refresh the prompts to show the new upload
-      if (window.youtubePrompts) {
-        youtubePrompts.currentPage = 1;
-        youtubePrompts.hasMore = true;
-        youtubePrompts.loadInitialPrompts();
+      // Clear cache to force refresh
+      lastPromptUpdate = 0;
+      allPrompts = [];
+      
+      // Immediately refresh both feeds
+      if (window.shortsHorizontalFeed) {
+        await window.shortsHorizontalFeed.refreshFeed();
       }
+      
+      if (window.youtubePrompts) {
+        await window.youtubePrompts.refreshFeed();
+      }
+      
     } else {
       throw new Error(result.error || 'Upload failed');
     }
@@ -2402,7 +2980,7 @@ function showNotification(message, type = 'info') {
   notification.innerHTML = `
     <div class="notification-content">
       <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-      <span>${message}</span>
+      <span>${message || 'Notification'}</span>
       <button class="notification-close"><i class="fas fa-times"></i></button>
     </div>
   `;
@@ -2459,9 +3037,12 @@ function showNotification(message, type = 'info') {
     }
   }, 5000);
   
-  notification.querySelector('.notification-close').addEventListener('click', () => {
-    notification.remove();
-  });
+  const closeBtn = notification.querySelector('.notification-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      notification.remove();
+    });
+  }
 }
 
 // Quick Fix for Case-Insensitive Search
@@ -2477,7 +3058,7 @@ function setupCaseInsensitiveSearch() {
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Initializing Prompt Seen...');
+  console.log('Initializing Prompt Seen with synchronized feeds...');
   
   await initializeFirebase();
   showAuthElements();
@@ -2489,8 +3070,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   initUploadModal();
   initNewsUploadModal();
   
-  // Initialize YouTube-style prompts with infinite scroll
+  // Initialize YouTube-style prompts with infinite scroll (vertical feed)
   window.youtubePrompts = new YouTubeStylePrompts();
+  
+  // Initialize horizontal shorts feed
+  window.shortsHorizontalFeed = new ShortsHorizontalFeed();
+  
+  // Start auto-refresh for both feeds
+  window.shortsHorizontalFeed.startAutoRefresh();
+  window.youtubePrompts.startAutoRefresh();
   
   // Initialize category manager
   window.categoryManager = new CategoryManager();
@@ -2539,7 +3127,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   script.textContent = JSON.stringify(structuredData);
   document.head.appendChild(script);
   
-  console.log('Prompt Seen initialization complete');
+  console.log('Prompt Seen initialization complete with synchronized feeds');
 });
 
 // Mobile Navigation Toggle
@@ -2551,11 +3139,13 @@ document.addEventListener('DOMContentLoaded', function() {
     mobileOverlay.className = 'mobile-overlay';
     document.body.appendChild(mobileOverlay);
     
-    mobileToggle.addEventListener('click', function() {
-        navLinks.classList.toggle('active');
-        mobileOverlay.classList.toggle('active');
-        document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
-    });
+    if (mobileToggle) {
+      mobileToggle.addEventListener('click', function() {
+          navLinks.classList.toggle('active');
+          mobileOverlay.classList.toggle('active');
+          document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+      });
+    }
     
     mobileOverlay.addEventListener('click', function() {
         navLinks.classList.remove('active');
@@ -2593,3 +3183,4 @@ window.loadUploads = () => {
 window.searchManager = window.searchManager || {};
 window.newsManager = window.newsManager || {};
 window.categoryManager = window.categoryManager || {};
+window.shortsHorizontalFeed = window.shortsHorizontalFeed || {};

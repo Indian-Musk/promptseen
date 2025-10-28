@@ -6,6 +6,7 @@ const axios = require('axios');
 require('dotenv').config();
 
 // Initialize Firebase Admin
+let adminInitialized = false;
 try {
   const serviceAccount = process.env.FIREBASE_ADMIN_PRIVATE_KEY ? {
     projectId: process.env.FIREBASE_ADMIN_PROJECT_ID,
@@ -18,40 +19,17 @@ try {
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.FIREBASE_ADMIN_STORAGE_BUCKET
     });
+    adminInitialized = true;
     console.log('✅ Firebase Admin initialized successfully');
   } else {
     console.log('⚠️ Firebase Admin not configured - running in demo mode');
-    // Create a mock admin object for development
-    admin = {
-      firestore: () => ({ 
-        collection: () => ({
-          doc: () => ({
-            get: () => Promise.resolve({ exists: false, data: () => null }),
-            set: () => Promise.resolve(),
-            update: () => Promise.resolve(),
-            delete: () => Promise.resolve()
-          }),
-          add: () => Promise.resolve({ id: 'mock-id' }),
-          get: () => Promise.resolve({ docs: [], forEach: () => {} }),
-          where: () => ({ orderBy: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }) }),
-          orderBy: () => ({ offset: () => ({ limit: () => ({ get: () => Promise.resolve({ docs: [] }) }) }) }),
-          count: () => ({ get: () => Promise.resolve({ data: () => ({ count: 0 }) }) })
-        })
-      }),
-      storage: () => ({ 
-        bucket: () => ({
-          file: () => ({
-            save: () => Promise.resolve(),
-            makePublic: () => Promise.resolve()
-          })
-        }) 
-      }),
-      auth: () => ({ verifyIdToken: () => Promise.resolve({}) })
-    };
   }
 } catch (error) {
   console.error('❌ Firebase Admin initialization failed:', error);
-  // Fallback for development
+}
+
+// Create mock admin object for development if not initialized
+if (!adminInitialized) {
   admin = {
     firestore: () => ({ 
       collection: () => ({
@@ -92,6 +70,33 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from current directory
 app.use(express.static(__dirname));
+
+// Helper function for safe date conversion
+function safeDateToString(dateValue) {
+  if (!dateValue) {
+    return new Date().toISOString();
+  }
+  
+  try {
+    if (dateValue.toDate && typeof dateValue.toDate === 'function') {
+      // Firestore timestamp
+      return dateValue.toDate().toISOString();
+    } else if (typeof dateValue === 'string') {
+      // Already a string - validate it's a proper date string
+      const testDate = new Date(dateValue);
+      return isNaN(testDate.getTime()) ? new Date().toISOString() : dateValue;
+    } else if (dateValue instanceof Date) {
+      // Date object
+      return dateValue.toISOString();
+    } else {
+      // Fallback
+      return new Date().toISOString();
+    }
+  } catch (error) {
+    console.error('Date conversion error:', error);
+    return new Date().toISOString();
+  }
+}
 
 // AdSense Helper Functions
 function generateAdSenseCode() {
@@ -183,6 +188,7 @@ class SEOOptimizer {
   }
 
   static extractKeywords(text) {
+    if (!text) return [];
     const commonWords = new Set(['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by']);
     const words = text.toLowerCase()
       .replace(/[^\w\s]/g, '')
@@ -193,6 +199,7 @@ class SEOOptimizer {
   }
 
   static generateSlug(title) {
+    if (!title) return 'untitled-prompt';
     return title.toLowerCase()
       .replace(/[^\w\s]/g, '')
       .replace(/\s+/g, '-')
@@ -203,18 +210,18 @@ class SEOOptimizer {
     return {
       "@context": "https://schema.org",
       "@type": "CreativeWork",
-      "name": prompt.title,
-      "description": prompt.metaDescription,
-      "image": prompt.imageUrl,
+      "name": prompt.title || 'Untitled Prompt',
+      "description": prompt.metaDescription || 'AI-generated prompt',
+      "image": prompt.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=AI+Image',
       "author": {
         "@type": "Person",
         "name": prompt.userName || "Prompt Seen User"
       },
-      "datePublished": prompt.createdAt,
-      "keywords": prompt.keywords.join(', '),
+      "datePublished": prompt.createdAt || new Date().toISOString(),
+      "keywords": (prompt.keywords || ['AI', 'prompt']).join(', '),
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": `https://promptseen.co/prompt/${prompt.id}`
+        "@id": `https://promptseen.co/prompt/${prompt.id || 'unknown'}`
       }
     };
   }
@@ -223,30 +230,32 @@ class SEOOptimizer {
 // News-specific SEO Optimizer
 class NewsSEOOptimizer {
   static generateNewsTitle(title) {
-    return `${title} - Prompt Seen News`;
+    return `${title || 'AI News'} - Prompt Seen News`;
   }
 
   static generateNewsDescription(content) {
+    if (!content) return 'Latest AI news and updates from Prompt Seen.';
     const cleanContent = content.replace(/[^\w\s]/gi, ' ').substring(0, 150);
     return `${cleanContent}... Read more AI prompt news and updates.`;
   }
 
   static generateNewsSlug(title) {
-    return title.toLowerCase()
+    const baseSlug = (title || 'ai-news').toLowerCase()
       .replace(/[^\w\s]/g, '')
       .replace(/\s+/g, '-')
-      .substring(0, 60) + '-' + Date.now();
+      .substring(0, 60);
+    return baseSlug + '-' + Date.now();
   }
 
   static generateNewsStructuredData(news) {
     return {
       "@context": "https://schema.org",
       "@type": "NewsArticle",
-      "headline": news.title,
-      "description": news.metaDescription,
+      "headline": news.title || 'AI News',
+      "description": news.metaDescription || 'Latest AI news and updates',
       "image": news.imageUrl || 'https://promptseen.co/logo.png',
-      "datePublished": news.createdAt,
-      "dateModified": news.updatedAt,
+      "datePublished": news.createdAt || new Date().toISOString(),
+      "dateModified": news.updatedAt || new Date().toISOString(),
       "author": {
         "@type": "Person",
         "name": news.author || "Prompt Seen Editor"
@@ -261,7 +270,7 @@ class NewsSEOOptimizer {
       },
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": `https://promptseen.co/news/${news.id}`
+        "@id": `https://promptseen.co/news/${news.id || 'unknown'}`
       }
     };
   }
@@ -310,6 +319,7 @@ class SitemapGenerator {
   }
 
   static escapeXml(unsafe) {
+    if (!unsafe) return '';
     return unsafe.replace(/[<>&'"]/g, (c) => {
       switch (c) {
         case '<': return '&lt;';
@@ -339,7 +349,7 @@ const mockPrompts = [
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     seoScore: 85,
-    adsenseMigrated: true // Mark mock data as migrated
+    adsenseMigrated: true
   },
   {
     id: 'demo-2',
@@ -596,7 +606,7 @@ app.get('/sitemap-posts.xml', async (req, res) => {
         return {
           id: doc.id,
           ...data,
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+          updatedAt: safeDateToString(data.updatedAt)
         };
       });
     } else {
@@ -660,7 +670,7 @@ app.get('/sitemap-news.xml', async (req, res) => {
         return {
           id: doc.id,
           ...data,
-          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || new Date().toISOString()
+          updatedAt: safeDateToString(data.updatedAt)
         };
       });
     } else {
@@ -695,7 +705,7 @@ app.post('/api/upload-news', async (req, res) => {
 
   busboy.on('field', (fieldname, val) => {
     fields[fieldname] = val;
-    console.log(`📝 News field ${fieldname}: ${val.substring(0, 50)}...`);
+    console.log(`📝 News field ${fieldname}: ${val ? val.substring(0, 50) : 'null'}...`);
   });
 
   busboy.on('file', (fieldname, file, info) => {
@@ -763,7 +773,7 @@ app.post('/api/upload-news', async (req, res) => {
       const newsData = {
         title: fields.title,
         content: fields.content,
-        excerpt: fields.excerpt || fields.content.substring(0, 200) + '...',
+        excerpt: fields.excerpt || (fields.content ? fields.content.substring(0, 200) + '...' : ''),
         imageUrl: imageUrl,
         author: fields.author || 'Prompt Seen Editor',
         category: fields.category || 'ai-news',
@@ -1050,26 +1060,37 @@ app.get('/api/search', async (req, res) => {
       if (query) {
         // This is a simple implementation - for production, consider using Algolia or Elasticsearch
         const snapshot = await firestoreQuery.get();
-        prompts = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          promptUrl: `/prompt/${doc.id}`
-        })).filter(prompt => 
-          prompt.title.toLowerCase().includes(query.toLowerCase()) ||
-          prompt.promptText.toLowerCase().includes(query.toLowerCase()) ||
-          (prompt.keywords && prompt.keywords.some(keyword => 
-            keyword.toLowerCase().includes(query.toLowerCase())
-          ))
-        );
+        prompts = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: safeDateToString(data.createdAt),
+            promptUrl: `/prompt/${doc.id}`
+          };
+        }).filter(prompt => {
+          const searchTerm = query.toLowerCase();
+          const title = (prompt.title || '').toLowerCase();
+          const promptText = (prompt.promptText || '').toLowerCase();
+          const keywords = prompt.keywords || [];
+          
+          return title.includes(searchTerm) ||
+                 promptText.includes(searchTerm) ||
+                 keywords.some(keyword => 
+                   keyword.toLowerCase().includes(searchTerm)
+                 );
+        });
       } else {
         const snapshot = await firestoreQuery.get();
-        prompts = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          promptUrl: `/prompt/${doc.id}`
-        }));
+        prompts = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: safeDateToString(data.createdAt),
+            promptUrl: `/prompt/${doc.id}`
+          };
+        });
       }
     } else {
       // Development mode - search in mock data
@@ -1078,10 +1099,14 @@ app.get('/api/search', async (req, res) => {
         
         if (query) {
           const searchTerm = query.toLowerCase();
+          const title = (prompt.title || '').toLowerCase();
+          const promptText = (prompt.promptText || '').toLowerCase();
+          const keywords = prompt.keywords || [];
+          
           matches = matches && (
-            prompt.title.toLowerCase().includes(searchTerm) ||
-            prompt.promptText.toLowerCase().includes(searchTerm) ||
-            prompt.keywords.some(keyword => keyword.toLowerCase().includes(searchTerm))
+            title.includes(searchTerm) ||
+            promptText.includes(searchTerm) ||
+            keywords.some(keyword => keyword.toLowerCase().includes(searchTerm))
           );
         }
         
@@ -1124,14 +1149,22 @@ function sortPrompts(prompts, sortBy) {
   
   switch (sortBy) {
     case 'popular':
-      return sorted.sort((a, b) => (b.likes + b.views) - (a.likes + a.views));
+      return sorted.sort((a, b) => {
+        const aScore = (a.likes || 0) + (a.views || 0);
+        const bScore = (b.likes || 0) + (b.views || 0);
+        return bScore - aScore;
+      });
     case 'likes':
-      return sorted.sort((a, b) => b.likes - a.likes);
+      return sorted.sort((a, b) => (b.likes || 0) - (a.likes || 0));
     case 'views':
-      return sorted.sort((a, b) => b.views - a.views);
+      return sorted.sort((a, b) => (b.views || 0) - (a.views || 0));
     case 'recent':
     default:
-      return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return sorted.sort((a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+        return dateB - dateA;
+      });
   }
 }
 
@@ -1148,7 +1181,7 @@ app.post('/api/upload', async (req, res) => {
 
   busboy.on('field', (fieldname, val) => {
     fields[fieldname] = val;
-    console.log(`📝 Field ${fieldname}: ${val.substring(0, 50)}...`);
+    console.log(`📝 Field ${fieldname}: ${val ? val.substring(0, 50) : 'null'}...`);
   });
 
   busboy.on('file', (fieldname, file, info) => {
@@ -1305,7 +1338,6 @@ app.get('/api/uploads', async (req, res) => {
     const userId = req.query.userId;
     
     if (db && db.collection) {
-      const offset = (page - 1) * limit;
       const snapshot = await db.collection('uploads')
         .orderBy('createdAt', 'desc')
         .get();
@@ -1316,9 +1348,10 @@ app.get('/api/uploads', async (req, res) => {
         allUploads.push({ 
           id: doc.id, 
           ...data,
+          createdAt: safeDateToString(data.createdAt),
+          updatedAt: safeDateToString(data.updatedAt),
           userLiked: false,
           userUsed: false,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
           promptUrl: `/prompt/${doc.id}`
         });
       });
@@ -1346,7 +1379,8 @@ app.get('/api/uploads', async (req, res) => {
       const uploads = mockPrompts.slice(startIndex, endIndex).map(prompt => ({
         ...prompt,
         userLiked: false,
-        userUsed: false
+        userUsed: false,
+        promptUrl: `/prompt/${prompt.id}`
       }));
       
       res.json({
@@ -1368,7 +1402,8 @@ app.get('/api/uploads', async (req, res) => {
       uploads: mockPrompts.map(prompt => ({
         ...prompt,
         userLiked: false,
-        userUsed: false
+        userUsed: false,
+        promptUrl: `/prompt/${prompt.id}`
       })),
       currentPage: 1,
       totalPages: 1,
@@ -1441,26 +1476,51 @@ app.get('/category/:category', async (req, res) => {
 
 // Helper functions
 function createNewsData(news, id) {
+  const safeNews = news || {};
   return {
-    id: id,
-    title: news.title || 'AI News Update',
-    content: news.content || 'No content available.',
-    excerpt: news.excerpt || (news.content ? news.content.substring(0, 200) + '...' : ''),
-    imageUrl: news.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=Prompt+Seen+News',
-    author: news.author || 'Prompt Seen Editor',
-    category: news.category || 'ai-news',
-    tags: news.tags || ['ai', 'news'],
-    views: news.views || 0,
-    likes: news.likes || 0,
-    shares: news.shares || 0,
-    isBreaking: news.isBreaking || false,
-    isFeatured: news.isFeatured || false,
-    createdAt: news.createdAt || new Date().toISOString(),
-    publishedAt: news.publishedAt || new Date().toISOString(),
-    seoTitle: news.seoTitle || news.title || 'AI News - Prompt Seen',
-    metaDescription: news.metaDescription || (news.content ? 
-      news.content.substring(0, 155) + '...' : 
+    id: id || 'unknown',
+    title: safeNews.title || 'AI News Update',
+    content: safeNews.content || 'No content available.',
+    excerpt: safeNews.excerpt || (safeNews.content ? safeNews.content.substring(0, 200) + '...' : ''),
+    imageUrl: safeNews.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=Prompt+Seen+News',
+    author: safeNews.author || 'Prompt Seen Editor',
+    category: safeNews.category || 'ai-news',
+    tags: safeNews.tags || ['ai', 'news'],
+    views: safeNews.views || 0,
+    likes: safeNews.likes || 0,
+    shares: safeNews.shares || 0,
+    isBreaking: safeNews.isBreaking || false,
+    isFeatured: safeNews.isFeatured || false,
+    createdAt: safeDateToString(safeNews.createdAt),
+    publishedAt: safeDateToString(safeNews.publishedAt),
+    seoTitle: safeNews.seoTitle || safeNews.title || 'AI News - Prompt Seen',
+    metaDescription: safeNews.metaDescription || (safeNews.content ? 
+      safeNews.content.substring(0, 155) + '...' : 
       'Latest AI news and prompt engineering updates from Prompt Seen.')
+  };
+}
+
+function createPromptData(prompt, id) {
+  // Safe fallbacks for all properties
+  const safePrompt = prompt || {};
+  
+  return {
+    id: id || 'unknown',
+    title: safePrompt.title || 'Untitled Prompt',
+    seoTitle: safePrompt.seoTitle || safePrompt.title || 'AI Prompt - Prompt Seen',
+    metaDescription: safePrompt.metaDescription || (safePrompt.promptText ? 
+      safePrompt.promptText.substring(0, 155) + '...' : 
+      'Explore this AI-generated image and learn prompt engineering techniques.'),
+    imageUrl: safePrompt.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=Prompt+Seen+AI+Image',
+    promptText: safePrompt.promptText || 'No prompt text available.',
+    userName: safePrompt.userName || 'Anonymous',
+    likes: safePrompt.likes || 0,
+    views: safePrompt.views || 0,
+    uses: safePrompt.uses || 0,
+    keywords: safePrompt.keywords || ['AI', 'prompt', 'image generation'],
+    createdAt: safeDateToString(safePrompt.createdAt),
+    seoScore: safePrompt.seoScore || 0,
+    adsenseMigrated: safePrompt.adsenseMigrated || false
   };
 }
 
@@ -1486,10 +1546,10 @@ function generateNewsHTML(newsData) {
     <meta property="article:modified_time" content="${newsData.updatedAt}">
     <meta property="article:author" content="${newsData.author}">
     <meta property="article:section" content="${newsData.category}">
-    ${newsData.tags.map(tag => `<meta property="article:tag" content="${tag}">`).join('')}
+    ${(newsData.tags || []).map(tag => `<meta property="article:tag" content="${tag}">`).join('')}
     
     <!-- Google News specific tags -->
-    <meta name="news_keywords" content="${newsData.tags.join(', ')}">
+    <meta name="news_keywords" content="${(newsData.tags || []).join(', ')}">
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1559,7 +1619,7 @@ function generateNewsHTML(newsData) {
         </div>
         
         <div class="news-content">
-            ${newsData.content.split('\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
+            ${(newsData.content || '').split('\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
         </div>
         
         <!-- Bottom Ad Placement -->
@@ -1574,80 +1634,6 @@ function generateNewsHTML(newsData) {
 </html>`;
 }
 
-function sendNewsNotFound(res, newsId) {
-  res.status(404).send(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>News Not Found - Prompt Seen</title>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
-        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h1 { color: #ff6b6b; margin-bottom: 20px; }
-        a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>News Article Not Found</h1>
-        <p>The news article you're looking for doesn't exist or may have been removed.</p>
-        <p><small>News ID: ${newsId}</small></p>
-        <a href="/">← Return to Prompt Seen</a>
-    </div>
-</body>
-</html>`);
-}
-
-function sendNewsErrorPage(res, error) {
-  res.status(500).send(`
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Error - Prompt Seen News</title>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
-        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h1 { color: #ff6b6b; margin-bottom: 20px; }
-        a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Error Loading News</h1>
-        <p>There was an error loading this news article. Please try again later.</p>
-        <a href="/">← Return to Home</a>
-    </div>
-</body>
-</html>`);
-}
-
-// Existing helper functions
-function createPromptData(prompt, id) {
-  return {
-    id: id,
-    title: prompt.title || 'Untitled Prompt',
-    seoTitle: prompt.seoTitle || prompt.title || 'AI Prompt - Prompt Seen',
-    metaDescription: prompt.metaDescription || (prompt.promptText ? 
-      prompt.promptText.substring(0, 155) + '...' : 
-      'Explore this AI-generated image and learn prompt engineering techniques.'),
-    imageUrl: prompt.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=Prompt+Seen+AI+Image',
-    promptText: prompt.promptText || 'No prompt text available.',
-    userName: prompt.userName || 'Anonymous',
-    likes: prompt.likes || 0,
-    views: prompt.views || 0,
-    uses: prompt.uses || 0,
-    keywords: prompt.keywords || ['AI', 'prompt', 'image generation'],
-    createdAt: prompt.createdAt ? 
-      (typeof prompt.createdAt === 'string' ? prompt.createdAt : prompt.createdAt.toISOString()) : 
-      new Date().toISOString(),
-    seoScore: prompt.seoScore || 0,
-    adsenseMigrated: prompt.adsenseMigrated || false // Track migration status
-  };
-}
-
-// Helper function to generate prompt HTML
 function generatePromptHTML(promptData) {
   const adsenseCode = generateAdSenseCode();
   
@@ -1659,7 +1645,7 @@ function generatePromptHTML(promptData) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${promptData.seoTitle}</title>
     <meta name="description" content="${promptData.metaDescription}">
-    <meta name="keywords" content="${promptData.keywords.join(', ')}">
+    <meta name="keywords" content="${(promptData.keywords || []).join(', ')}">
     <meta name="robots" content="index, follow, max-image-preview:large">
     
     <!-- Google AdSense Auto Ads -->
@@ -1901,7 +1887,7 @@ function generatePromptHTML(promptData) {
             if (navigator.share) {
                 navigator.share({
                     title: '${promptData.title}',
-                    text: '${promptData.promptText?.substring(0, 100)}...',
+                    text: '${(promptData.promptText || '').substring(0, 100)}...',
                     url: url
                 });
             } else {
@@ -1914,7 +1900,6 @@ function generatePromptHTML(promptData) {
 </body>
 </html>`;
 }
-
 
 // Helper function to generate category page HTML
 function generateCategoryHTML(category, baseUrl) {
@@ -2024,7 +2009,6 @@ function generateCategoryHTML(category, baseUrl) {
 </html>`;
 }
 
-
 // Helper function for 404 page
 function sendPromptNotFound(res, promptId) {
   res.status(404).send(`
@@ -2051,6 +2035,31 @@ function sendPromptNotFound(res, promptId) {
 </html>`);
 }
 
+function sendNewsNotFound(res, newsId) {
+  res.status(404).send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>News Not Found - Prompt Seen</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
+        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: #ff6b6b; margin-bottom: 20px; }
+        a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>News Article Not Found</h1>
+        <p>The news article you're looking for doesn't exist or may have been removed.</p>
+        <p><small>News ID: ${newsId}</small></p>
+        <a href="/">← Return to Prompt Seen</a>
+    </div>
+</body>
+</html>`);
+}
+
 // Helper function for error page
 function sendErrorPage(res, error) {
   res.status(500).send(`
@@ -2070,6 +2079,30 @@ function sendErrorPage(res, error) {
     <div class="container">
         <h1>Error Loading Prompt</h1>
         <p>There was an error loading this prompt. Please try again later.</p>
+        <a href="/">← Return to Home</a>
+    </div>
+</body>
+</html>`);
+}
+
+function sendNewsErrorPage(res, error) {
+  res.status(500).send(`
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Error - Prompt Seen News</title>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
+        .container { max-width: 600px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: #ff6b6b; margin-bottom: 20px; }
+        a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Error Loading News</h1>
+        <p>There was an error loading this news article. Please try again later.</p>
         <a href="/">← Return to Home</a>
     </div>
 </body>
