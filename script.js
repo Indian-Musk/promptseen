@@ -202,21 +202,54 @@ class ShortsHorizontalFeed {
             nextBtn.addEventListener('click', () => this.scrollShorts(1));
         }
 
-        // Touch/swipe support for mobile
+        // Enhanced Touch/swipe support for mobile
         if (trackContainer) {
             let startX = 0;
+            let startY = 0;
             let scrollLeft = 0;
+            let isScrolling = false;
 
             trackContainer.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].pageX;
-                scrollLeft = this.track.scrollLeft;
-            });
+                startY = e.touches[0].pageY;
+                scrollLeft = trackContainer.scrollLeft;
+                isScrolling = true;
+                
+                // Add active state for visual feedback
+                trackContainer.style.cursor = 'grabbing';
+            }, { passive: true });
 
             trackContainer.addEventListener('touchmove', (e) => {
-                if (!startX) return;
+                if (!isScrolling) return;
+                
                 const x = e.touches[0].pageX;
-                const walk = (x - startX) * 2;
-                this.track.scrollLeft = scrollLeft - walk;
+                const y = e.touches[0].pageY;
+                
+                // Calculate the distance moved
+                const walkX = x - startX;
+                const walkY = y - startY;
+                
+                // Only prevent default if primarily horizontal movement
+                if (Math.abs(walkX) > Math.abs(walkY)) {
+                    e.preventDefault();
+                }
+                
+                trackContainer.scrollLeft = scrollLeft - walkX;
+            }, { passive: false });
+
+            trackContainer.addEventListener('touchend', () => {
+                isScrolling = false;
+                trackContainer.style.cursor = 'grab';
+                
+                // Apply snap scrolling on mobile
+                if (window.innerWidth <= 768) {
+                    this.snapToNearestItem();
+                }
+            });
+
+            trackContainer.addEventListener('touchcancel', () => {
+                isScrolling = false;
+                trackContainer.style.cursor = 'grab';
             });
         }
 
@@ -228,6 +261,87 @@ class ShortsHorizontalFeed {
 
         // Infinite scroll detection
         this.setupInfiniteScroll();
+        
+        // Add cursor style for desktop hover
+        if (window.innerWidth > 768) {
+            const trackContainer = document.querySelector('.shorts-track-container');
+            if (trackContainer) {
+                trackContainer.style.cursor = 'grab';
+                
+                trackContainer.addEventListener('mousedown', (e) => {
+                    trackContainer.style.cursor = 'grabbing';
+                    let startX = e.pageX;
+                    let scrollLeft = trackContainer.scrollLeft;
+                    
+                    const mouseMoveHandler = (e) => {
+                        const x = e.pageX;
+                        const walk = (x - startX) * 2;
+                        trackContainer.scrollLeft = scrollLeft - walk;
+                    };
+                    
+                    const mouseUpHandler = () => {
+                        document.removeEventListener('mousemove', mouseMoveHandler);
+                        document.removeEventListener('mouseup', mouseUpHandler);
+                        trackContainer.style.cursor = 'grab';
+                    };
+                    
+                    document.addEventListener('mousemove', mouseMoveHandler);
+                    document.addEventListener('mouseup', mouseUpHandler);
+                });
+            }
+        }
+    }
+
+    // Add this new method for snap scrolling
+    snapToNearestItem() {
+        const trackContainer = document.querySelector('.shorts-track-container');
+        if (!trackContainer) return;
+        
+        const scrollLeft = trackContainer.scrollLeft;
+        const itemWidth = 110; // Match the mobile item width
+        const gap = 12;
+        const totalItemWidth = itemWidth + gap;
+        
+        const nearestIndex = Math.round(scrollLeft / totalItemWidth);
+        const targetScroll = nearestIndex * totalItemWidth;
+        
+        trackContainer.scrollTo({
+            left: targetScroll,
+            behavior: 'smooth'
+        });
+    }
+
+    // Update the scrollShorts method for better mobile behavior
+    scrollShorts(direction) {
+        const trackContainer = document.querySelector('.shorts-track-container');
+        if (!trackContainer) return;
+
+        const itemWidth = window.innerWidth <= 768 ? 110 : 132;
+        const gap = 12;
+        const totalItemWidth = itemWidth + gap;
+        
+        // On mobile, scroll by one item at a time with snap
+        if (window.innerWidth <= 768) {
+            const scrollAmount = totalItemWidth * direction;
+            trackContainer.scrollBy({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+            
+            // Update navigation after scroll completes
+            setTimeout(() => this.updateNavigation(), 300);
+        } else {
+            // Desktop behavior (original code)
+            const visibleItems = Math.floor(trackContainer.offsetWidth / totalItemWidth);
+            const scrollAmount = totalItemWidth * visibleItems * direction;
+
+            trackContainer.scrollBy({
+                left: scrollAmount,
+                behavior: 'smooth'
+            });
+
+            this.updateNavigation();
+        }
     }
 
     async loadLatestPrompts() {
@@ -432,21 +546,6 @@ class ShortsHorizontalFeed {
         }
     }
 
-    scrollShorts(direction) {
-        if (!this.track) return;
-
-        const itemWidth = 132; // 120px + 12px gap
-        const visibleItems = Math.floor(this.track.parentElement.offsetWidth / itemWidth);
-        const scrollAmount = itemWidth * visibleItems * direction;
-
-        this.track.scrollBy({
-            left: scrollAmount,
-            behavior: 'smooth'
-        });
-
-        this.updateNavigation();
-    }
-
     updateNavigation() {
         const prevBtn = document.getElementById('shortsPrevBtn');
         const nextBtn = document.getElementById('shortsNextBtn');
@@ -534,6 +633,25 @@ class ShortsHorizontalFeed {
         setInterval(async () => {
             await this.refreshFeed();
         }, 2 * 60 * 1000);
+    }
+}
+
+// Initialize mobile horizontal scrolling
+function initMobileHorizontalScroll() {
+    if (window.innerWidth <= 768) {
+        const trackContainer = document.querySelector('.shorts-track-container');
+        if (trackContainer) {
+            // Ensure proper touch scrolling
+            trackContainer.style.overflowX = 'auto';
+            trackContainer.style.webkitOverflowScrolling = 'touch';
+            
+            // Add scroll event listener to update navigation
+            trackContainer.addEventListener('scroll', () => {
+                if (window.shortsHorizontalFeed) {
+                    window.shortsHorizontalFeed.updateNavigation();
+                }
+            });
+        }
     }
 }
 
@@ -3107,6 +3225,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   // Add mobile bottom navigation
   addMobileNavigation();
+  
+  // Initialize mobile horizontal scrolling
+  initMobileHorizontalScroll();
+  
+  // Re-initialize on resize
+  window.addEventListener('resize', initMobileHorizontalScroll);
   
   // Add structured data for homepage
   const structuredData = {

@@ -86,10 +86,33 @@ body {
     cursor: not-allowed;
 }
 
+/* Enhanced Mobile Touch Scrolling for Shorts Feed */
 .shorts-track-container {
     position: relative;
     overflow: hidden;
     padding: 0 20px;
+}
+
+@media (max-width: 768px) {
+    .shorts-track-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        padding: 0 15px;
+        margin: 0 -15px;
+        width: calc(100% + 30px);
+        touch-action: pan-x;
+    }
+    
+    .shorts-track-container::-webkit-scrollbar {
+        display: none;
+    }
+    
+    /* Enable smooth snapping for better UX */
+    .shorts-track-container {
+        scroll-snap-type: x mandatory;
+    }
 }
 
 .shorts-track {
@@ -97,6 +120,16 @@ body {
     gap: 12px;
     transition: transform 0.3s ease;
     padding: 5px 0;
+}
+
+@media (max-width: 768px) {
+    .shorts-track {
+        display: flex;
+        gap: 12px;
+        padding: 5px 15px;
+        width: max-content;
+        min-width: 100%;
+    }
 }
 
 /* Individual Short Item */
@@ -109,6 +142,16 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: all 0.3s ease;
     position: relative;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+@media (max-width: 768px) {
+    .shorts-item {
+        flex: 0 0 110px;
+        scroll-snap-align: start;
+    }
 }
 
 .shorts-item:hover {
@@ -243,25 +286,31 @@ body {
     }
     
     .shorts-controls {
-        display: none; /* Hide arrows on mobile - use touch scroll */
+        display: none !important; /* Force hide arrows on mobile */
+    }
+    
+    /* Ensure track container takes full width */
+    .shorts-track-container {
+        width: 100%;
+        margin: 0;
+        padding: 0;
     }
 }
 
 @media (max-width: 480px) {
+    .shorts-track-container {
+        padding: 0 10px;
+        margin: 0 -10px;
+        width: calc(100% + 20px);
+    }
+    
+    .shorts-track {
+        gap: 10px;
+        padding: 5px 10px;
+    }
+    
     .shorts-item {
         flex: 0 0 100px;
-    }
-    
-    .shorts-thumbnail {
-        height: 130px;
-    }
-    
-    .shorts-info {
-        padding: 6px;
-    }
-    
-    .shorts-title {
-        font-size: 0.7rem;
     }
 }
 
@@ -1133,78 +1182,42 @@ body {
     }
 }
 
-/* Animation for new news items */
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.news-card {
-    animation: slideInUp 0.5s ease-out;
-}
-
-/* Print Styles for News */
-@media print {
-    .news-filters,
-    .load-more-container,
-    .mobile-nav {
-        display: none;
+/* Fix for iOS Safari */
+@supports (-webkit-touch-callout: none) {
+    .upload-modal {
+        -webkit-overflow-scrolling: touch !important;
     }
     
-    .news-card {
-        break-inside: avoid;
-        box-shadow: none;
-        border: 1px solid #ddd;
-        margin-bottom: 20px;
-    }
-    
-    .news-section {
-        padding: 20px 0;
-        background: white;
+    .upload-form input,
+    .upload-form textarea {
+        font-size: 16px !important; /* Prevents zoom on focus */
     }
 }
 
-/* Accessibility Improvements */
-.news-card:focus-within {
-    outline: 3px solid var(--primary);
-    outline-offset: 2px;
-}
-
-.read-more:focus {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-    border-radius: 4px;
-}
-
-/* High Contrast Mode Support */
+/* High contrast mode support */
 @media (prefers-contrast: high) {
-    .news-card {
-        border: 2px solid var(--dark);
+    .upload-modal {
+        border: 2px solid #000 !important;
     }
     
-    .filter-btn {
-        border-width: 2px;
+    .upload-form input,
+    .upload-form textarea,
+    .upload-form select {
+        border-width: 2px !important;
     }
 }
 
-/* Reduced Motion Support */
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-    .news-card,
-    .filter-btn,
-    .file-upload {
-        transition: none;
+    .upload-modal {
+        transition: none !important;
     }
     
-    .news-card:hover {
-        transform: none;
+    .submit-btn {
+        transition: none !important;
     }
 }
+
 
 /* Add to existing styles.css */
 
