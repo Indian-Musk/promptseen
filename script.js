@@ -14,35 +14,6 @@ let allPrompts = [];
 let lastPromptUpdate = 0;
 const PROMPT_CACHE_DURATION = 30000; // 30 seconds
 
-// Add this to your existing script.js file or include it in a script tag
-document.addEventListener('DOMContentLoaded', function() {
-    // Add scroll effect to header for desktop
-    const header = document.getElementById('mainHeader');
-    
-    function handleScroll() {
-        if (window.scrollY > 10) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
-        }
-    }
-    
-    // Apply scroll effect for desktop
-    if (window.innerWidth >= 769) {
-        window.addEventListener('scroll', handleScroll);
-    }
-    
-    // Re-apply on resize
-    window.addEventListener('resize', function() {
-        if (window.innerWidth >= 769) {
-            window.addEventListener('scroll', handleScroll);
-        } else {
-            window.removeEventListener('scroll', handleScroll);
-            header.classList.remove('scrolled');
-        }
-    });
-});
-
 // Track Firebase initialization state
 let firebaseInitialized = false;
 
@@ -132,7 +103,7 @@ function showAuthElements() {
   }
 }
 
-// YouTube Shorts Style Horizontal Feed - UPDATED
+// YouTube Shorts Style Horizontal Feed - OPTIMIZED
 class ShortsHorizontalFeed {
     constructor() {
         this.currentPosition = 0;
@@ -141,6 +112,9 @@ class ShortsHorizontalFeed {
         this.isLoading = false;
         this.hasMore = true;
         this.last24hPrompts = [];
+        this.scrollTimeout = null;
+        this.lastScrollTime = 0;
+        this.momentumFrame = null;
         this.init();
     }
 
@@ -202,20 +176,26 @@ class ShortsHorizontalFeed {
             nextBtn.addEventListener('click', () => this.scrollShorts(1));
         }
 
-        // Enhanced Touch/swipe support for mobile
+        // ENHANCED: Ultra-smooth touch/swipe support
         if (trackContainer) {
             let startX = 0;
-            let startY = 0;
             let scrollLeft = 0;
             let isScrolling = false;
+            let velocity = 0;
+            let lastX = 0;
+            let lastTime = 0;
 
             trackContainer.addEventListener('touchstart', (e) => {
                 startX = e.touches[0].pageX;
-                startY = e.touches[0].pageY;
                 scrollLeft = trackContainer.scrollLeft;
                 isScrolling = true;
+                velocity = 0;
+                lastX = startX;
+                lastTime = Date.now();
                 
-                // Add active state for visual feedback
+                // Cancel any existing momentum
+                cancelAnimationFrame(this.momentumFrame);
+                
                 trackContainer.style.cursor = 'grabbing';
             }, { passive: true });
 
@@ -223,28 +203,33 @@ class ShortsHorizontalFeed {
                 if (!isScrolling) return;
                 
                 const x = e.touches[0].pageX;
-                const y = e.touches[0].pageY;
-                
-                // Calculate the distance moved
                 const walkX = x - startX;
-                const walkY = y - startY;
                 
-                // Only prevent default if primarily horizontal movement
-                if (Math.abs(walkX) > Math.abs(walkY)) {
-                    e.preventDefault();
+                // Apply immediate scroll without smoothing for direct response
+                trackContainer.scrollLeft = scrollLeft - walkX;
+                
+                // Calculate velocity for momentum scrolling
+                const currentTime = Date.now();
+                const deltaTime = currentTime - lastTime;
+                if (deltaTime > 0) {
+                    velocity = (x - lastX) / deltaTime;
+                    lastX = x;
+                    lastTime = currentTime;
                 }
                 
-                trackContainer.scrollLeft = scrollLeft - walkX;
-            }, { passive: false });
+            }, { passive: true });
 
             trackContainer.addEventListener('touchend', () => {
                 isScrolling = false;
                 trackContainer.style.cursor = 'grab';
                 
-                // Apply snap scrolling on mobile
-                if (window.innerWidth <= 768) {
+                // Apply momentum scrolling
+                this.applyMomentum(trackContainer, velocity);
+                
+                // Snap to nearest item after a short delay
+                setTimeout(() => {
                     this.snapToNearestItem();
-                }
+                }, 100);
             });
 
             trackContainer.addEventListener('touchcancel', () => {
@@ -259,37 +244,35 @@ class ShortsHorizontalFeed {
             if (e.key === 'ArrowRight') this.scrollShorts(1);
         });
 
+        // Wheel scrolling for desktop
+        if (trackContainer) {
+            trackContainer.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                trackContainer.scrollLeft += e.deltaY * 2; // Faster wheel scrolling
+            }, { passive: false });
+        }
+
         // Infinite scroll detection
         this.setupInfiniteScroll();
+    }
+
+    // NEW: Momentum scrolling for smoother feel
+    applyMomentum(container, velocity) {
+        const minVelocity = 0.1;
+        const friction = 0.92;
         
-        // Add cursor style for desktop hover
-        if (window.innerWidth > 768) {
-            const trackContainer = document.querySelector('.shorts-track-container');
-            if (trackContainer) {
-                trackContainer.style.cursor = 'grab';
-                
-                trackContainer.addEventListener('mousedown', (e) => {
-                    trackContainer.style.cursor = 'grabbing';
-                    let startX = e.pageX;
-                    let scrollLeft = trackContainer.scrollLeft;
-                    
-                    const mouseMoveHandler = (e) => {
-                        const x = e.pageX;
-                        const walk = (x - startX) * 2;
-                        trackContainer.scrollLeft = scrollLeft - walk;
-                    };
-                    
-                    const mouseUpHandler = () => {
-                        document.removeEventListener('mousemove', mouseMoveHandler);
-                        document.removeEventListener('mouseup', mouseUpHandler);
-                        trackContainer.style.cursor = 'grab';
-                    };
-                    
-                    document.addEventListener('mousemove', mouseMoveHandler);
-                    document.addEventListener('mouseup', mouseUpHandler);
-                });
+        if (Math.abs(velocity) < minVelocity) return;
+        
+        const animateMomentum = () => {
+            velocity *= friction;
+            container.scrollLeft -= velocity * 16;
+            
+            if (Math.abs(velocity) > minVelocity) {
+                this.momentumFrame = requestAnimationFrame(animateMomentum);
             }
-        }
+        };
+        
+        this.momentumFrame = requestAnimationFrame(animateMomentum);
     }
 
     // Add this new method for snap scrolling
@@ -298,12 +281,12 @@ class ShortsHorizontalFeed {
         if (!trackContainer) return;
         
         const scrollLeft = trackContainer.scrollLeft;
-        const itemWidth = 110; // Match the mobile item width
-        const gap = 12;
+        const itemWidth = window.innerWidth <= 768 ? 100 : 120;
+        const gap = 8;
         const totalItemWidth = itemWidth + gap;
         
         const nearestIndex = Math.round(scrollLeft / totalItemWidth);
-        const targetScroll = nearestIndex * totalItemWidth;
+        const targetScroll = Math.max(0, nearestIndex * totalItemWidth);
         
         trackContainer.scrollTo({
             left: targetScroll,
@@ -311,45 +294,36 @@ class ShortsHorizontalFeed {
         });
     }
 
-    // Update the scrollShorts method for better mobile behavior
+    // OPTIMIZED: Faster scrolling with instant response
     scrollShorts(direction) {
         const trackContainer = document.querySelector('.shorts-track-container');
         if (!trackContainer) return;
 
-        const itemWidth = window.innerWidth <= 768 ? 110 : 132;
-        const gap = 12;
+        const itemWidth = window.innerWidth <= 768 ? 100 : 120;
+        const gap = 8;
         const totalItemWidth = itemWidth + gap;
         
-        // On mobile, scroll by one item at a time with snap
-        if (window.innerWidth <= 768) {
-            const scrollAmount = totalItemWidth * direction;
-            trackContainer.scrollBy({
-                left: scrollAmount,
-                behavior: 'smooth'
-            });
-            
-            // Update navigation after scroll completes
-            setTimeout(() => this.updateNavigation(), 300);
-        } else {
-            // Desktop behavior (original code)
-            const visibleItems = Math.floor(trackContainer.offsetWidth / totalItemWidth);
-            const scrollAmount = totalItemWidth * visibleItems * direction;
-
-            trackContainer.scrollBy({
-                left: scrollAmount,
-                behavior: 'smooth'
-            });
-
+        // Calculate how many items to scroll based on velocity
+        const scrollAmount = totalItemWidth * direction * (window.innerWidth <= 768 ? 3 : 5);
+        
+        trackContainer.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+        
+        // Update navigation immediately
+        requestAnimationFrame(() => {
             this.updateNavigation();
-        }
+        });
     }
 
+    // OPTIMIZED: Faster loading with minimal skeleton time
     async loadLatestPrompts() {
         try {
             this.isLoading = true;
             
-            // Show loading state for at least 1 second
-            const loadingPromise = new Promise(resolve => setTimeout(resolve, 1000));
+            // Show loading state for only 200ms (reduced from 1000ms)
+            const loadingPromise = new Promise(resolve => setTimeout(resolve, 200));
             
             // Get fresh prompts data
             await this.loadAllPrompts();
@@ -453,39 +427,51 @@ class ShortsHorizontalFeed {
         return allPrompts;
     }
 
+    // OPTIMIZED: Faster rendering with simpler items
     displayShorts() {
         if (!this.track) return;
 
         if (this.last24hPrompts.length === 0) {
-            this.track.innerHTML = `
-                <div class="no-prompts" style="text-align: center; padding: 40px; color: #666; width: 100%;">
-                    <i class="fas fa-clock" style="font-size: 2rem; margin-bottom: 10px; opacity: 0.5;"></i>
-                    <p>No recent prompts in the last 24 hours</p>
-                    <p style="font-size: 0.9rem; margin-top: 5px;">Upload a prompt to see it here!</p>
-                </div>
-            `;
+            this.track.innerHTML = this.createEmptyState();
             return;
         }
 
         const shortsHTML = this.last24hPrompts.map(prompt => this.createShortItem(prompt)).join('');
         this.track.innerHTML = shortsHTML;
 
-        // Add click handlers
-        this.track.querySelectorAll('.shorts-item').forEach((item, index) => {
-            item.addEventListener('click', () => {
-                this.openPromptPage(this.last24hPrompts[index].id);
-            });
+        // Add click handlers with event delegation for better performance
+        this.track.addEventListener('click', (e) => {
+            const shortsItem = e.target.closest('.shorts-item');
+            if (shortsItem) {
+                const promptId = shortsItem.dataset.promptId;
+                this.openPromptPage(promptId);
+            }
         });
 
         this.updateNavigation();
+        
+        // Preload images for smoother experience
+        this.preloadImages();
     }
 
+    // NEW: Preload images for better performance
+    preloadImages() {
+        const images = this.track.querySelectorAll('img');
+        images.forEach(img => {
+            if (img.src && !img.complete) {
+                const preloadImg = new Image();
+                preloadImg.src = img.src;
+            }
+        });
+    }
+
+    // OPTIMIZED: Simpler item creation for faster rendering
     createShortItem(prompt) {
         // Safe data access
         const safePrompt = prompt || {};
         const promptId = safePrompt.id || 'unknown';
         const title = safePrompt.title || 'Untitled Prompt';
-        const imageUrl = safePrompt.imageUrl || 'https://via.placeholder.com/120x160/4e54c8/white?text=Prompt';
+        const imageUrl = safePrompt.imageUrl || 'https://via.placeholder.com/100x150/4e54c8/white?text=Prompt';
         const views = safePrompt.views || 0;
         const createdAt = safePrompt.createdAt || new Date().toISOString();
         
@@ -498,18 +484,34 @@ class ShortsHorizontalFeed {
                     <img src="${imageUrl}" 
                          alt="${title}"
                          loading="lazy"
-                         onerror="this.src='https://via.placeholder.com/120x160/4e54c8/white?text=Prompt'">
+                         onerror="this.src='https://via.placeholder.com/100x150/4e54c8/white?text=Prompt'">
                     <div class="shorts-views">
                         <i class="fas fa-eye"></i> ${this.formatCount(views)}
                     </div>
                     ${isNew ? '<div class="shorts-new-indicator"></div>' : ''}
                 </div>
                 <div class="shorts-info">
-                    <div class="shorts-title">${title}</div>
+                    <div class="shorts-title">${this.truncateText(title, 40)}</div>
                     <div class="shorts-meta">
-                        <span class="shorts-time">View Prompt</span>
+                        <span class="shorts-time">View</span>
                     </div>
                 </div>
+            </div>
+        `;
+    }
+
+    // NEW: Text truncation for consistent layout
+    truncateText(text, maxLength) {
+        if (!text) return '';
+        return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+    }
+
+    createEmptyState() {
+        return `
+            <div class="no-prompts" style="text-align: center; padding: 20px; color: #666; width: 100%;">
+                <i class="fas fa-clock" style="font-size: 1.5rem; margin-bottom: 8px; opacity: 0.5;"></i>
+                <p style="font-size: 0.9rem;">No recent prompts</p>
+                <p style="font-size: 0.8rem; margin-top: 2px;">Upload a prompt to see it here!</p>
             </div>
         `;
     }
@@ -636,19 +638,29 @@ class ShortsHorizontalFeed {
     }
 }
 
-// Initialize mobile horizontal scrolling
+// Enhanced mobile horizontal scrolling initialization
 function initMobileHorizontalScroll() {
     if (window.innerWidth <= 768) {
         const trackContainer = document.querySelector('.shorts-track-container');
         if (trackContainer) {
-            // Ensure proper touch scrolling
+            // Force hardware acceleration
+            trackContainer.style.transform = 'translate3d(0, 0, 0)';
+            trackContainer.style.webkitTransform = 'translate3d(0, 0, 0)';
+            
+            // Enhanced touch scrolling
             trackContainer.style.overflowX = 'auto';
             trackContainer.style.webkitOverflowScrolling = 'touch';
             
-            // Add scroll event listener to update navigation
+            // Throttled scroll event for better performance
+            let scrollTimeout;
             trackContainer.addEventListener('scroll', () => {
-                if (window.shortsHorizontalFeed) {
-                    window.shortsHorizontalFeed.updateNavigation();
+                if (!scrollTimeout) {
+                    scrollTimeout = setTimeout(() => {
+                        if (window.shortsHorizontalFeed) {
+                            window.shortsHorizontalFeed.updateNavigation();
+                        }
+                        scrollTimeout = null;
+                    }, 16); // ~60fps
                 }
             });
         }
@@ -1979,7 +1991,6 @@ class YouTubeStylePrompts {
   async handleShare(shareBtn) {
     const promptId = shareBtn.dataset.promptId;
    
-
     const promptUrl = `${window.location.origin}/prompt/${promptId}`;
     
     if (navigator.share) {
