@@ -22,7 +22,7 @@ body {
     overflow-x: hidden;
 }
 
-/* YouTube Shorts Style Horizontal Feed - OPTIMIZED */
+/* YouTube Shorts Style Horizontal Feed - FIXED MOBILE SCROLLING */
 .shorts-horizontal-feed {
     background: white;
     border-bottom: 1px solid #e5e5e5;
@@ -86,7 +86,7 @@ body {
     cursor: not-allowed;
 }
 
-/* Enhanced Mobile Touch Scrolling for Shorts Feed - OPTIMIZED */
+/* FIXED: Enhanced Mobile Touch Scrolling for Shorts Feed */
 .shorts-track-container {
     position: relative;
     overflow: hidden;
@@ -101,34 +101,38 @@ body {
 @media (max-width: 768px) {
     .shorts-track-container {
         overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch; /* This enables smooth scrolling on iOS */
+        scrollbar-width: none; /* Firefox */
+        -ms-overflow-style: none; /* IE and Edge */
         padding: 0 15px;
         margin: 0 -15px;
         width: calc(100% + 30px);
-        touch-action: pan-x;
+        touch-action: pan-x pinch-zoom; /* Better touch control */
         scroll-behavior: smooth;
         /* Enhanced scrolling */
         scroll-snap-type: x mandatory;
         scroll-padding: 0 15px;
+        /* Prevent any other scrolling interference */
+        overscroll-behavior-x: contain;
     }
     
     .shorts-track-container::-webkit-scrollbar {
-        display: none;
+        display: none; /* Chrome, Safari, Opera */
     }
 }
 
 .shorts-track {
     display: flex;
-    gap: 8px; /* Reduced gap for more items */
-    transition: none !important; /* Remove transition for instant response */
+    gap: 8px;
+    transition: none !important;
     padding: 5px 0;
     /* Optimize scrolling performance */
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
     transform: translateZ(0);
     will-change: transform;
+    /* Prevent layout shifts */
+    min-height: 180px;
 }
 
 @media (max-width: 768px) {
@@ -138,52 +142,62 @@ body {
         padding: 5px 15px;
         width: max-content;
         min-width: 100%;
+        /* Improved mobile layout */
+        align-items: flex-start;
     }
 }
 
 /* Individual Short Item - OPTIMIZED */
 .shorts-item {
-    flex: 0 0 100px; /* Smaller for more items */
+    flex: 0 0 100px;
     cursor: pointer;
     border-radius: 8px;
     overflow: hidden;
     background: white;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: transform 0.1s ease; /* Faster hover effect */
+    transition: transform 0.1s ease;
     position: relative;
     -webkit-tap-highlight-color: transparent;
     user-select: none;
     -webkit-user-select: none;
     transform: translateZ(0);
+    /* Prevent layout shifts */
+    height: 180px;
 }
 
 @media (max-width: 768px) {
     .shorts-item {
         flex: 0 0 100px;
         scroll-snap-align: start;
+        /* Prevent any size changes during scroll */
+        flex-shrink: 0;
     }
 }
 
 .shorts-item:hover {
-    transform: scale(1.02); /* More subtle hover */
+    transform: scale(1.02);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .shorts-thumbnail {
     position: relative;
     width: 100%;
-    height: 140px; /* Adjusted for new size */
+    height: 140px;
     overflow: hidden;
+    /* Prevent image layout shifts */
+    background: #f8f9fa;
 }
 
 .shorts-thumbnail img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: none; /* Remove image transform for performance */
+    transition: none;
     /* Optimize image rendering */
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
+    /* Prevent layout shifts */
+    display: block;
 }
 
 /* Remove hover effects on mobile for better performance */
@@ -195,6 +209,15 @@ body {
     .shorts-item:hover {
         transform: none;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Force hardware acceleration on mobile */
+    .shorts-track-container {
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .shorts-track {
+        -webkit-overflow-scrolling: touch;
     }
 }
 
@@ -230,6 +253,9 @@ body {
 
 .shorts-info {
     padding: 6px;
+    /* Fixed height to prevent layout shifts */
+    height: 40px;
+    overflow: hidden;
 }
 
 .shorts-title {
@@ -269,7 +295,7 @@ body {
     flex: 0 0 100px;
     background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
     background-size: 200% 100%;
-    animation: loading 1s infinite; /* Faster loading animation */
+    animation: loading 1s infinite;
     border-radius: 8px;
     height: 150px;
 }
@@ -313,7 +339,7 @@ body {
     }
     
     .shorts-controls {
-        display: none !important; /* Force hide arrows on mobile */
+        display: none !important;
     }
     
     /* Ensure track container takes full width */
@@ -321,6 +347,14 @@ body {
         width: 100%;
         margin: 0;
         padding: 0;
+    }
+    
+    /* iOS Safari specific fixes */
+    @supports (-webkit-touch-callout: none) {
+        .shorts-track-container {
+            -webkit-overflow-scrolling: touch !important;
+            overflow-x: auto !important;
+        }
     }
 }
 
@@ -342,6 +376,18 @@ body {
     
     .shorts-thumbnail {
         height: 110px;
+    }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+    .shorts-track-container {
+        -webkit-overflow-scrolling: touch !important;
+        overflow-x: auto !important;
+    }
+    
+    .shorts-track {
+        -webkit-overflow-scrolling: touch;
     }
 }
 

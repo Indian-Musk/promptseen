@@ -651,6 +651,15 @@ function initMobileHorizontalScroll() {
             trackContainer.style.overflowX = 'auto';
             trackContainer.style.webkitOverflowScrolling = 'touch';
             
+            // Remove any transition that might interfere
+            trackContainer.style.transition = 'none';
+            
+            // iOS Safari specific fixes
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                trackContainer.style.webkitOverflowScrolling = 'touch';
+                trackContainer.style.overflowScrolling = 'touch';
+            }
+            
             // Throttled scroll event for better performance
             let scrollTimeout;
             trackContainer.addEventListener('scroll', () => {
@@ -662,7 +671,29 @@ function initMobileHorizontalScroll() {
                         scrollTimeout = null;
                     }, 16); // ~60fps
                 }
-            });
+            }, { passive: true });
+            
+            // Prevent vertical scroll when horizontally scrolling
+            let startX, startY;
+            trackContainer.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].pageX;
+                startY = e.touches[0].pageY;
+            }, { passive: true });
+            
+            trackContainer.addEventListener('touchmove', (e) => {
+                if (!startX || !startY) return;
+                
+                const x = e.touches[0].pageX;
+                const y = e.touches[0].pageY;
+                
+                const diffX = Math.abs(x - startX);
+                const diffY = Math.abs(y - startY);
+                
+                // If horizontal scroll is more significant, prevent vertical scroll
+                if (diffX > diffY) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
         }
     }
 }
