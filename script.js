@@ -12,7 +12,7 @@ const firebaseConfig = {
 // Global variables for synchronized feeds
 let allPrompts = [];
 let lastPromptUpdate = 0;
-const PROMPT_CACHE_DURATION = 30000; // 30 seconds
+const PROMPT_CACHE_DURATION = 15000; // REDUCED: 15 seconds
 
 // Add this to your existing script.js file or include it in a script tag
 document.addEventListener('DOMContentLoaded', function() {
@@ -348,8 +348,8 @@ class ShortsHorizontalFeed {
         try {
             this.isLoading = true;
             
-            // Show loading state for at least 1 second
-            const loadingPromise = new Promise(resolve => setTimeout(resolve, 1000));
+            // REDUCED: Show loading state for only 500ms instead of 1000ms
+            const loadingPromise = new Promise(resolve => setTimeout(resolve, 500));
             
             // Get fresh prompts data
             await this.loadAllPrompts();
@@ -1345,20 +1345,20 @@ class YouTubeStylePrompts {
         border: 3px solid #f3f3f3 !important;
         border-top: 3px solid #4e54c8 !important;
         border-radius: 50% !important;
-        animation: spin 1s linear infinite !important;
+        animation: spin 0.8s linear infinite !important; /* REDUCED: 0.8s instead of 1s */
         margin-right: 12px !important;
       }
 
       .loading-prompt .shorts-video-container {
         background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
         background-size: 200% 100% !important;
-        animation: loading 1.5s infinite !important;
+        animation: loading 1s infinite !important; /* REDUCED: 1s instead of 1.5s */
       }
 
       .loading-text {
         background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%) !important;
         background-size: 200% 100% !important;
-        animation: loading 1.5s infinite !important;
+        animation: loading 1s infinite !important; /* REDUCED: 1s instead of 1.5s */
         border-radius: 4px !important;
       }
 
@@ -1518,7 +1518,7 @@ class YouTubeStylePrompts {
 
     // Also check on load in case content doesn't fill the screen
     window.addEventListener('load', () => {
-      setTimeout(() => this.checkScrollPosition(), 1000);
+      setTimeout(() => this.checkScrollPosition(), 100);
     });
   }
 
@@ -1654,8 +1654,8 @@ class YouTubeStylePrompts {
     console.log(`Loading page ${this.currentPage + 1} for vertical feed...`);
 
     try {
-      // Simulate API delay for better UX
-      await new Promise(resolve => setTimeout(resolve, 800));
+      // REDUCED: Simulate API delay for better UX - reduced from 800ms to 400ms
+      await new Promise(resolve => setTimeout(resolve, 400));
       
       const olderPrompts = this.getOlderPrompts();
       const startIndex = this.currentPage * this.promptsPerPage;
@@ -1780,7 +1780,7 @@ class YouTubeStylePrompts {
       }
     });
 
-    // Animate prompts in
+    // Animate prompts in with reduced delays
     setTimeout(() => {
       this.animatePromptsIn();
     }, 50);
@@ -1819,7 +1819,8 @@ class YouTubeStylePrompts {
     promptDiv.setAttribute('data-prompt-id', promptId);
     promptDiv.style.opacity = '0';
     promptDiv.style.transform = 'translateY(20px)';
-    promptDiv.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+    // REDUCED: Reduced animation delay from 0.1s to 0.05s per item
+    promptDiv.style.transition = `opacity 0.3s ease ${index * 0.05}s, transform 0.3s ease ${index * 0.05}s`;
 
     promptDiv.innerHTML = `
       <div class="shorts-video-container">
@@ -1979,7 +1980,6 @@ class YouTubeStylePrompts {
   async handleShare(shareBtn) {
     const promptId = shareBtn.dataset.promptId;
    
-
     const promptUrl = `${window.location.origin}/prompt/${promptId}`;
     
     if (navigator.share) {
@@ -2051,7 +2051,7 @@ class YouTubeStylePrompts {
   createLoadingShorts() {
     // Create loading cards
     const loadingCards = Array(4).fill(0).map((_, i) => `
-      <div class="shorts-prompt-card loading-prompt" style="opacity: 0; transform: translateY(20px); transition: opacity 0.5s ease ${i * 0.1}s, transform 0.5s ease ${i * 0.1}s">
+      <div class="shorts-prompt-card loading-prompt" style="opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease ${i * 0.05}s, transform 0.3s ease ${i * 0.05}s">
         <div class="shorts-video-container">
           <div class="loading-placeholder"></div>
         </div>
@@ -2191,7 +2191,7 @@ class YouTubeStyleHeader {
         clearTimeout(this.searchTimeout);
         this.searchTimeout = setTimeout(() => {
           this.handleSearch(e.target.value);
-        }, 300);
+        }, 200); // REDUCED: 200ms instead of 300ms
       });
 
       if (searchButton) {
@@ -2714,14 +2714,14 @@ class SearchManager {
             if (promptCard) {
                 promptCard.style.opacity = '0';
                 promptCard.style.transform = 'translateY(20px)';
-                promptCard.style.transition = `opacity 0.5s ease ${index * 0.1}s, transform 0.5s ease ${index * 0.1}s`;
+                promptCard.style.transition = `opacity 0.3s ease ${index * 0.05}s, transform 0.3s ease ${index * 0.05}s`;
                 
                 promptsContainer.appendChild(promptCard);
                 
                 setTimeout(() => {
                     promptCard.style.opacity = '1';
                     promptCard.style.transform = 'translateY(0)';
-                }, 100 + (index * 100));
+                }, 100 + (index * 50));
             }
         });
     }
@@ -3176,12 +3176,12 @@ function setupCaseInsensitiveSearch() {
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Initializing Prompt Seen with synchronized feeds...');
+  console.log('Initializing Prompt Seen with optimized loading...');
   
   await initializeFirebase();
   showAuthElements();
   
-  // Initialize all components
+  // Initialize core UI immediately
   initMobileNavigation();
   initFilterButtons();
   initScrollEffects();
@@ -3251,7 +3251,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   script.textContent = JSON.stringify(structuredData);
   document.head.appendChild(script);
   
-  console.log('Prompt Seen initialization complete with synchronized feeds');
+  console.log('Prompt Seen initialization complete with optimized loading');
 });
 
 // Mobile Navigation Toggle
