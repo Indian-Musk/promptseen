@@ -71,6 +71,51 @@ app.use(express.urlencoded({ extended: true }));
 // Serve static files from current directory
 app.use(express.static(__dirname));
 
+// Redirect middleware for www - ADDED WWW REDIRECTS
+app.use((req, res, next) => {
+  const host = req.get('host');
+  const protocol = req.protocol;
+  
+  // Only redirect in production (not localhost)
+  if (host === 'promptseen.co' && process.env.NODE_ENV === 'production') {
+    const targetUrl = `https://www.promptseen.co${req.originalUrl}`;
+    console.log(`🔄 Redirecting ${host} to www version: ${targetUrl}`);
+    return res.redirect(301, targetUrl);
+  }
+  
+  next();
+});
+
+// Specific redirect for prompt pages from non-www to www - ADDED
+app.get('/prompt/:id', (req, res, next) => {
+  const host = req.get('host');
+  const promptId = req.params.id;
+  
+  // If accessing prompt page from non-www version in production
+  if (host === 'promptseen.co' && process.env.NODE_ENV === 'production') {
+    const targetUrl = `https://www.promptseen.co/prompt/${promptId}`;
+    console.log(`🔄 Redirecting prompt ${promptId} from ${host} to www version`);
+    return res.redirect(301, targetUrl);
+  }
+  
+  next(); // Continue to the actual prompt handler
+});
+
+// Specific redirect for news pages from non-www to www - ADDED
+app.get('/news/:id', (req, res, next) => {
+  const host = req.get('host');
+  const newsId = req.params.id;
+  
+  // If accessing news page from non-www version in production
+  if (host === 'promptseen.co' && process.env.NODE_ENV === 'production') {
+    const targetUrl = `https://www.promptseen.co/news/${newsId}`;
+    console.log(`🔄 Redirecting news ${newsId} from ${host} to www version`);
+    return res.redirect(301, targetUrl);
+  }
+  
+  next(); // Continue to the actual news handler
+});
+
 // Helper function for safe date conversion
 function safeDateToString(dateValue) {
   if (!dateValue) {
@@ -221,7 +266,7 @@ class SEOOptimizer {
       "keywords": (prompt.keywords || ['AI', 'prompt']).join(', '),
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": `https://promptseen.co/prompt/${prompt.id || 'unknown'}`
+        "@id": `https://www.promptseen.co/prompt/${prompt.id || 'unknown'}`
       }
     };
   }
@@ -253,7 +298,7 @@ class NewsSEOOptimizer {
       "@type": "NewsArticle",
       "headline": news.title || 'AI News',
       "description": news.metaDescription || 'Latest AI news and updates',
-      "image": news.imageUrl || 'https://promptseen.co/logo.png',
+      "image": news.imageUrl || 'https://www.promptseen.co/logo.png',
       "datePublished": news.createdAt || new Date().toISOString(),
       "dateModified": news.updatedAt || new Date().toISOString(),
       "author": {
@@ -265,12 +310,12 @@ class NewsSEOOptimizer {
         "name": "Prompt Seen",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://promptseen.co/logo.png"
+          "url": "https://www.promptseen.co/logo.png"
         }
       },
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": `https://promptseen.co/news/${news.id || 'unknown'}`
+        "@id": `https://www.promptseen.co/news/${news.id || 'unknown'}`
       }
     };
   }
@@ -465,17 +510,51 @@ app.get('/admin/migrate-adsense', async (req, res) => {
   }
 });
 
-// Dynamic Robots.txt
+// Dynamic Robots.txt - ENHANCED VERSION
 app.get('/robots.txt', (req, res) => {
-  const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+  const domain = req.get('host');
+  const protocol = req.secure ? 'https' : 'http';
+  const currentBaseUrl = `${protocol}://${domain}`;
   
   const robotsTxt = `User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /private/
 Disallow: /api/
+Disallow: /cdn-cgi/
+Disallow: /*.php$
+Disallow: /*.json$
+Disallow: /*?*
+Disallow: /*/comments/
+Disallow: /search/
 
-# Google News bot
+# Explicitly allow important pages
+Allow: /promptconverter.html
+Allow: /howitworks.html
+Allow: /login.html
+
+# Block duplicate index pages
+Disallow: /index.html
+Disallow: /home.html
+Disallow: /main.html
+
+# Allow image crawling for Google Images
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.gif$
+Allow: /*.webp$
+
+# Google AdsBot
+User-agent: AdsBot-Google
+Allow: /
+
+# Google Image Bot
+User-agent: Googlebot-Image
+Allow: /
+Disallow: /api/
+
+# Google News Bot
 User-agent: Googlebot-News
 Allow: /news/
 Allow: /sitemap-news.xml
@@ -483,24 +562,44 @@ Crawl-delay: 1
 
 # Regular Googlebot
 User-agent: Googlebot
-Allow: /news/
-Allow: /sitemap-news.xml
+Allow: /
+Disallow: /api/
 Crawl-delay: 2
 
-# Sitemaps
-Sitemap: ${baseUrl}/sitemap.xml
-Sitemap: ${baseUrl}/sitemap-news.xml
-Sitemap: ${baseUrl}/sitemap-posts.xml
-Sitemap: ${baseUrl}/sitemap-pages.xml
+# Bing Bot
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Crawl-delay: 2
 
 # Block AI scrapers
 User-agent: ChatGPT-User
 Disallow: /
 
 User-agent: GPTBot
-Disallow: /`;
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Applebot
+Disallow: /api/
+
+# Sitemaps - Use dynamic base URL
+Sitemap: ${currentBaseUrl}/sitemap.xml
+Sitemap: ${currentBaseUrl}/sitemap-posts.xml
+Sitemap: ${currentBaseUrl}/sitemap-news.xml
+Sitemap: ${currentBaseUrl}/sitemap-pages.xml
+
+# Crawl delay for all other bots
+User-agent: *
+Crawl-delay: 3`;
 
   res.set('Content-Type', 'text/plain');
+  res.set('Cache-Control', 'public, max-age=3600');
   res.send(robotsTxt);
 });
 
@@ -546,12 +645,7 @@ app.get('/sitemap-pages.xml', async (req, res) => {
         changefreq: 'daily',
         priority: '1.0'
       },
-      {
-        loc: baseUrl + '/index.html',
-        lastmod: new Date().toISOString(),
-        changefreq: 'daily',
-        priority: '1.0'
-      },
+    
       {
         loc: 'https://www.promptseen.co/promptconverter.html',
         lastmod: new Date().toISOString(),
@@ -565,7 +659,7 @@ app.get('/sitemap-pages.xml', async (req, res) => {
         priority: '0.8'
       },
       {
-        loc: 'https://promptseen.co/login.html',
+        loc: 'https://www.promptseen.co/login.html',
         lastmod: new Date().toISOString(),
         changefreq: 'monthly',
         priority: '0.5'
@@ -1655,7 +1749,7 @@ function generatePromptHTML(promptData) {
     <meta property="og:title" content="${promptData.seoTitle}">
     <meta property="og:description" content="${promptData.metaDescription}">
     <meta property="og:image" content="${promptData.imageUrl}">
-    <meta property="og:url" content="https://promptseen.co/prompt/${promptData.id}">
+    <meta property="og:url" content="https://www.promptseen.co/prompt/${promptData.id}">
     <meta property="og:type" content="article">
     
     <!-- Twitter Card -->
@@ -2109,6 +2203,18 @@ function sendNewsErrorPage(res, error) {
 </html>`);
 }
 
+// Force canonical redirect for index.html - SIMPLE VERSION
+app.get('/index.html', (req, res) => {
+    const domain = req.get('host');
+    const protocol = req.secure ? 'https' : 'http';
+    const targetUrl = `${protocol}://${domain}/`;
+    
+    console.log(`🔄 Redirecting /index.html to ${targetUrl}`);
+    
+    // Simple 301 redirect - most reliable for SEO
+    res.redirect(301, targetUrl);
+});
+
 // Serve main page
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -2149,6 +2255,7 @@ app.listen(port, async () => {
   console.log(`❤️  Health check: http://localhost:${port}/health`);
   console.log(`💰 AdSense Client ID: ${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}`);
   console.log(`🔄 AdSense Migration: http://localhost:${port}/admin/migrate-adsense`);
+  console.log(`🔄 WWW Redirects: Enabled for production (promptseen.co → www.promptseen.co)`);
   
   // Auto-migrate on startup (optional - remove if you want manual control)
   if (process.env.AUTO_MIGRATE_ADSENSE === 'true') {
