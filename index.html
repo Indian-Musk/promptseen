@@ -50,19 +50,6 @@
             // Only run redirect logic on production domain
             if (currentHost === 'promptseen.co' || currentHost === 'www.promptseen.co') {
                 const targetHost = 'www.promptseen.co';
-                const canonicalUrl = 'https://www.promptseen.co/';
-                
-                // Update canonical tag immediately
-                const canonicalTag = document.querySelector('link[rel="canonical"]');
-                if (canonicalTag) {
-                    canonicalTag.href = canonicalUrl;
-                } else {
-                    // Create canonical tag if it doesn't exist
-                    const link = document.createElement('link');
-                    link.rel = 'canonical';
-                    link.href = canonicalUrl;
-                    document.head.appendChild(link);
-                }
                 
                 // Check if we need to redirect (non-www or index.html access)
                 const shouldRedirect = 
@@ -101,14 +88,26 @@
                     }
                     
                     console.log('Redirecting from:', currentUrl);
-                    console.log('Redirecting to canonical URL:', targetUrl);
+                    console.log('Redirecting to:', targetUrl);
                     
                     // Only redirect if URLs are different
                     if (currentUrl !== targetUrl) {
-                        // Use replace to maintain SEO value
                         window.location.replace(targetUrl);
                         return;
                     }
+                }
+                
+                // Update canonical tag for all pages
+                const canonicalUrl = `https://${targetHost}${currentPath === '/index.html' ? '/' : currentPath}`;
+                const canonicalTag = document.querySelector('link[rel="canonical"]');
+                if (canonicalTag) {
+                    canonicalTag.href = canonicalUrl;
+                } else {
+                    // Create canonical tag if it doesn't exist
+                    const link = document.createElement('link');
+                    link.rel = 'canonical';
+                    link.href = canonicalUrl;
+                    document.head.appendChild(link);
                 }
                 
             } else {

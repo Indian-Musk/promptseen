@@ -207,7 +207,6 @@ class SEOOptimizer {
   }
 
   static generateStructuredData(prompt) {
-    const canonicalUrl = `https://www.promptseen.co/prompt/${prompt.id || 'unknown'}`;
     return {
       "@context": "https://schema.org",
       "@type": "CreativeWork",
@@ -222,7 +221,7 @@ class SEOOptimizer {
       "keywords": (prompt.keywords || ['AI', 'prompt']).join(', '),
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": canonicalUrl
+        "@id": `https://www.promptseen.co/prompt/${prompt.id || 'unknown'}`
       }
     };
   }
@@ -249,7 +248,6 @@ class NewsSEOOptimizer {
   }
 
   static generateNewsStructuredData(news) {
-    const canonicalUrl = `https://www.promptseen.co/news/${news.id || 'unknown'}`;
     return {
       "@context": "https://schema.org",
       "@type": "NewsArticle",
@@ -272,7 +270,7 @@ class NewsSEOOptimizer {
       },
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": canonicalUrl
+        "@id": `https://www.promptseen.co/news/${news.id || 'unknown'}`
       }
     };
   }
@@ -597,7 +595,7 @@ app.get('/sitemap-pages.xml', async (req, res) => {
     
     const pages = [
       {
-        loc: 'https://www.promptseen.co/',
+        loc: baseUrl + '/',
         lastmod: new Date().toISOString(),
         changefreq: 'daily',
         priority: '1.0'
@@ -621,7 +619,7 @@ app.get('/sitemap-pages.xml', async (req, res) => {
         priority: '0.5'
       },
       {
-        loc: 'https://www.promptseen.co/admin/migrate-adsense',
+        loc: baseUrl + '/admin/migrate-adsense',
         lastmod: new Date().toISOString(),
         changefreq: 'yearly',
         priority: '0.1'
@@ -665,7 +663,7 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     }
 
     const urls = prompts.map(prompt => ({
-      loc: `https://www.promptseen.co/prompt/${prompt.id}`,
+      loc: `${baseUrl}/prompt/${prompt.id}`,
       lastmod: prompt.updatedAt || prompt.createdAt || new Date().toISOString(),
       changefreq: 'weekly',
       priority: '0.8'
@@ -675,7 +673,7 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     const categories = ['art', 'photography', 'design', 'writing', 'other'];
     categories.forEach(category => {
       urls.push({
-        loc: `https://www.promptseen.co/category/${category}`,
+        loc: `${baseUrl}/category/${category}`,
         lastmod: new Date().toISOString(),
         changefreq: 'weekly',
         priority: '0.6'
@@ -691,7 +689,7 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
     const fallbackUrls = [
       {
-        loc: 'https://www.promptseen.co/',
+        loc: baseUrl + '/',
         lastmod: new Date().toISOString(),
         changefreq: 'daily',
         priority: '1.0'
@@ -728,7 +726,7 @@ app.get('/sitemap-news.xml', async (req, res) => {
     }
 
     const newsUrls = news.map(newsItem => ({
-      loc: `https://www.promptseen.co/news/${newsItem.id}`,
+      loc: `${baseUrl}/news/${newsItem.id}`,
       lastmod: newsItem.updatedAt || newsItem.publishedAt || new Date().toISOString(),
       title: newsItem.title
     }));
@@ -1467,11 +1465,11 @@ app.get('/api/uploads', async (req, res) => {
   }
 });
 
-// Individual prompt pages for SEO - UPDATED TO ALWAYS USE ADSENSE TEMPLATES
+// Individual prompt pages for SEO - UPDATED TO ALWAYS USE WWW VERSION
 app.get('/prompt/:id', async (req, res) => {
   try {
     const promptId = req.params.id;
-    console.log(`📄 Serving prompt page for ID: ${promptId} with AdSense`);
+    console.log(`📄 Serving prompt page for ID: ${promptId} with WWW version`);
     
     let promptData;
 
@@ -1497,7 +1495,7 @@ app.get('/prompt/:id', async (req, res) => {
       promptData = createPromptData(mockPrompt, promptId);
     }
 
-    // ✅ This will ALWAYS use the new AdSense-enabled template for ALL prompts
+    // ✅ This will ALWAYS use the WWW version template for ALL prompts
     const html = generatePromptHTML(promptData);
     res.set('Content-Type', 'text/html');
     res.send(html);
@@ -1576,7 +1574,10 @@ function createPromptData(prompt, id) {
 
 function generateNewsHTML(newsData) {
   const adsenseCode = generateAdSenseCode();
-  const canonicalUrl = `https://www.promptseen.co/news/${newsData.id}`;
+  
+  // FORCE WWW VERSION
+  const baseUrl = 'https://www.promptseen.co';
+  const newsUrl = `${baseUrl}/news/${newsData.id}`;
   
   return `
 <!DOCTYPE html>
@@ -1588,28 +1589,23 @@ function generateNewsHTML(newsData) {
     <meta name="description" content="${newsData.metaDescription}">
     <meta name="robots" content="index, follow, max-image-preview:large">
     
-    <!-- CRITICAL: Canonical URL -->
-    <link rel="canonical" href="${canonicalUrl}" />
-    
     <!-- Google AdSense Auto Ads -->
     ${adsenseCode}
     
     <!-- News-specific meta tags -->
     <meta property="og:type" content="article">
-    <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:url" content="${newsUrl}">
     <meta property="article:published_time" content="${newsData.publishedAt}">
     <meta property="article:modified_time" content="${newsData.updatedAt}">
     <meta property="article:author" content="${newsData.author}">
     <meta property="article:section" content="${newsData.category}">
     ${(newsData.tags || []).map(tag => `<meta property="article:tag" content="${tag}">`).join('')}
     
+    <!-- Canonical URL -->
+    <link rel="canonical" href="${newsUrl}" />
+    
     <!-- Google News specific tags -->
     <meta name="news_keywords" content="${(newsData.tags || []).join(', ')}">
-    
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-    ${JSON.stringify(NewsSEOOptimizer.generateNewsStructuredData(newsData))}
-    </script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1688,39 +1684,28 @@ function generateNewsHTML(newsData) {
             <!-- Auto ads will populate here -->
         </div>
         
-        <a href="/" class="back-link">← Back to Prompt Seen</a>
+        <a href="https://www.promptseen.co/" class="back-link">← Back to Prompt Seen</a>
     </article>
 
-    <!-- ENHANCED CLIENT-SIDE REDIRECT WITH CANONICAL SUPPORT -->
+    <!-- CLIENT-SIDE REDIRECT SCRIPT FOR NEWS PAGES -->
     <script>
-        // Enhanced client-side redirect with canonical support
+        // Force www version for all news pages
         (function() {
             const currentHost = window.location.hostname;
+            const currentProtocol = window.location.protocol;
             const currentPath = window.location.pathname;
-            const currentUrl = window.location.href;
+            const currentSearch = window.location.search;
+            const currentHash = window.location.hash;
             
-            // Only run on production domain
+            // If accessed via non-www, redirect to www
             if (currentHost === 'promptseen.co') {
-                const targetHost = 'www.promptseen.co';
-                const targetUrl = \`https://\${targetHost}\${currentPath}\${window.location.search}\${window.location.hash}\`;
+                const targetUrl = \`https://www.promptseen.co\${currentPath}\${currentSearch}\${currentHash}\`;
                 
-                // Update canonical tag immediately
-                const canonicalTag = document.querySelector('link[rel="canonical"]');
-                if (canonicalTag) {
-                    canonicalTag.href = targetUrl;
-                }
-                
-                // Update all meta tags with URLs
-                const ogUrlTag = document.querySelector('meta[property="og:url"]');
-                if (ogUrlTag) {
-                    ogUrlTag.content = targetUrl;
-                }
-                
-                console.log('Redirecting to canonical URL:', targetUrl);
-                
-                // Use replace to maintain SEO value
-                if (currentUrl !== targetUrl) {
+                // Only redirect if we're not already on www
+                if (window.location.href !== targetUrl) {
+                    console.log('Redirecting to www version:', targetUrl);
                     window.location.replace(targetUrl);
+                    return; // Stop execution for redirect
                 }
             }
         })();
@@ -1731,7 +1716,10 @@ function generateNewsHTML(newsData) {
 
 function generatePromptHTML(promptData) {
   const adsenseCode = generateAdSenseCode();
-  const canonicalUrl = `https://www.promptseen.co/prompt/${promptData.id}`;
+  
+  // FORCE WWW VERSION IN ALL LINKS AND META TAGS
+  const baseUrl = 'https://www.promptseen.co';
+  const promptUrl = `${baseUrl}/prompt/${promptData.id}`;
   
   return `
 <!DOCTYPE html>
@@ -1744,28 +1732,44 @@ function generatePromptHTML(promptData) {
     <meta name="keywords" content="${(promptData.keywords || []).join(', ')}">
     <meta name="robots" content="index, follow, max-image-preview:large">
     
-    <!-- CRITICAL: Canonical URL -->
-    <link rel="canonical" href="${canonicalUrl}" />
-    
     <!-- Google AdSense Auto Ads -->
     ${adsenseCode}
     
-    <!-- Open Graph -->
+    <!-- Open Graph - USING WWW VERSION -->
     <meta property="og:title" content="${promptData.seoTitle}">
     <meta property="og:description" content="${promptData.metaDescription}">
     <meta property="og:image" content="${promptData.imageUrl}">
-    <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:url" content="${promptUrl}">
     <meta property="og:type" content="article">
     
-    <!-- Twitter Card -->
+    <!-- Twitter Card - USING WWW VERSION -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="${promptData.seoTitle}">
     <meta name="twitter:description" content="${promptData.metaDescription}">
     <meta name="twitter:image" content="${promptData.imageUrl}">
     
-    <!-- Structured Data -->
+    <!-- Canonical URL - FORCE WWW -->
+    <link rel="canonical" href="${promptUrl}" />
+    
+    <!-- Structured Data - USING WWW VERSION -->
     <script type="application/ld+json">
-    ${JSON.stringify(SEOOptimizer.generateStructuredData(promptData))}
+    {
+      "@context": "https://schema.org",
+      "@type": "CreativeWork",
+      "name": "${promptData.title || 'Untitled Prompt'}",
+      "description": "${promptData.metaDescription || 'AI-generated prompt'}",
+      "image": "${promptData.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=AI+Image'}",
+      "author": {
+        "@type": "Person",
+        "name": "${promptData.userName || 'Prompt Seen User'}"
+      },
+      "datePublished": "${promptData.createdAt || new Date().toISOString()}",
+      "keywords": "${(promptData.keywords || ['AI', 'prompt']).join(', ')}",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "${promptUrl}"
+      }
+    }
     </script>
     
     <!-- Font Awesome -->
@@ -1895,7 +1899,8 @@ function generatePromptHTML(promptData) {
             <!-- Auto ads will populate here -->
         </div>
         
-        <a href="/" class="back-link">
+        <!-- BACK LINK USING WWW VERSION -->
+        <a href="https://www.promptseen.co/" class="back-link">
             <i class="fas fa-arrow-left"></i> Back to Prompt Seen
         </a>
     </div>
@@ -1916,8 +1921,8 @@ function generatePromptHTML(promptData) {
                 }
             }
             
-            // Track view
-            fetch('/api/prompt/${promptData.id}/view', { method: 'POST' })
+            // Track view - USING WWW VERSION IN API CALLS
+            fetch('https://www.promptseen.co/api/prompt/${promptData.id}/view', { method: 'POST' })
                 .then(() => {
                     // Update view count
                     const viewsCount = document.querySelector('.views-count');
@@ -1935,7 +1940,8 @@ function generatePromptHTML(promptData) {
                 const isLiked = likeBtn.classList.contains('liked');
                 const action = isLiked ? 'unlike' : 'like';
                 
-                const response = await fetch('/api/prompt/' + promptId + '/like', {
+                // USING WWW VERSION IN API CALLS
+                const response = await fetch('https://www.promptseen.co/api/prompt/' + promptId + '/like', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -1968,7 +1974,8 @@ function generatePromptHTML(promptData) {
                 const useBtn = document.querySelector('.use-btn');
                 const usesCount = document.querySelector('.uses-count');
                 
-                const response = await fetch('/api/prompt/' + promptId + '/use', {
+                // USING WWW VERSION IN API CALLS
+                const response = await fetch('https://www.promptseen.co/api/prompt/' + promptId + '/use', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ userId: 'anonymous' })
@@ -1987,53 +1994,63 @@ function generatePromptHTML(promptData) {
         }
         
         function handleShare(promptId) {
-            const url = window.location.href;
+            // USING WWW VERSION FOR SHARING
+            const promptUrl = 'https://www.promptseen.co/prompt/' + promptId;
+            
             if (navigator.share) {
-                navigator.share({
-                    title: '${promptData.title}',
-                    text: '${(promptData.promptText || '').substring(0, 100)}...',
-                    url: url
-                });
+                try {
+                    navigator.share({
+                        title: '${promptData.title}',
+                        text: '${(promptData.promptText || '').substring(0, 100)}...',
+                        url: promptUrl
+                    });
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        navigator.clipboard.writeText(promptUrl).then(() => {
+                            alert('Link copied to clipboard!');
+                        });
+                    }
+                }
             } else {
-                navigator.clipboard.writeText(url).then(() => {
+                navigator.clipboard.writeText(promptUrl).then(() => {
                     alert('Link copied to clipboard!');
                 });
             }
         }
     </script>
 
-    <!-- ENHANCED CLIENT-SIDE REDIRECT WITH CANONICAL SUPPORT -->
+    <!-- ENHANCED CLIENT-SIDE REDIRECT - FORCE WWW IF SOMEONE ACCESSES NON-WWW -->
     <script>
-        // Enhanced client-side redirect with canonical support
+        // Force www version for all prompt pages
         (function() {
             const currentHost = window.location.hostname;
+            const currentProtocol = window.location.protocol;
             const currentPath = window.location.pathname;
-            const currentUrl = window.location.href;
+            const currentSearch = window.location.search;
+            const currentHash = window.location.hash;
             
-            // Only run on production domain
+            // If accessed via non-www, redirect to www
             if (currentHost === 'promptseen.co') {
-                const targetHost = 'www.promptseen.co';
-                const targetUrl = \`https://\${targetHost}\${currentPath}\${window.location.search}\${window.location.hash}\`;
+                const targetUrl = \`https://www.promptseen.co\${currentPath}\${currentSearch}\${currentHash}\`;
                 
-                // Update canonical tag immediately
-                const canonicalTag = document.querySelector('link[rel="canonical"]');
-                if (canonicalTag) {
-                    canonicalTag.href = targetUrl;
-                }
-                
-                // Update all meta tags with URLs
-                const ogUrlTag = document.querySelector('meta[property="og:url"]');
-                if (ogUrlTag) {
-                    ogUrlTag.content = targetUrl;
-                }
-                
-                console.log('Redirecting to canonical URL:', targetUrl);
-                
-                // Use replace to maintain SEO value
-                if (currentUrl !== targetUrl) {
+                // Only redirect if we're not already on www
+                if (window.location.href !== targetUrl) {
+                    console.log('Redirecting to www version:', targetUrl);
                     window.location.replace(targetUrl);
+                    return; // Stop execution for redirect
                 }
             }
+            
+            // If we're on www, ensure all internal links use www
+            document.addEventListener('DOMContentLoaded', function() {
+                // Update any relative links to absolute www links
+                const links = document.querySelectorAll('a[href^="/"]');
+                links.forEach(link => {
+                    if (link.href.startsWith('/')) {
+                        link.href = 'https://www.promptseen.co' + link.getAttribute('href');
+                    }
+                });
+            });
         })();
     </script>
 </body>
@@ -2052,7 +2069,6 @@ function generateCategoryHTML(category, baseUrl) {
   
   const categoryName = categoryNames[category] || 'AI Prompts';
   const description = `Explore ${categoryName} prompts and AI-generated content. Discover the best prompt engineering techniques for ${categoryName.toLowerCase()}.`;
-  const canonicalUrl = `https://www.promptseen.co/category/${category}`;
 
   const adsenseCode = generateAdSenseCode();
 
@@ -2066,9 +2082,6 @@ function generateCategoryHTML(category, baseUrl) {
     <meta name="description" content="${description}">
     <meta name="robots" content="index, follow">
     
-    <!-- CRITICAL: Canonical URL -->
-    <link rel="canonical" href="${canonicalUrl}" />
-    
     <!-- Google AdSense Auto Ads -->
     ${adsenseCode}
     
@@ -2076,7 +2089,10 @@ function generateCategoryHTML(category, baseUrl) {
     <meta property="og:title" content="${categoryName} Prompts - Prompt Seen">
     <meta property="og:description" content="${description}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="${canonicalUrl}">
+    <meta property="og:url" content="https://www.promptseen.co/category/${category}">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.promptseen.co/category/${category}" />
     
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -2085,7 +2101,7 @@ function generateCategoryHTML(category, baseUrl) {
       "@type": "CollectionPage",
       "name": "${categoryName} Prompts",
       "description": "${description}",
-      "url": "${canonicalUrl}",
+      "url": "https://www.promptseen.co/category/${category}",
       "mainEntity": {
         "@type": "ItemList",
         "name": "${categoryName} AI Prompts"
@@ -2140,7 +2156,7 @@ function generateCategoryHTML(category, baseUrl) {
             <!-- Auto ads will populate here -->
         </div>
         
-        <a href="/" class="back-link">← Back to Prompt Showcase</a>
+        <a href="https://www.promptseen.co/" class="back-link">← Back to Prompt Showcase</a>
         
         <!-- Bottom Ad Placement -->
         <div class="ad-container">
@@ -2149,37 +2165,20 @@ function generateCategoryHTML(category, baseUrl) {
         </div>
     </div>
 
-    <!-- ENHANCED CLIENT-SIDE REDIRECT WITH CANONICAL SUPPORT -->
+    <!-- CLIENT-SIDE REDIRECT SCRIPT FOR CATEGORY PAGES -->
     <script>
-        // Enhanced client-side redirect with canonical support
+        // Client-side redirect for category pages
         (function() {
             const currentHost = window.location.hostname;
             const currentPath = window.location.pathname;
-            const currentUrl = window.location.href;
             
             // Only run on production domain
             if (currentHost === 'promptseen.co') {
                 const targetHost = 'www.promptseen.co';
                 const targetUrl = \`https://\${targetHost}\${currentPath}\${window.location.search}\${window.location.hash}\`;
                 
-                // Update canonical tag immediately
-                const canonicalTag = document.querySelector('link[rel="canonical"]');
-                if (canonicalTag) {
-                    canonicalTag.href = targetUrl;
-                }
-                
-                // Update all meta tags with URLs
-                const ogUrlTag = document.querySelector('meta[property="og:url"]');
-                if (ogUrlTag) {
-                    ogUrlTag.content = targetUrl;
-                }
-                
-                console.log('Redirecting to canonical URL:', targetUrl);
-                
-                // Use replace to maintain SEO value
-                if (currentUrl !== targetUrl) {
-                    window.location.replace(targetUrl);
-                }
+                console.log('Redirecting category page to:', targetUrl);
+                window.location.replace(targetUrl);
             }
         })();
     </script>
@@ -2207,7 +2206,7 @@ function sendPromptNotFound(res, promptId) {
         <h1>Prompt Not Found</h1>
         <p>The prompt you're looking for doesn't exist or may have been removed.</p>
         <p><small>Prompt ID: ${promptId}</small></p>
-        <a href="/">← Return to Prompt Seen</a>
+        <a href="https://www.promptseen.co/">← Return to Prompt Seen</a>
     </div>
 </body>
 </html>`);
@@ -2232,7 +2231,7 @@ function sendNewsNotFound(res, newsId) {
         <h1>News Article Not Found</h1>
         <p>The news article you're looking for doesn't exist or may have been removed.</p>
         <p><small>News ID: ${newsId}</small></p>
-        <a href="/">← Return to Prompt Seen</a>
+        <a href="https://www.promptseen.co/">← Return to Prompt Seen</a>
     </div>
 </body>
 </html>`);
@@ -2257,7 +2256,7 @@ function sendErrorPage(res, error) {
     <div class="container">
         <h1>Error Loading Prompt</h1>
         <p>There was an error loading this prompt. Please try again later.</p>
-        <a href="/">← Return to Home</a>
+        <a href="https://www.promptseen.co/">← Return to Home</a>
     </div>
 </body>
 </html>`);
@@ -2281,7 +2280,7 @@ function sendNewsErrorPage(res, error) {
     <div class="container">
         <h1>Error Loading News</h1>
         <p>There was an error loading this news article. Please try again later.</p>
-        <a href="/">← Return to Home</a>
+        <a href="https://www.promptseen.co/">← Return to Home</a>
     </div>
 </body>
 </html>`);
@@ -2300,7 +2299,7 @@ app.use((req, res) => {
       <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
         <h1>Page Not Found</h1>
         <p>The page you're looking for doesn't exist.</p>
-        <a href="/">Return to Home</a>
+        <a href="https://www.promptseen.co/">Return to Home</a>
       </body>
     </html>
   `);
