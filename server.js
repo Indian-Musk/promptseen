@@ -207,6 +207,7 @@ class SEOOptimizer {
   }
 
   static generateStructuredData(prompt) {
+    const canonicalUrl = `https://www.promptseen.co/prompt/${prompt.id || 'unknown'}`;
     return {
       "@context": "https://schema.org",
       "@type": "CreativeWork",
@@ -221,7 +222,7 @@ class SEOOptimizer {
       "keywords": (prompt.keywords || ['AI', 'prompt']).join(', '),
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": `https://promptseen.co/prompt/${prompt.id || 'unknown'}`
+        "@id": canonicalUrl
       }
     };
   }
@@ -248,12 +249,13 @@ class NewsSEOOptimizer {
   }
 
   static generateNewsStructuredData(news) {
+    const canonicalUrl = `https://www.promptseen.co/news/${news.id || 'unknown'}`;
     return {
       "@context": "https://schema.org",
       "@type": "NewsArticle",
       "headline": news.title || 'AI News',
       "description": news.metaDescription || 'Latest AI news and updates',
-      "image": news.imageUrl || 'https://promptseen.co/logo.png',
+      "image": news.imageUrl || 'https://www.promptseen.co/logo.png',
       "datePublished": news.createdAt || new Date().toISOString(),
       "dateModified": news.updatedAt || new Date().toISOString(),
       "author": {
@@ -265,12 +267,12 @@ class NewsSEOOptimizer {
         "name": "Prompt Seen",
         "logo": {
           "@type": "ImageObject",
-          "url": "https://promptseen.co/logo.png"
+          "url": "https://www.promptseen.co/logo.png"
         }
       },
       "mainEntityOfPage": {
         "@type": "WebPage",
-        "@id": `https://promptseen.co/news/${news.id || 'unknown'}`
+        "@id": canonicalUrl
       }
     };
   }
@@ -465,17 +467,51 @@ app.get('/admin/migrate-adsense', async (req, res) => {
   }
 });
 
-// Dynamic Robots.txt
+// Dynamic Robots.txt - ENHANCED VERSION
 app.get('/robots.txt', (req, res) => {
-  const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+  const domain = req.get('host');
+  const protocol = req.secure ? 'https' : 'http';
+  const currentBaseUrl = `${protocol}://${domain}`;
   
   const robotsTxt = `User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /private/
 Disallow: /api/
+Disallow: /cdn-cgi/
+Disallow: /*.php$
+Disallow: /*.json$
+Disallow: /*?*
+Disallow: /*/comments/
+Disallow: /search/
 
-# Google News bot
+# Explicitly allow important pages
+Allow: /promptconverter.html
+Allow: /howitworks.html
+Allow: /login.html
+
+# Block duplicate index pages
+Disallow: /index.html
+Disallow: /home.html
+Disallow: /main.html
+
+# Allow image crawling for Google Images
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.png$
+Allow: /*.gif$
+Allow: /*.webp$
+
+# Google AdsBot
+User-agent: AdsBot-Google
+Allow: /
+
+# Google Image Bot
+User-agent: Googlebot-Image
+Allow: /
+Disallow: /api/
+
+# Google News Bot
 User-agent: Googlebot-News
 Allow: /news/
 Allow: /sitemap-news.xml
@@ -483,24 +519,44 @@ Crawl-delay: 1
 
 # Regular Googlebot
 User-agent: Googlebot
-Allow: /news/
-Allow: /sitemap-news.xml
+Allow: /
+Disallow: /api/
 Crawl-delay: 2
 
-# Sitemaps
-Sitemap: ${baseUrl}/sitemap.xml
-Sitemap: ${baseUrl}/sitemap-news.xml
-Sitemap: ${baseUrl}/sitemap-posts.xml
-Sitemap: ${baseUrl}/sitemap-pages.xml
+# Bing Bot
+User-agent: Bingbot
+Allow: /
+Disallow: /api/
+Crawl-delay: 2
 
 # Block AI scrapers
 User-agent: ChatGPT-User
 Disallow: /
 
 User-agent: GPTBot
-Disallow: /`;
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Applebot
+Disallow: /api/
+
+# Sitemaps - Use dynamic base URL
+Sitemap: ${currentBaseUrl}/sitemap.xml
+Sitemap: ${currentBaseUrl}/sitemap-posts.xml
+Sitemap: ${currentBaseUrl}/sitemap-news.xml
+Sitemap: ${currentBaseUrl}/sitemap-pages.xml
+
+# Crawl delay for all other bots
+User-agent: *
+Crawl-delay: 3`;
 
   res.set('Content-Type', 'text/plain');
+  res.set('Cache-Control', 'public, max-age=3600');
   res.send(robotsTxt);
 });
 
@@ -541,13 +597,7 @@ app.get('/sitemap-pages.xml', async (req, res) => {
     
     const pages = [
       {
-        loc: baseUrl + '/',
-        lastmod: new Date().toISOString(),
-        changefreq: 'daily',
-        priority: '1.0'
-      },
-      {
-        loc: baseUrl + '/index.html',
+        loc: 'https://www.promptseen.co/',
         lastmod: new Date().toISOString(),
         changefreq: 'daily',
         priority: '1.0'
@@ -565,13 +615,13 @@ app.get('/sitemap-pages.xml', async (req, res) => {
         priority: '0.8'
       },
       {
-        loc: 'https://promptseen.co/login.html',
+        loc: 'https://www.promptseen.co/login.html',
         lastmod: new Date().toISOString(),
         changefreq: 'monthly',
         priority: '0.5'
       },
       {
-        loc: baseUrl + '/admin/migrate-adsense',
+        loc: 'https://www.promptseen.co/admin/migrate-adsense',
         lastmod: new Date().toISOString(),
         changefreq: 'yearly',
         priority: '0.1'
@@ -615,7 +665,7 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     }
 
     const urls = prompts.map(prompt => ({
-      loc: `${baseUrl}/prompt/${prompt.id}`,
+      loc: `https://www.promptseen.co/prompt/${prompt.id}`,
       lastmod: prompt.updatedAt || prompt.createdAt || new Date().toISOString(),
       changefreq: 'weekly',
       priority: '0.8'
@@ -625,7 +675,7 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     const categories = ['art', 'photography', 'design', 'writing', 'other'];
     categories.forEach(category => {
       urls.push({
-        loc: `${baseUrl}/category/${category}`,
+        loc: `https://www.promptseen.co/category/${category}`,
         lastmod: new Date().toISOString(),
         changefreq: 'weekly',
         priority: '0.6'
@@ -641,7 +691,7 @@ app.get('/sitemap-posts.xml', async (req, res) => {
     const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
     const fallbackUrls = [
       {
-        loc: baseUrl + '/',
+        loc: 'https://www.promptseen.co/',
         lastmod: new Date().toISOString(),
         changefreq: 'daily',
         priority: '1.0'
@@ -678,7 +728,7 @@ app.get('/sitemap-news.xml', async (req, res) => {
     }
 
     const newsUrls = news.map(newsItem => ({
-      loc: `${baseUrl}/news/${newsItem.id}`,
+      loc: `https://www.promptseen.co/news/${newsItem.id}`,
       lastmod: newsItem.updatedAt || newsItem.publishedAt || new Date().toISOString(),
       title: newsItem.title
     }));
@@ -1526,6 +1576,7 @@ function createPromptData(prompt, id) {
 
 function generateNewsHTML(newsData) {
   const adsenseCode = generateAdSenseCode();
+  const canonicalUrl = `https://www.promptseen.co/news/${newsData.id}`;
   
   return `
 <!DOCTYPE html>
@@ -1537,11 +1588,15 @@ function generateNewsHTML(newsData) {
     <meta name="description" content="${newsData.metaDescription}">
     <meta name="robots" content="index, follow, max-image-preview:large">
     
+    <!-- CRITICAL: Canonical URL -->
+    <link rel="canonical" href="${canonicalUrl}" />
+    
     <!-- Google AdSense Auto Ads -->
     ${adsenseCode}
     
     <!-- News-specific meta tags -->
     <meta property="og:type" content="article">
+    <meta property="og:url" content="${canonicalUrl}">
     <meta property="article:published_time" content="${newsData.publishedAt}">
     <meta property="article:modified_time" content="${newsData.updatedAt}">
     <meta property="article:author" content="${newsData.author}">
@@ -1550,6 +1605,11 @@ function generateNewsHTML(newsData) {
     
     <!-- Google News specific tags -->
     <meta name="news_keywords" content="${(newsData.tags || []).join(', ')}">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    ${JSON.stringify(NewsSEOOptimizer.generateNewsStructuredData(newsData))}
+    </script>
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1630,12 +1690,48 @@ function generateNewsHTML(newsData) {
         
         <a href="/" class="back-link">← Back to Prompt Seen</a>
     </article>
+
+    <!-- ENHANCED CLIENT-SIDE REDIRECT WITH CANONICAL SUPPORT -->
+    <script>
+        // Enhanced client-side redirect with canonical support
+        (function() {
+            const currentHost = window.location.hostname;
+            const currentPath = window.location.pathname;
+            const currentUrl = window.location.href;
+            
+            // Only run on production domain
+            if (currentHost === 'promptseen.co') {
+                const targetHost = 'www.promptseen.co';
+                const targetUrl = \`https://\${targetHost}\${currentPath}\${window.location.search}\${window.location.hash}\`;
+                
+                // Update canonical tag immediately
+                const canonicalTag = document.querySelector('link[rel="canonical"]');
+                if (canonicalTag) {
+                    canonicalTag.href = targetUrl;
+                }
+                
+                // Update all meta tags with URLs
+                const ogUrlTag = document.querySelector('meta[property="og:url"]');
+                if (ogUrlTag) {
+                    ogUrlTag.content = targetUrl;
+                }
+                
+                console.log('Redirecting to canonical URL:', targetUrl);
+                
+                // Use replace to maintain SEO value
+                if (currentUrl !== targetUrl) {
+                    window.location.replace(targetUrl);
+                }
+            }
+        })();
+    </script>
 </body>
 </html>`;
 }
 
 function generatePromptHTML(promptData) {
   const adsenseCode = generateAdSenseCode();
+  const canonicalUrl = `https://www.promptseen.co/prompt/${promptData.id}`;
   
   return `
 <!DOCTYPE html>
@@ -1648,6 +1744,9 @@ function generatePromptHTML(promptData) {
     <meta name="keywords" content="${(promptData.keywords || []).join(', ')}">
     <meta name="robots" content="index, follow, max-image-preview:large">
     
+    <!-- CRITICAL: Canonical URL -->
+    <link rel="canonical" href="${canonicalUrl}" />
+    
     <!-- Google AdSense Auto Ads -->
     ${adsenseCode}
     
@@ -1655,7 +1754,7 @@ function generatePromptHTML(promptData) {
     <meta property="og:title" content="${promptData.seoTitle}">
     <meta property="og:description" content="${promptData.metaDescription}">
     <meta property="og:image" content="${promptData.imageUrl}">
-    <meta property="og:url" content="https://promptseen.co/prompt/${promptData.id}">
+    <meta property="og:url" content="${canonicalUrl}">
     <meta property="og:type" content="article">
     
     <!-- Twitter Card -->
@@ -1663,6 +1762,11 @@ function generatePromptHTML(promptData) {
     <meta name="twitter:title" content="${promptData.seoTitle}">
     <meta name="twitter:description" content="${promptData.metaDescription}">
     <meta name="twitter:image" content="${promptData.imageUrl}">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    ${JSON.stringify(SEOOptimizer.generateStructuredData(promptData))}
+    </script>
     
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -1897,6 +2001,41 @@ function generatePromptHTML(promptData) {
             }
         }
     </script>
+
+    <!-- ENHANCED CLIENT-SIDE REDIRECT WITH CANONICAL SUPPORT -->
+    <script>
+        // Enhanced client-side redirect with canonical support
+        (function() {
+            const currentHost = window.location.hostname;
+            const currentPath = window.location.pathname;
+            const currentUrl = window.location.href;
+            
+            // Only run on production domain
+            if (currentHost === 'promptseen.co') {
+                const targetHost = 'www.promptseen.co';
+                const targetUrl = \`https://\${targetHost}\${currentPath}\${window.location.search}\${window.location.hash}\`;
+                
+                // Update canonical tag immediately
+                const canonicalTag = document.querySelector('link[rel="canonical"]');
+                if (canonicalTag) {
+                    canonicalTag.href = targetUrl;
+                }
+                
+                // Update all meta tags with URLs
+                const ogUrlTag = document.querySelector('meta[property="og:url"]');
+                if (ogUrlTag) {
+                    ogUrlTag.content = targetUrl;
+                }
+                
+                console.log('Redirecting to canonical URL:', targetUrl);
+                
+                // Use replace to maintain SEO value
+                if (currentUrl !== targetUrl) {
+                    window.location.replace(targetUrl);
+                }
+            }
+        })();
+    </script>
 </body>
 </html>`;
 }
@@ -1913,6 +2052,7 @@ function generateCategoryHTML(category, baseUrl) {
   
   const categoryName = categoryNames[category] || 'AI Prompts';
   const description = `Explore ${categoryName} prompts and AI-generated content. Discover the best prompt engineering techniques for ${categoryName.toLowerCase()}.`;
+  const canonicalUrl = `https://www.promptseen.co/category/${category}`;
 
   const adsenseCode = generateAdSenseCode();
 
@@ -1926,6 +2066,9 @@ function generateCategoryHTML(category, baseUrl) {
     <meta name="description" content="${description}">
     <meta name="robots" content="index, follow">
     
+    <!-- CRITICAL: Canonical URL -->
+    <link rel="canonical" href="${canonicalUrl}" />
+    
     <!-- Google AdSense Auto Ads -->
     ${adsenseCode}
     
@@ -1933,7 +2076,7 @@ function generateCategoryHTML(category, baseUrl) {
     <meta property="og:title" content="${categoryName} Prompts - Prompt Seen">
     <meta property="og:description" content="${description}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="${baseUrl}/category/${category}">
+    <meta property="og:url" content="${canonicalUrl}">
     
     <!-- JSON-LD Structured Data -->
     <script type="application/ld+json">
@@ -1942,7 +2085,7 @@ function generateCategoryHTML(category, baseUrl) {
       "@type": "CollectionPage",
       "name": "${categoryName} Prompts",
       "description": "${description}",
-      "url": "${baseUrl}/category/${category}",
+      "url": "${canonicalUrl}",
       "mainEntity": {
         "@type": "ItemList",
         "name": "${categoryName} AI Prompts"
@@ -2005,6 +2148,41 @@ function generateCategoryHTML(category, baseUrl) {
             <!-- Auto ads will populate here -->
         </div>
     </div>
+
+    <!-- ENHANCED CLIENT-SIDE REDIRECT WITH CANONICAL SUPPORT -->
+    <script>
+        // Enhanced client-side redirect with canonical support
+        (function() {
+            const currentHost = window.location.hostname;
+            const currentPath = window.location.pathname;
+            const currentUrl = window.location.href;
+            
+            // Only run on production domain
+            if (currentHost === 'promptseen.co') {
+                const targetHost = 'www.promptseen.co';
+                const targetUrl = \`https://\${targetHost}\${currentPath}\${window.location.search}\${window.location.hash}\`;
+                
+                // Update canonical tag immediately
+                const canonicalTag = document.querySelector('link[rel="canonical"]');
+                if (canonicalTag) {
+                    canonicalTag.href = targetUrl;
+                }
+                
+                // Update all meta tags with URLs
+                const ogUrlTag = document.querySelector('meta[property="og:url"]');
+                if (ogUrlTag) {
+                    ogUrlTag.content = targetUrl;
+                }
+                
+                console.log('Redirecting to canonical URL:', targetUrl);
+                
+                // Use replace to maintain SEO value
+                if (currentUrl !== targetUrl) {
+                    window.location.replace(targetUrl);
+                }
+            }
+        })();
+    </script>
 </body>
 </html>`;
 }
