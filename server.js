@@ -465,10 +465,38 @@ app.get('/admin/migrate-adsense', async (req, res) => {
   }
 });
 
-// Dynamic Robots.txt - ENHANCED VERSION
+// Dynamic Robots.txt - FIXED HTTPS VERSION
 app.get('/robots.txt', (req, res) => {
   const domain = req.get('host');
-  const protocol = req.secure ? 'https' : 'http';
+  
+  // Better HTTPS detection
+  let protocol = 'https';
+  
+  // Check multiple ways to detect HTTPS
+  if (req.secure) {
+    protocol = 'https';
+  } else if (req.headers['x-forwarded-proto'] === 'https') {
+    protocol = 'https';
+  } else if (req.headers['x-forwarded-protocol'] === 'https') {
+    protocol = 'https';
+  } else if (req.headers['x-forwarded-ssl'] === 'on') {
+    protocol = 'https';
+  } else if (req.headers['x-url-scheme'] === 'https') {
+    protocol = 'https';
+  } else {
+    // Fallback: check if host contains your domain (likely production)
+    if (domain.includes('promptseen.co')) {
+      protocol = 'https';
+    } else {
+      protocol = req.protocol; // Use whatever Express detects
+    }
+  }
+  
+  // FORCE HTTPS for production domain
+  if (domain.includes('promptseen.co')) {
+    protocol = 'https';
+  }
+  
   const currentBaseUrl = `${protocol}://${domain}`;
   
   const robotsTxt = `User-agent: *
@@ -543,11 +571,11 @@ Disallow: /
 User-agent: Applebot
 Disallow: /api/
 
-# Sitemaps - Use dynamic base URL
-Sitemap: ${currentBaseUrl}/sitemap.xml
-Sitemap: ${currentBaseUrl}/sitemap-posts.xml
-Sitemap: ${currentBaseUrl}/sitemap-news.xml
-Sitemap: ${currentBaseUrl}/sitemap-pages.xml
+# Sitemaps - Use HTTPS always for production
+Sitemap: https://www.promptseen.co/sitemap.xml
+Sitemap: https://www.promptseen.co/sitemap-posts.xml
+Sitemap: https://www.promptseen.co/sitemap-news.xml
+Sitemap: https://www.promptseen.co/sitemap-pages.xml
 
 # Crawl delay for all other bots
 User-agent: *
@@ -557,7 +585,6 @@ Crawl-delay: 3`;
   res.set('Cache-Control', 'public, max-age=3600');
   res.send(robotsTxt);
 });
-
 // Dynamic Sitemap Index
 app.get('/sitemap.xml', async (req, res) => {
   try {
