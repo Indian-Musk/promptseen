@@ -1758,7 +1758,7 @@ function generatePromptHTML(promptData) {
     <meta name="description" content="${promptData.metaDescription}">
     <meta name="keywords" content="${(promptData.keywords || []).join(', ')}">
     <meta name="robots" content="index, follow, max-image-preview:large">
-    
+     <meta http-equiv="refresh" content="0;url=https://www.promptseen.co/prompt/${promptData.id}">
     <!-- Google AdSense Auto Ads -->
     ${adsenseCode}
     
@@ -2046,44 +2046,39 @@ function generatePromptHTML(promptData) {
         }
     </script>
 
-    <!-- ENHANCED CLIENT-SIDE REDIRECT - FORCE WWW IF SOMEONE ACCESSES NON-WWW -->
+    <!-- IMPROVED CLIENT-SIDE REDIRECT - BETTER DETECTION -->
     <script>
-        // Force www version for all prompt pages
+        // Force www version for all prompt pages - IMPROVED VERSION
         (function() {
             const currentHost = window.location.hostname;
-            const currentProtocol = window.location.protocol;
             const currentPath = window.location.pathname;
             const currentSearch = window.location.search;
             const currentHash = window.location.hash;
             
-            // If accessed via non-www, redirect to www
-            if (currentHost === 'promptseen.co') {
-                const targetUrl = \`https://www.promptseen.co\${currentPath}\${currentSearch}\${currentHash}\`;
-                
-                // Only redirect if we're not already on www
-                if (window.location.href !== targetUrl) {
-                    console.log('Redirecting to www version:', targetUrl);
-                    window.location.replace(targetUrl);
-                    return; // Stop execution for redirect
-                }
-            }
+            console.log('Current host:', currentHost);
+            console.log('Current URL:', window.location.href);
             
-            // If we're on www, ensure all internal links use www
-            document.addEventListener('DOMContentLoaded', function() {
-                // Update any relative links to absolute www links
-                const links = document.querySelectorAll('a[href^="/"]');
-                links.forEach(link => {
-                    if (link.href.startsWith('/')) {
-                        link.href = 'https://www.promptseen.co' + link.getAttribute('href');
-                    }
-                });
-            });
+            // Check if we're on non-www version (multiple ways)
+            const isNonWWW = 
+                currentHost === 'promptseen.co' || 
+                currentHost === 'https://promptseen.co' ||
+                window.location.href.includes('://promptseen.co') ||
+                !currentHost.includes('www.');
+            
+            console.log('Is non-www:', isNonWWW);
+            
+            if (isNonWWW) {
+                const targetUrl = \`https://www.promptseen.co\${currentPath}\${currentSearch}\${currentHash}\`;
+                console.log('Redirecting to:', targetUrl);
+                
+                // Use replace to avoid adding to browser history
+                window.location.replace(targetUrl);
+            }
         })();
     </script>
 </body>
 </html>`;
 }
-
 // Helper function to generate category page HTML
 function generateCategoryHTML(category, baseUrl) {
   const categoryNames = {
