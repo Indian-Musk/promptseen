@@ -600,7 +600,6 @@ Crawl-delay: 3`;
   res.set('Cache-Control', 'public, max-age=3600');
   res.send(robotsTxt);
 });
-
 // Dynamic Sitemap Index
 app.get('/sitemap.xml', async (req, res) => {
   try {
@@ -1510,11 +1509,19 @@ app.get('/api/uploads', async (req, res) => {
   }
 });
 
+
 // Individual prompt pages for SEO - ENHANCED WITH RICH CONTENT
 app.get('/prompt/:id', async (req, res) => {
   try {
     const promptId = req.params.id;
     console.log(`📄 Serving enhanced prompt page for ID: ${promptId}`);
+
+// Individual prompt pages for SEO - UPDATED TO ALWAYS USE WWW VERSION
+app.get('/prompt/:id', async (req, res) => {
+  try {
+    const promptId = req.params.id;
+    console.log(`📄 Serving prompt page for ID: ${promptId} with WWW version`);
+
     
     let promptData;
 
@@ -1540,8 +1547,13 @@ app.get('/prompt/:id', async (req, res) => {
       promptData = createPromptData(mockPrompt, promptId);
     }
 
+
     // ✅ This will use the enhanced template with rich content
     const html = generateEnhancedPromptHTML(promptData);
+
+    // ✅ This will ALWAYS use the WWW version template for ALL prompts
+    const html = generatePromptHTML(promptData);
+
     res.set('Content-Type', 'text/html');
     res.send(html);
 
@@ -1623,12 +1635,160 @@ function createPromptData(prompt, id) {
 function generateEnhancedPromptHTML(promptData) {
   const adsenseCode = generateAdSenseCode();
   
+
   // FORCE WWW VERSION IN ALL LINKS AND META TAGS
   const baseUrl = 'https://www.promptseen.co';
   const promptUrl = baseUrl + '/prompt/' + promptData.id;
   
   // Generate supporting content
   const supportingContent = generateSupportingContent(promptData);
+
+  // FORCE WWW VERSION
+  const baseUrl = 'https://www.promptseen.co';
+  const newsUrl = `${baseUrl}/news/${newsData.id}`;
+  
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${newsData.seoTitle}</title>
+    <meta name="description" content="${newsData.metaDescription}">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    
+    <!-- Google AdSense Auto Ads -->
+    ${adsenseCode}
+    
+    <!-- News-specific meta tags -->
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="${newsUrl}">
+    <meta property="article:published_time" content="${newsData.publishedAt}">
+    <meta property="article:modified_time" content="${newsData.updatedAt}">
+    <meta property="article:author" content="${newsData.author}">
+    <meta property="article:section" content="${newsData.category}">
+    ${(newsData.tags || []).map(tag => `<meta property="article:tag" content="${tag}">`).join('')}
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="${newsUrl}" />
+    
+    <!-- Google News specific tags -->
+    <meta name="news_keywords" content="${(newsData.tags || []).join(', ')}">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; background: #f5f7fa; padding: 20px; }
+        .news-article { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .news-header { text-align: center; margin-bottom: 30px; }
+        .news-title { font-size: 2.5rem; color: #2d334a; margin-bottom: 15px; line-height: 1.3; }
+        .news-meta { color: #666; margin-bottom: 20px; font-size: 1rem; }
+        .news-image { width: 100%; height: 400px; object-fit: cover; border-radius: 10px; margin-bottom: 30px; }
+        .news-content { line-height: 1.8; font-size: 1.1rem; }
+        .news-content p { margin-bottom: 20px; }
+        .breaking-badge { background: #ff6b6b; color: white; padding: 8px 20px; border-radius: 25px; font-weight: bold; display: inline-block; margin-bottom: 15px; }
+        .back-link { display: inline-block; margin-top: 30px; color: #4e54c8; text-decoration: none; font-weight: 600; }
+        .back-link:hover { text-decoration: underline; }
+        
+        /* Ad Container Styles */
+        .ad-container {
+            margin: 25px 0;
+            text-align: center;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .ad-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .news-article { padding: 20px; }
+            .news-title { font-size: 1.8rem; }
+            .news-image { height: 250px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Auto Ads will be placed here automatically by Google -->
+    
+    <article class="news-article">
+        <header class="news-header">
+            ${newsData.isBreaking ? '<span class="breaking-badge">BREAKING NEWS</span>' : ''}
+            <h1 class="news-title">${newsData.title}</h1>
+            <div class="news-meta">
+                By ${newsData.author} | ${new Date(newsData.publishedAt).toLocaleDateString()} | 
+                ${newsData.views} views | ${newsData.category}
+            </div>
+        </header>
+        
+        <!-- Top Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+        
+        <img src="${newsData.imageUrl}" alt="${newsData.title}" class="news-image">
+        
+        <!-- Middle Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+        
+        <div class="news-content">
+            ${(newsData.content || '').split('\n').map(paragraph => `<p>${paragraph}</p>`).join('')}
+        </div>
+        
+        <!-- Bottom Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+        
+        <a href="https://www.promptseen.co/" class="back-link">← Back to Prompt Seen</a>
+    </article>
+
+    <!-- CLIENT-SIDE REDIRECT SCRIPT FOR NEWS PAGES -->
+    <script>
+        // Force www version for all news pages
+        (function() {
+            const currentHost = window.location.hostname;
+            const currentProtocol = window.location.protocol;
+            const currentPath = window.location.pathname;
+            const currentSearch = window.location.search;
+            const currentHash = window.location.hash;
+            
+            // If accessed via non-www, redirect to www
+            if (currentHost === 'promptseen.co') {
+                const targetUrl = \`https://www.promptseen.co\${currentPath}\${currentSearch}\${currentHash}\`;
+                
+                // Only redirect if we're not already on www
+                if (window.location.href !== targetUrl) {
+                    console.log('Redirecting to www version:', targetUrl);
+                    window.location.replace(targetUrl);
+                    return; // Stop execution for redirect
+                }
+            }
+        })();
+    </script>
+</body>
+</html>`;
+}
+
+function generatePromptHTML(promptData) {
+  const adsenseCode = generateAdSenseCode();
+
+  
+  // FORCE WWW VERSION IN ALL LINKS AND META TAGS
+  const baseUrl = 'https://www.promptseen.co';
+  const promptUrl = `${baseUrl}/prompt/${promptData.id}`;
   
   return `
 <!DOCTYPE html>
@@ -1640,11 +1800,15 @@ function generateEnhancedPromptHTML(promptData) {
     <meta name="description" content="${promptData.metaDescription}">
     <meta name="keywords" content="${(promptData.keywords || []).join(', ')}">
     <meta name="robots" content="index, follow, max-image-preview:large">
-    
+     <meta http-equiv="refresh" content="0;url=https://www.promptseen.co/prompt/${promptData.id}">
     <!-- Google AdSense Auto Ads -->
     ${adsenseCode}
     
+
     <!-- Enhanced Open Graph - USING WWW VERSION -->
+
+    <!-- Open Graph - USING WWW VERSION -->
+
     <meta property="og:title" content="${promptData.seoTitle}">
     <meta property="og:description" content="${promptData.metaDescription}">
     <meta property="og:image" content="${promptData.imageUrl}">
@@ -1661,6 +1825,7 @@ function generateEnhancedPromptHTML(promptData) {
     <!-- Canonical URL - FORCE WWW -->
     <link rel="canonical" href="${promptUrl}" />
     
+
     <!-- Enhanced Structured Data - USING WWW VERSION -->
     <script type="application/ld+json">
     {
@@ -1673,10 +1838,21 @@ function generateEnhancedPromptHTML(promptData) {
       "headline": "${promptData.title.replace(/"/g, '\\"')}",
       "description": "${promptData.metaDescription.replace(/"/g, '\\"')}",
       "image": "${promptData.imageUrl}",
+
+    <!-- Structured Data - USING WWW VERSION -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CreativeWork",
+      "name": "${promptData.title || 'Untitled Prompt'}",
+      "description": "${promptData.metaDescription || 'AI-generated prompt'}",
+      "image": "${promptData.imageUrl || 'https://via.placeholder.com/800x400/4e54c8/white?text=AI+Image'}",
+
       "author": {
         "@type": "Person",
         "name": "${promptData.userName || 'Prompt Seen User'}"
       },
+
       "publisher": {
         "@type": "Organization",
         "name": "Prompt Seen",
@@ -1718,6 +1894,14 @@ function generateEnhancedPromptHTML(promptData) {
           "item": "${promptUrl}"
         }
       ]
+
+      "datePublished": "${promptData.createdAt || new Date().toISOString()}",
+      "keywords": "${(promptData.keywords || ['AI', 'prompt']).join(', ')}",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "${promptUrl}"
+      }
+
     }
     </script>
     
@@ -2295,7 +2479,23 @@ function generateEnhancedPromptHTML(promptData) {
         <div class="copyright">
             <p>&copy; 2025 Prompt Seen. All rights reserved. | AI Prompt Sharing Platform</p>
         </div>
+
     </footer>
+
+
+        
+        <!-- Bottom Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+        
+        <!-- BACK LINK USING WWW VERSION -->
+        <a href="https://www.promptseen.co/" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Prompt Seen
+        </a>
+    </div>
+    
 
     <script>
         // Enhanced image loading
@@ -2313,7 +2513,11 @@ function generateEnhancedPromptHTML(promptData) {
                 }
             }
             
+
             // Track view
+
+            // Track view - USING WWW VERSION IN API CALLS
+
             fetch('https://www.promptseen.co/api/prompt/${promptData.id}/view', { method: 'POST' })
                 .then(() => {
                     const viewsCount = document.querySelector('.views-count');
@@ -2378,6 +2582,10 @@ function generateEnhancedPromptHTML(promptData) {
                 const isLiked = likeBtn.classList.contains('liked');
                 const action = isLiked ? 'unlike' : 'like';
                 
+
+
+                // USING WWW VERSION IN API CALLS
+
                 const response = await fetch('https://www.promptseen.co/api/prompt/' + promptId + '/like', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2408,6 +2616,9 @@ function generateEnhancedPromptHTML(promptData) {
                 const useBtn = document.querySelector('.use-btn');
                 const usesCount = document.querySelector('.uses-count');
                 
+
+                // USING WWW VERSION IN API CALLS
+
                 const response = await fetch('https://www.promptseen.co/api/prompt/' + promptId + '/use', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -2425,6 +2636,7 @@ function generateEnhancedPromptHTML(promptData) {
         }
         
         function handleShare(promptId) {
+
             const promptUrl = 'https://www.promptseen.co/prompt/' + promptId;
             
             if (navigator.share) {
@@ -2436,10 +2648,33 @@ function generateEnhancedPromptHTML(promptData) {
             } else {
                 navigator.clipboard.writeText(promptUrl).then(() => {
                     alert('Prompt link copied to clipboard!');
+
+            // USING WWW VERSION FOR SHARING
+            const promptUrl = 'https://www.promptseen.co/prompt/' + promptId;
+            
+            if (navigator.share) {
+                try {
+                    navigator.share({
+                        title: '${promptData.title}',
+                        text: '${(promptData.promptText || '').substring(0, 100)}...',
+                        url: promptUrl
+                    });
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        navigator.clipboard.writeText(promptUrl).then(() => {
+                            alert('Link copied to clipboard!');
+                        });
+                    }
+                }
+            } else {
+                navigator.clipboard.writeText(promptUrl).then(() => {
+                    alert('Link copied to clipboard!');
+
                 });
             }
         }
     </script>
+
 
 <!-- IMPROVED CLIENT-SIDE REDIRECT - BETTER DETECTION -->
     <script>
@@ -2449,12 +2684,26 @@ function generateEnhancedPromptHTML(promptData) {
             var currentPath = window.location.pathname;
             var currentSearch = window.location.search;
             var currentHash = window.location.hash;
+
+    <!-- IMPROVED CLIENT-SIDE REDIRECT - BETTER DETECTION -->
+    <script>
+        // Force www version for all prompt pages - IMPROVED VERSION
+        (function() {
+            const currentHost = window.location.hostname;
+            const currentPath = window.location.pathname;
+            const currentSearch = window.location.search;
+            const currentHash = window.location.hash;
+
             
             console.log('Current host:', currentHost);
             console.log('Current URL:', window.location.href);
             
             // Check if we're on non-www version (multiple ways)
+
             var isNonWWW = 
+
+            const isNonWWW = 
+
                 currentHost === 'promptseen.co' || 
                 currentHost === 'https://promptseen.co' ||
                 window.location.href.includes('://promptseen.co') ||
@@ -2463,7 +2712,11 @@ function generateEnhancedPromptHTML(promptData) {
             console.log('Is non-www:', isNonWWW);
             
             if (isNonWWW) {
+
                 var targetUrl = 'https://www.promptseen.co' + currentPath + currentSearch + currentHash;
+
+                const targetUrl = \`https://www.promptseen.co\${currentPath}\${currentSearch}\${currentHash}\`;
+
                 console.log('Redirecting to:', targetUrl);
                 
                 // Use replace to avoid adding to browser history
@@ -2471,6 +2724,7 @@ function generateEnhancedPromptHTML(promptData) {
             }
         })();
     </script>
+
 
 </body>
 </html>`;
@@ -2581,6 +2835,12 @@ function generateNewsHTML(newsData) {
 </body>
 </html>`;
 }
+
+</body>
+</html>`;
+}
+// Helper function to generate category page HTML
+
 function generateCategoryHTML(category, baseUrl) {
   const categoryNames = {
     'art': 'AI Art', 'photography': 'AI Photography', 'design': 'AI Design',
@@ -2596,7 +2856,39 @@ function generateCategoryHTML(category, baseUrl) {
     <meta charset="UTF-8">
     <title>${categoryName} Prompts - Prompt Seen</title>
     <meta name="description" content="${description}">
+
     ${generateAdSenseCode()}
+
+    <meta name="robots" content="index, follow">
+    
+    <!-- Google AdSense Auto Ads -->
+    ${adsenseCode}
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="${categoryName} Prompts - Prompt Seen">
+    <meta property="og:description" content="${description}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.promptseen.co/category/${category}">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://www.promptseen.co/category/${category}" />
+    
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "${categoryName} Prompts",
+      "description": "${description}",
+      "url": "https://www.promptseen.co/category/${category}",
+      "mainEntity": {
+        "@type": "ItemList",
+        "name": "${categoryName} AI Prompts"
+      }
+    }
+    </script>
+    
+
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
         .container { max-width: 800px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -2608,8 +2900,44 @@ function generateCategoryHTML(category, baseUrl) {
     <div class="container">
         <h1>${categoryName} Prompts</h1>
         <p>${description}</p>
+
         <a href="/">← Back to Prompt Showcase</a>
+
+        <p>This category page is automatically generated for SEO purposes. The actual ${categoryName.toLowerCase()} content is available on our main showcase page.</p>
+        
+        <!-- Middle Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+        
+        <a href="https://www.promptseen.co/" class="back-link">← Back to Prompt Showcase</a>
+        
+        <!-- Bottom Ad Placement -->
+        <div class="ad-container">
+            <div class="ad-label">Advertisement</div>
+            <!-- Auto ads will populate here -->
+        </div>
+
     </div>
+
+    <!-- CLIENT-SIDE REDIRECT SCRIPT FOR CATEGORY PAGES -->
+    <script>
+        // Client-side redirect for category pages
+        (function() {
+            const currentHost = window.location.hostname;
+            const currentPath = window.location.pathname;
+            
+            // Only run on production domain
+            if (currentHost === 'promptseen.co') {
+                const targetHost = 'www.promptseen.co';
+                const targetUrl = \`https://\${targetHost}\${currentPath}\${window.location.search}\${window.location.hash}\`;
+                
+                console.log('Redirecting category page to:', targetUrl);
+                window.location.replace(targetUrl);
+            }
+        })();
+    </script>
 </body>
 </html>`;
 }
@@ -2634,7 +2962,7 @@ function sendPromptNotFound(res, promptId) {
         <h1>Prompt Not Found</h1>
         <p>The prompt you're looking for doesn't exist or may have been removed.</p>
         <p><small>Prompt ID: ${promptId}</small></p>
-        <a href="/">← Return to Prompt Seen</a>
+        <a href="https://www.promptseen.co/">← Return to Prompt Seen</a>
     </div>
 </body>
 </html>`);
@@ -2659,7 +2987,7 @@ function sendNewsNotFound(res, newsId) {
         <h1>News Article Not Found</h1>
         <p>The news article you're looking for doesn't exist or may have been removed.</p>
         <p><small>News ID: ${newsId}</small></p>
-        <a href="/">← Return to Prompt Seen</a>
+        <a href="https://www.promptseen.co/">← Return to Prompt Seen</a>
     </div>
 </body>
 </html>`);
@@ -2684,7 +3012,7 @@ function sendErrorPage(res, error) {
     <div class="container">
         <h1>Error Loading Prompt</h1>
         <p>There was an error loading this prompt. Please try again later.</p>
-        <a href="/">← Return to Home</a>
+        <a href="https://www.promptseen.co/">← Return to Home</a>
     </div>
 </body>
 </html>`);
@@ -2708,7 +3036,7 @@ function sendNewsErrorPage(res, error) {
     <div class="container">
         <h1>Error Loading News</h1>
         <p>There was an error loading this news article. Please try again later.</p>
-        <a href="/">← Return to Home</a>
+        <a href="https://www.promptseen.co/">← Return to Home</a>
     </div>
 </body>
 </html>`);
@@ -2727,7 +3055,7 @@ app.use((req, res) => {
       <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
         <h1>Page Not Found</h1>
         <p>The page you're looking for doesn't exist.</p>
-        <a href="/">Return to Home</a>
+        <a href="https://www.promptseen.co/">Return to Home</a>
       </body>
     </html>
   `);

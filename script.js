@@ -582,11 +582,19 @@ class ShortsHorizontalFeed {
         // Implementation for infinite horizontal loading
     }
 
-    openPromptPage(promptId) {
-        if (promptId && promptId !== 'unknown') {
-            window.open(`/prompt/${promptId}`, '_blank');
-        }
+   openPromptPage(promptId) {
+  if (promptId && promptId !== 'unknown') {
+    const currentHost = window.location.hostname;
+    let targetUrl = `/prompt/${promptId}`;
+    
+    // If on non-www version in production, redirect to www
+    if (currentHost === 'promptseen.co' && window.location.hostname !== 'localhost') {
+      targetUrl = `https://www.promptseen.co/prompt/${promptId}`;
     }
+    
+    window.open(targetUrl, '_blank');
+  }
+}
 
     formatCount(count) {
         // Handle undefined, null, or non-numeric values
