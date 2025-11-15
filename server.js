@@ -2165,7 +2165,7 @@ function generateEnhancedPromptHTML(promptData) {
                 <div class="user-info">
                     <i class="fas fa-user-circle"></i>
                     <span>Created by: ${promptData.userName}</span>
-                    ${promptData.seoScore ? '<span style="background: #20bf6b; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 10px;">SEO Score: ' + promptData.seoScore + '/100</span>' : ''}
+                    ${promptData.seoScore ? '<span style="background: #20bf6b; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 10px;">Prompt Seen: ' + promptData.seoScore + '/100</span>' : ''}
                 </div>
                 <h1 class="article-title">${promptData.title}</h1>
                 <div class="prompt-meta">
