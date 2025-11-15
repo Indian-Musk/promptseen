@@ -1,4 +1,4 @@
-﻿﻿<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" itemscope itemtype="https://schema.org/WebSite">
 <head>
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724"     crossorigin="anonymous"></script>
@@ -14,8 +14,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- Enhanced SEO Meta Tags -->
-    <title>Prompt Seen: New Trending prompts & photo editing prompts</title>
-    <meta name="description" content="Prompt Seen Website is a Trending and viral Prompts Website Which can Help You To Make Your Photo Image In Awesome by Just Using Prompt Seen Website .">
+    <title>Prompt Seen: AI trending photo editing prompts</title>
+    <meta name="description" content="Prompt Seen Website is a Trending and viral AI Prompts Website Which can Help You To Edit Your Photos, Images, By Just Copy & Paste Prompt ">
     <meta name="keywords" content=""Prompt Seen,home prompt seen,chatgpt prompt seen,midjourney prompt seen,type prompt seen,prompt seen download,prompt seen gcam,prompt seen camera,prompt seen chatgpt,prompt seen lmc,prompt seen couple,prompt seen gcam download,	prompt seen name,prompt seen ai,prompt seen app download,	prompt seen app,prompt seen apk,prompt seen attitude boy,prompt seen apk download,	prompt seen all,	prompt seen ai image generator,prompt signification,ai prompt seen,apk prompt seen download,ai couple prompt seen,	all prompt seen,prompt seen 15 august name,prompt seen 15 august photo,	prompt seen camera app,	prompt seen boy,	prompt seen birthday,prompt seen bike,prompt seen black and white,prompt seen baby,prompt seen black,prompt seen boy and girl,	prompt seen bing image creator,prompt seen bike rider,	prompt report meaning,birthday prompt seen,	best prompt seen,prompt seen ganpati bappa,prompt seen birthday wishes,prompt seen sad boy,	prompt seen name for boy,prompt seen com,prompt seen camera download,	prompt seen copy,prompt seen car,prompt seen camera iphone,prompt seen couple free,chatgpt prompt seen,couple prompt seen,prompt seen diwali,prompt seen durga puja,diwali prompt seen,prompt seen friendship day,prompt seen editing,	prompt seen eid milad un nabi,prompt seen photo editor,prompt seen rajan editz,command prompt see environment variables,anaconda prompt see environments,prompt seen name ai photo editing,	prompt scene editing,photo editing prompt seen,prompt seen free,prompt seen friends,	prompt seen free fire,prompt seen for girl,	prompt seen for chatgpt,	prompt seen for boys">
     <meta name="robots" content="index, follow, max-image-preview:large">
     <meta name="googlebot" content="index, follow">
@@ -24,22 +24,107 @@
     <meta name="author" content="Prompt Seen">
     
     <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="Prompt Seen: AI Prompt Engineering Platform">
+    <meta property="og:title" content="Prompt Seen: AI Prompt Provider & Sharing Platform">
     <meta property="og:description" content="Create, share and discover effective AI prompts. Join our community of prompt engineers and AI enthusiasts.">
-    <meta property="og:image" content="https://promptseen.co/logo.png">
-    <meta property="og:url" content="https://promptseen.co">
+    <meta property="og:image" content="https://www.promptseen.co/logo.png">
+    <meta property="og:url" content="https://www.promptseen.co">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="Prompt Seen">
     
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Prompt Seen: AI Prompt Engineering Platform">
+    <meta name="twitter:title" content="Prompt Seen: AI Prompt Provider & Sharing Platform">
     <meta name="twitter:description" content="Create, share and discover effective AI prompts. Join our community of prompt engineers.">
-    <meta name="twitter:image" content="https://promptseen.co/logo.png">
+    <meta name="twitter:image" content="https://www.promptseen.co/logo.png">
     <meta name="twitter:site" content="@promptseen">
     
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://promptseen.co">
+    <!-- Enhanced Canonical and Redirect Script -->
+    <script>
+        // Force canonical URL and redirect if accessed via index.html or non-www
+        (function() {
+            const currentUrl = window.location.href;
+            const currentHost = window.location.hostname;
+            const currentPath = window.location.pathname;
+            const currentProtocol = window.location.protocol;
+            
+            // Only run redirect logic on production domain
+            if (currentHost === 'promptseen.co' || currentHost === 'www.promptseen.co') {
+                const targetHost = 'www.promptseen.co';
+                
+                // Check if we need to redirect (non-www or index.html access)
+                const shouldRedirect = 
+                    currentHost !== targetHost || 
+                    currentPath === '/index.html' || 
+                    currentPath.includes('/index.html');
+                
+                if (shouldRedirect) {
+                    // Build target URL
+                    let targetUrl = `${currentProtocol}//${targetHost}`;
+                    
+                    // Handle prompt pages - preserve the unique ID
+                    if (currentPath.startsWith('/prompt/')) {
+                        const promptId = currentPath.split('/prompt/')[1];
+                        if (promptId) {
+                            targetUrl += `/prompt/${promptId}`;
+                        } else {
+                            targetUrl += '/';
+                        }
+                    } 
+                    // Handle other paths (except index.html)
+                    else if (currentPath !== '/index.html' && currentPath !== '/') {
+                        targetUrl += currentPath;
+                    } else {
+                        targetUrl += '/';
+                    }
+                    
+                    // Add query parameters if any
+                    if (window.location.search) {
+                        targetUrl += window.location.search;
+                    }
+                    
+                    // Add hash if any
+                    if (window.location.hash) {
+                        targetUrl += window.location.hash;
+                    }
+                    
+                    console.log('Redirecting from:', currentUrl);
+                    console.log('Redirecting to:', targetUrl);
+                    
+                    // Only redirect if URLs are different
+                    if (currentUrl !== targetUrl) {
+                        window.location.replace(targetUrl);
+                        return;
+                    }
+                }
+                
+                // Update canonical tag for all pages
+                const canonicalUrl = `https://${targetHost}${currentPath === '/index.html' ? '/' : currentPath}`;
+                const canonicalTag = document.querySelector('link[rel="canonical"]');
+                if (canonicalTag) {
+                    canonicalTag.href = canonicalUrl;
+                } else {
+                    // Create canonical tag if it doesn't exist
+                    const link = document.createElement('link');
+                    link.rel = 'canonical';
+                    link.href = canonicalUrl;
+                    document.head.appendChild(link);
+                }
+                
+            } else {
+                // Development/localhost handling
+                console.log('Development mode: Running on', currentHost);
+                
+                // Still fix index.html paths in development
+                if (currentPath === '/index.html') {
+                    const cleanUrl = currentUrl.replace('/index.html', '/');
+                    window.history.replaceState({}, document.title, cleanUrl);
+                }
+            }
+        })();
+    </script>
+
+    <!-- Existing canonical tag -->
+    <link rel="canonical" href="https://www.promptseen.co/" />
     
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="/favicon.png">
@@ -58,9 +143,9 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "Prompt Seen",
-      "url": "https://promptseen.co",
-      "logo": "https://promptseen.co/logo.png",
-      "description": "AI Prompt Engineering Platform",
+      "url": "https://www.promptseen.co",
+      "logo": "https://www.promptseen.co/logo.png",
+      "description": "AI Prompt Provider & Sharing Platform",
       "sameAs": [
         "https://twitter.com/promptseen",
         "https://instagram.com/promptseen"
@@ -228,7 +313,7 @@
                 <!-- YouTube-style Search Bar -->
                 <div class="search-container">
                     <div class="search-box">
-                        <input type="text" id="searchInput" placeholder="Search...e.g.happy diwali">
+                        <input type="text" id="searchInput" placeholder="Search...e.g. couples">
                         <button class="search-btn" id="searchButton">
                             <i class="fas fa-search"></i>
                         </button>
@@ -348,8 +433,10 @@
              <button class="upload-btn" id="openUploadModal">
                     <i class="fas fa-cloud-upload-alt"></i> Upload
                 </button>
-
-            <p>Scroll to discover prompt seen</p>
+<marquee width="100%" direction="left" height="100px">
+<p Style="color: blue;">Scroll to discover prompt seen "Don't miss out! Join Our Whatsapp Group & Follow our Whatsapp Channel To Get 24/7 latest updated Prompt & Tips For Your Photo Editing."</p>
+</marquee>
+            
             <!-- YouTube Shorts Style Container -->
             <div class="shorts-container" id="promptsContainer" >
                 <!-- Prompts will be loaded here automatically -->

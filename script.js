@@ -1,3 +1,4 @@
+﻿
 ﻿// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDWDn4T6tkk8ihjLX8Y_YHMkz7y2Uw9paQ",
@@ -2802,10 +2803,13 @@ function addMobileNavigation() {
         <i class="fas fa-exchange-alt"></i>
         <span>Create</span>
       </a>
-      <a href="login.html" class="nav-item">
-        <i class="fas fa-user"></i>
-        <span>Login</span>
+ <!-- Add WhatsApp Group Button -->
+      <a href="https://whatsapp.com/channel/0029Vb5Th674SpkEB2iRMK01" class="nav-item whatsapp-mobile" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+        <span>Join Group</span>
+
       </a>
+   
     `;
     
     document.body.appendChild(mobileNav);
@@ -3237,11 +3241,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     "@context": "https://schema.org",
     "@type": "WebSite",
     "name": "Prompt Seen",
-    "url": "https://promptseen.co",
-    "description": "AI Prompt Engineering Platform - Create, share and discover effective AI prompts",
+    "url": "https://www.promptseen.co",
+    "description": "AI Prompt Provider and Sharing platform - Create, share and discover effective AI prompts",
     "potentialAction": {
       "@type": "SearchAction",
-      "target": "https://promptseen.co/search?q={search_term_string}",
+      "target": "https://www.promptseen.co/search?q={search_term_string}",
       "query-input": "required name=search_term_string"
     }
   };
