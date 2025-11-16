@@ -2272,7 +2272,7 @@ function generateEnhancedPromptHTML(promptData) {
         <div class="footer-container">
             <div class="footer-section">
                 <h3>Prompt Seen</h3>
-                <p>Your premier destination for AI prompts and creative inspiration. Share, discover, and create amazing AI-generated content.</p>
+                <p>Prompt Seen is a platform that offers trending and viral AI prompts for photo editing and other creative tasks. It provides users with free, high-quality prompts that can be used with various AI tools, including ChatGPT and Google Gemini. The platform aims to simplify the photo editing process by offering ready-to-use prompts that enhance creativity and efficiency. Additionally, it features an AI image generator that allows users to create visuals from text prompts. </p>
             </div>
             <div class="footer-section">
                 <h3>Quick Links</h3>
@@ -2293,7 +2293,7 @@ function generateEnhancedPromptHTML(promptData) {
             </div>
         </div>
         <div class="copyright">
-            <p>&copy; 2024 Prompt Seen. All rights reserved. | AI Prompt Sharing Platform</p>
+            <p>&copy; 2025 Prompt Seen. All rights reserved. | AI Prompt Sharing Platform</p>
         </div>
     </footer>
 
