@@ -1,34 +1,388 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724"     crossorigin="anonymous"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-LS811PSS3V"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
   function gtag(){dataLayer.push(arguments);}
   gtag('js', new Date());
-
   gtag('config', 'G-LS811PSS3V');
 </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="title" content="Prompt Seen - New Trending Prompts & Photo editing Stock">
-<meta name="description" content="Prompt Seen Website is a Trending and viral Prompts Website Which can Help You To Make Your Photo Image In Awesome by Just Using Prompt Seen Website .">
-<meta name="keywords" content="Prompt Seen,home prompt seen,chatgpt prompt seen,midjourney prompt seen,type prompt seen,prompt seen download,prompt seen gcam,prompt seen camera,prompt seen chatgpt,prompt seen lmc,prompt seen couple,prompt seen gcam download,	prompt seen name,prompt seen ai,prompt seen app download,	prompt seen app,prompt seen apk,prompt seen attitude boy,prompt seen apk download,	prompt seen all,	prompt seen ai image generator,prompt signification,ai prompt seen,apk prompt seen download,ai couple prompt seen,	all prompt seen,prompt seen 15 august name,prompt seen 15 august photo,	prompt seen camera app,	prompt seen boy,	prompt seen birthday,prompt seen bike,prompt seen black and white,prompt seen baby,prompt seen black,prompt seen boy and girl,	prompt seen bing image creator,prompt seen bike rider,	prompt report meaning,birthday prompt seen,	best prompt seen,prompt seen ganpati bappa,prompt seen birthday wishes,prompt seen sad boy,	prompt seen name for boy,prompt seen com,prompt seen camera download,	prompt seen copy,prompt seen car,prompt seen camera iphone,prompt seen couple free,chatgpt prompt seen,couple prompt seen,prompt seen diwali,prompt seen durga puja,diwali prompt seen,prompt seen friendship day,prompt seen editing,	prompt seen eid milad un nabi,prompt seen photo editor,prompt seen rajan editz,command prompt see environment variables,anaconda prompt see environments,prompt seen name ai photo editing,	prompt scene editing,photo editing prompt seen,prompt seen free,prompt seen friends,	prompt seen free fire,prompt seen for girl,	prompt seen for chatgpt,	prompt seen for boys">
-<meta name="robots" content="index, follow">
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<meta name="language" content="English">
+    <meta name="title" content="AI Prompt Converter - Transform Basic Prompts into Detailed AI Art Instructions">
+    <meta name="description" content="Free AI Prompt Converter tool that enhances basic text prompts into detailed, optimized instructions for Chatgpt, Google Gemini, Midjourney, DALL-E, Stable Diffusion and other AI image generators. Improve your AI art results instantly.">
+    <meta name="keywords" content="AI prompt converter, prompt enhancement, Chatgpt, Google Gemini, Midjourney prompt generator, DALL-E prompt optimizer, AI art prompts, Stable Diffusion prompts, prompt engineering, AI image generation, creative prompts, art direction">
+    <meta name="robots" content="index, follow">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="language" content="English">
+    <meta property="og:title" content="AI Prompt Converter - Enhance Your AI Art Prompts">
+    <meta property="og:description" content="Transform basic prompts into detailed AI art instructions for better results with Midjourney, DALL-E, and Stable Diffusion.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://promptseen.co/promptconverter.html">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="AI Prompt Converter - Better Prompts for AI Art">
+    <meta name="twitter:description" content="Free tool to convert basic ideas into detailed AI art prompts with style, lighting, and technical parameters.">
 
-
-    <title>Prompt Seen - New Trending Prompts & Photo editing Stock</title>
+    <title>AI Prompt Converter - Enhance Basic Prompts for Midjourney, DALL-E | PromptSeen</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
-<!-- Add this in the <head> section of each HTML file -->
-<link rel="icon" type="image/png" href="/favicon.png">
-<!-- Add to <head> section -->
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <!-- Add this in the <head> section of each HTML file -->
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <!-- Add to <head> section -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <style>
+        /* Inline CSS for Prompt Converter */
+        .prompt-converter {
+            padding: 40px 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 0 15px;
+        }
+        
+        .section-title h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: #2d334a;
+        }
+        
+        .section-title p {
+            font-size: 1rem;
+            color: #6c757d;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .converter-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 1000px;
+            margin: 0 15px;
+        }
+        
+        .converter-header {
+            background: linear-gradient(135deg, #8f94fb 0%, #4e54c8 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .converter-header h2 {
+            margin: 0 0 10px 0;
+            font-size: 1.5rem;
+        }
+        
+        .converter-header p {
+            margin: 0;
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .converter-body {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            gap: 20px;
+        }
+        
+        .converter-column {
+            width: 100%;
+        }
+        
+        .converter-column h3 {
+            margin-bottom: 15px;
+            color: #4e54c8;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .converter-column textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 1px solid #e1e5ee;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            box-sizing: border-box;
+        }
+        
+        .converter-column textarea:focus {
+            outline: none;
+            border-color: #8f94fb;
+            box-shadow: 0 0 0 3px rgba(143, 148, 251, 0.2);
+        }
+        
+        #enhancedPrompt {
+            background-color: #f8f9fa;
+            color: #495057;
+        }
+        
+        .converter-actions {
+            padding: 0 20px 20px;
+            text-align: center;
+        }
+        
+        .convert-btn {
+            background: linear-gradient(135deg, #8f94fb 0%, #4e54c8 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            max-width: 300px;
+            justify-content: center;
+        }
+        
+        .convert-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(143, 148, 251, 0.4);
+        }
+        
+        .convert-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .converter-tips {
+            background: #f8f9fa;
+            padding: 20px;
+            border-top: 1px solid #e1e5ee;
+        }
+        
+        .converter-tips h4 {
+            margin-bottom: 15px;
+            color: #2d334a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .converter-tips ul {
+            padding-left: 20px;
+            margin: 0;
+        }
+        
+        .converter-tips li {
+            margin-bottom: 8px;
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        /* Examples Section */
+        .examples {
+            padding: 40px 0;
+            background: white;
+        }
+        
+        .example-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 15px;
+        }
+        
+        .example-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            border: 1px solid #e1e5ee;
+        }
+        
+        .example-header {
+            background: #f8f9fa;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e1e5ee;
+            flex-wrap: wrap;
+        }
+        
+        .example-header h3 {
+            margin: 0;
+            font-size: 1rem;
+            color: #4e54c8;
+        }
+        
+        .example-content {
+            padding: 15px;
+        }
+        
+        .basic-prompt, .enhanced-prompt {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+        }
+        
+        .basic-prompt {
+            background: #f8f9fa;
+            border-left: 4px solid #6c757d;
+        }
+        
+        .enhanced-prompt {
+            background: #e7f4ff;
+            border-left: 4px solid #4e54c8;
+        }
+        
+        .basic-prompt p, .enhanced-prompt p {
+            margin: 0;
+            font-style: italic;
+        }
+        
+        /* Mobile Navigation */
+        .mobile-toggle {
+            display: block;
+            cursor: pointer;
+            font-size: 1.5rem;
+        }
+        
+        .nav-links {
+            display: none;
+            flex-direction: column;
+            position: absolute;
+            top: 70px;
+            left: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+        
+        .nav-links.active {
+            display: flex;
+        }
+        
+        .nav-links a {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            width: 100%;
+            text-align: center;
+        }
+        
+        /* Responsive Design */
+        @media (min-width: 768px) {
+            .prompt-converter {
+                padding: 80px 0;
+            }
+            
+            .section-title {
+                margin-bottom: 50px;
+                padding: 0;
+            }
+            
+            .section-title h2 {
+                font-size: 2.5rem;
+            }
+            
+            .section-title p {
+                font-size: 1.1rem;
+            }
+            
+            .converter-container {
+                margin: 0 auto;
+            }
+            
+            .converter-header {
+                padding: 30px;
+            }
+            
+            .converter-header h2 {
+                font-size: 1.8rem;
+            }
+            
+            .converter-body {
+                flex-direction: row;
+                padding: 30px;
+                gap: 30px;
+            }
+            
+            .converter-column {
+                flex: 1;
+            }
+            
+            .converter-column textarea {
+                min-height: 200px;
+            }
+            
+            .converter-actions {
+                padding: 0 30px 30px;
+            }
+            
+            .convert-btn {
+                width: auto;
+                padding: 15px 30px;
+                font-size: 1.1rem;
+            }
+            
+            .converter-tips {
+                padding: 30px;
+            }
+            
+            .examples {
+                padding: 80px 0;
+            }
+            
+            .example-grid {
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+                gap: 30px;
+                margin: 0 auto;
+            }
+            
+            .example-header {
+                padding: 20px;
+            }
+            
+            .example-content {
+                padding: 20px;
+            }
+            
+            .basic-prompt, .enhanced-prompt {
+                font-size: 1rem;
+            }
+            
+            /* Navigation for larger screens */
+            .mobile-toggle {
+                display: none;
+            }
+            
+            .nav-links {
+                display: flex;
+                flex-direction: row;
+                position: static;
+                width: auto;
+                background: none;
+                box-shadow: none;
+            }
+            
+            .nav-links a {
+                padding: 0 15px;
+                border-bottom: none;
+                width: auto;
+            }
+        }
+    </style>
 </head>
 <body>
   <header>
@@ -37,27 +391,21 @@
             <div class="logo">
                <a href="index.html" class="logo home-link" id="homeLink">
                       <img src="logo.png" alt="Logo" style="width:50px;height:50px;">
-
                     <span>PromptSeen</span>
                 </a>
-
             </div>
-            <div class="nav-links">
-               
-<a href="index.html">Showcase</a>
-<!-- In all HTML files, add this to the nav-links section -->
-<a href="chatbot.html">Generate Image</a> 
+            <div class="nav-links" id="navLinks">
+                <a href="index.html">Showcase</a>
+                <a href="chatbot.html">Generate Image</a> 
                 <a href="promptconverter.html">Prompt Converter</a>
                 <a href="features.html">Features</a>
-                <a href="showcase.html">Gallery</a>
                 <a href="howitworks.html">How It Works</a>
             </div>
             <div id="authSection">
                 <!-- Will be populated by script.js -->
                 <a href="login.html" class="login-btn">Login</a>
-             
             </div>
-            <div class="mobile-toggle">
+            <div class="mobile-toggle" id="mobileToggle">
                 <i class="fas fa-bars"></i>
             </div>
         </nav>
@@ -210,38 +558,112 @@
     </footer>
 
     <script src="script.js"></script>
-<!-- Cookie Consent Banner -->
-<div id="cookie-consent" style="display: none; position: fixed; bottom: 0; left: 0; right: 0; background: rgba(45,51,74,0.95); color: white; padding: 20px; z-index: 1000;">
-    <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-        <div style="flex: 1; min-width: 300px; padding-right: 20px;">
-            <p>We use cookies to enhance your experience and analyze site usage. By continuing to browse, you agree to our use of cookies. Learn more in our <a href="cookies-ethics.html" style="color: #8f94fb;">Cookies & AI Ethics Policy</a>.</p>
-        </div>
-        <div style="display: flex; gap: 10px;">
-            <button id="accept-cookies" style="background: #20bf6b; color: white; border: none; padding: 10px 20px; border-radius: 30px; cursor: pointer;">Accept All</button>
-            <button id="customize-cookies" style="background: transparent; color: white; border: 1px solid #8f94fb; padding: 10px 20px; border-radius: 30px; cursor: pointer;">Customize</button>
-        </div>
-    </div>
-</div>
-
-<script>
-    // Cookie consent functionality
-    document.addEventListener('DOMContentLoaded', function() {
-        const consentBanner = document.getElementById('cookie-consent');
-        const accepted = localStorage.getItem('cookiesAccepted');
-        
-        if (!accepted) {
-            consentBanner.style.display = 'block';
-        }
-        
-        document.getElementById('accept-cookies').addEventListener('click', function() {
-            localStorage.setItem('cookiesAccepted', 'true');
-            consentBanner.style.display = 'none';
+    
+    <!-- Prompt Converter JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const convertBtn = document.getElementById('convertBtn');
+            const userPrompt = document.getElementById('userPrompt');
+            const enhancedPrompt = document.getElementById('enhancedPrompt');
+            const mobileToggle = document.getElementById('mobileToggle');
+            const navLinks = document.getElementById('navLinks');
+            
+            // Mobile navigation toggle
+            mobileToggle.addEventListener('click', function() {
+                navLinks.classList.toggle('active');
+            });
+            
+            // Prompt enhancement templates
+            const enhancementTemplates = [
+                "A stunning {subject} in {setting}, with {lighting} lighting and {color} color palette. {style} style, highly detailed, 8K resolution, trending on ArtStation, cinematic composition --ar 16:9 --v 5",
+                "An epic {subject} in {setting}, {time} with dramatic {lighting} and {mood} atmosphere. {style} aesthetic, hyper-detailed, photorealistic, professional photography, wide angle shot --ar 3:2 --v 5",
+                "A beautiful {subject} in {setting}, {time} with soft {lighting} and {color} tones. {style} influence, intricate details, masterpiece, award-winning photography, shallow depth of field --ar 4:5 --v 5",
+                "A magnificent {subject} in {setting}, captured at {time} with {lighting} creating {mood} ambiance. {style} art style, ultra-detailed, 4K resolution, professional photo, rule of thirds composition --ar 16:10 --v 5"
+            ];
+            
+            // Enhancement components
+            const components = {
+                lighting: ["dramatic", "soft", "cinematic", "golden hour", "blue hour", "moody", "ethereal", "volumetric", "natural", "studio"],
+                color: ["vibrant", "muted", "pastel", "monochromatic", "complementary", "warm", "cool", "earthy", "neon", "jewel"],
+                style: ["photorealistic", "fantasy art", "cyberpunk", "steampunk", "impressionist", "surreal", "minimalist", "concept art", "anime", "oil painting"],
+                mood: ["mysterious", "epic", "serene", "melancholic", "joyful", "tense", "dreamy", "nostalgic", "futuristic", "ancient"],
+                time: ["at sunrise", "at sunset", "at night", "during the day", "in the morning", "in the evening", "at twilight", "at dawn", "at dusk", "under moonlight"]
+            };
+            
+            // Function to get random element from array
+            function getRandomElement(arr) {
+                return arr[Math.floor(Math.random() * arr.length)];
+            }
+            
+            // Function to enhance prompt
+            function enhancePrompt(basicPrompt) {
+                // Extract subject and setting from basic prompt
+                let subject = "subject";
+                let setting = "setting";
+                
+                // Simple parsing to extract subject and setting
+                const words = basicPrompt.toLowerCase().split(' ');
+                if (words.length >= 3) {
+                    subject = words.slice(0, Math.ceil(words.length/2)).join(' ');
+                    setting = words.slice(Math.ceil(words.length/2)).join(' ');
+                } else if (words.includes('in') || words.includes('at')) {
+                    const inIndex = Math.max(words.indexOf('in'), words.indexOf('at'));
+                    if (inIndex > 0 && inIndex < words.length - 1) {
+                        subject = words.slice(0, inIndex).join(' ');
+                        setting = words.slice(inIndex + 1).join(' ');
+                    }
+                } else {
+                    subject = basicPrompt;
+                    setting = "beautiful environment";
+                }
+                
+                // Choose a random template
+                const template = getRandomElement(enhancementTemplates);
+                
+                // Replace placeholders with random components
+                let enhanced = template
+                    .replace(/{subject}/g, subject)
+                    .replace(/{setting}/g, setting)
+                    .replace(/{lighting}/g, getRandomElement(components.lighting))
+                    .replace(/{color}/g, getRandomElement(components.color))
+                    .replace(/{style}/g, getRandomElement(components.style))
+                    .replace(/{mood}/g, getRandomElement(components.mood))
+                    .replace(/{time}/g, getRandomElement(components.time));
+                
+                return enhanced;
+            }
+            
+            // Event listener for convert button
+            convertBtn.addEventListener('click', function() {
+                const basicPrompt = userPrompt.value.trim();
+                
+                if (!basicPrompt) {
+                    alert('Please enter a prompt to enhance');
+                    return;
+                }
+                
+                // Show loading state
+                convertBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enhancing...';
+                convertBtn.disabled = true;
+                
+                // Simulate processing time
+                setTimeout(function() {
+                    const result = enhancePrompt(basicPrompt);
+                    enhancedPrompt.value = result;
+                    
+                    // Reset button
+                    convertBtn.innerHTML = '<i class="fas fa-bolt"></i> Enhance Prompt';
+                    convertBtn.disabled = false;
+                }, 1000);
+            });
+            
+            // Allow Enter key to trigger conversion
+            userPrompt.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    convertBtn.click();
+                }
+            });
         });
-        
-        document.getElementById('customize-cookies').addEventListener('click', function() {
-            window.location.href = 'cookies-ethics.html';
-        });
-    });
-</script>
+    </script>
 </body>
 </html>
