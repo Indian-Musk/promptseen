@@ -3,6 +3,7 @@ const path = require('path');
 const admin = require('firebase-admin');
 const Busboy = require('busboy');
 const axios = require('axios');
+const fs = require('fs');
 require('dotenv').config();
 
 // Initialize Firebase Admin
@@ -112,6 +113,41 @@ function safeDateToString(dateValue) {
     return new Date().toISOString();
   }
 }
+
+// Enhanced HTML serving with canonical support
+function serveHTMLWithCanonical(filePath, requestedPath, req, res) {
+  fs.readFile(filePath, 'utf8', (err, html) => {
+    if (err) {
+      console.error('Error reading HTML file:', err);
+      return res.status(500).send('Error loading page');
+    }
+    
+    const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
+    let canonicalUrl = baseUrl + requestedPath;
+    
+    // For index.html, set canonical to root to avoid duplicate content issues
+    if (requestedPath === '/index.html') {
+      canonicalUrl = baseUrl + '/';
+    }
+    
+    // Inject canonical tag
+    const canonicalTag = `<link rel="canonical" href="${canonicalUrl}" />`;
+    const modifiedHTML = html.replace('</head>', `${canonicalTag}</head>`);
+    
+    res.set('Content-Type', 'text/html');
+    res.send(modifiedHTML);
+  });
+}
+
+// Serve main page with canonical support
+app.get('/', (req, res) => {
+  serveHTMLWithCanonical(path.join(__dirname, 'index.html'), '/', req, res);
+});
+
+// Serve index.html as separate page with proper canonical
+app.get('/index.html', (req, res) => {
+  serveHTMLWithCanonical(path.join(__dirname, 'index.html'), '/index.html', req, res);
+});
 
 // AdSense Helper Functions
 function generateAdSenseCode() {
@@ -239,6 +275,553 @@ class SEOOptimizer {
         "@id": `https://www.promptseen.co/prompt/${prompt.id || 'unknown'}`
       }
     };
+  }
+}
+
+// AI Content Generator for Prompt Pages
+class PromptContentGenerator {
+  static generateDetailedExplanation(promptData) {
+    const keywords = promptData.keywords || ['AI', 'prompt'];
+    const category = promptData.category || 'general';
+    
+    const explanations = {
+      'art': `This ${keywords[0] || 'creative'} prompt generates stunning visual artwork through AI image generation. The prompt carefully combines specific stylistic elements, composition techniques, and artistic references to produce unique digital creations that showcase the power of modern AI art tools.`,
+      
+      'photography': `This photography-style prompt creates realistic images that mimic professional photographic techniques. The AI interprets lighting conditions, camera settings, and compositional rules to generate images that appear to be captured with high-end photographic equipment and expert technique.`,
+      
+      'design': `This design-focused prompt produces visually appealing compositions suitable for various applications. The AI understands design principles, color theory, and layout requirements to create professional-grade visual assets that can be used in digital and print media.`,
+      
+      'writing': `This writing prompt generates textual content using advanced language models. The AI analyzes the prompt structure, tone requirements, and content specifications to produce coherent, engaging written material that meets specific creative or professional needs.`,
+      
+      'general': `This AI prompt leverages advanced machine learning algorithms to interpret and execute creative instructions. The system analyzes the prompt's semantic structure, contextual cues, and stylistic requirements to generate high-quality output that aligns with the specified parameters.`
+    };
+
+    return explanations[category] || explanations.general;
+  }
+
+  static generateStepByStepInstructions(promptData) {
+    const category = promptData.category || 'general';
+    
+    const steps = {
+      'art': [
+        "Copy the exact prompt text provided below",
+        "Paste into your preferred AI image generator (Midjourney, DALL-E, Stable Diffusion)",
+        "Adjust parameters like aspect ratio, style, and quality settings if needed",
+        "Generate multiple variations to explore different interpretations",
+        "Select the best result and refine if necessary"
+      ],
+      
+      'photography': [
+        "Use the prompt in AI photography tools or image generators",
+        "Set appropriate resolution and quality settings for your needs",
+        "Consider adjusting lighting and composition parameters",
+        "Generate several versions to capture different perspectives",
+        "Post-process if needed using image editing software"
+      ],
+      
+      'design': [
+        "Input the prompt into your AI design tool of choice",
+        "Specify output format and dimensions for your project",
+        "Generate multiple design variations for comparison",
+        "Select the most suitable design for your application",
+        "Customize further with additional design elements if required"
+      ],
+      
+      'writing': [
+        "Copy the prompt into your AI writing assistant",
+        "Set the desired tone, style, and length parameters",
+        "Generate the initial content draft",
+        "Review and refine the output for coherence and accuracy",
+        "Edit and polish the final text as needed"
+      ],
+      
+      'general': [
+        "Copy the complete prompt text",
+        "Paste into your chosen AI platform or tool",
+        "Configure any additional settings or parameters",
+        "Generate the output and review results",
+        "Iterate with modifications if necessary"
+      ]
+    };
+
+    return steps[category] || steps.general;
+  }
+
+  static generateBestAITools(promptData) {
+    const category = promptData.category || 'general';
+    
+    const tools = {
+      'art': [
+        { name: "Midjourney", description: "Excellent for artistic and creative imagery with strong stylistic control" },
+        { name: "DALL-E 3", description: "Great for conceptual art and understanding complex prompt requirements" },
+        { name: "Stable Diffusion", description: "Ideal for custom models and local generation with extensive control" },
+        { name: "Adobe Firefly", description: "Perfect for commercial use with ethical training data" }
+      ],
+      
+      'photography': [
+        { name: "Chatgpt", description: "Superior at understanding photographic terms and realistic rendering" },
+        { name: "Google Gemini", description: "Strong research capabilities and factual accuracy Superior at understanding photgraphic terms" },
+        { name: "Stable Diffusion", description: "Best for photorealistic outputs with custom models" },
+        { name: "Midjourney", description: "Excellent for artistic photography styles and compositions" }
+      ],
+      
+      'design': [
+        { name: "Midjourney", description: "Strong for conceptual design and artistic layouts" },
+        { name: "DALL-E 3", description: "Excellent for understanding design briefs and requirements" },
+        { name: "Canva AI", description: "Integrated design platform with AI capabilities" },
+        { name: "Adobe Firefly", description: "Seamless integration with Adobe Creative Cloud" }
+      ],
+      
+      'writing': [
+        { name: "ChatGPT", description: "Versatile for all types of writing tasks and content generation" },
+        { name: "Claude", description: "Excellent for long-form content and complex writing tasks" },
+        { name: "Google Gemini", description: "Strong research capabilities and factual accuracy" },
+        { name: "Microsoft Copilot", description: "Great for professional and business writing" }
+      ],
+      
+      'general': [
+        { name: "ChatGPT", description: "Versatile all-around AI assistant for various tasks" },
+        { name: "Midjourney", description: "Leading AI image generation platform" },
+        { name: "DALL-E 3", description: "Advanced image generation with strong prompt understanding" },
+        { name: "Claude", description: "Excellent for complex reasoning and content creation" }
+      ]
+    };
+
+    return tools[category] || tools.general;
+  }
+
+  static generateTrendAnalysis(promptData) {
+    const keywords = promptData.keywords || [];
+    const category = promptData.category || 'general';
+    
+    const trends = {
+      'art': `The AI art landscape is rapidly evolving with trends leaning towards ${keywords.slice(0, 2).join(' and ') || 'mixed-media styles'}. Current movements emphasize hybrid techniques, surreal compositions, and the integration of traditional art principles with digital innovation. Prompt engineering has become crucial for achieving specific artistic visions.`,
+      
+      'photography': `AI photography is revolutionizing how we create visual content. Trends show increased demand for ${keywords[0] || 'professional'} styles that mimic real-world photography while offering impossible perspectives and lighting conditions. The focus is on achieving photographic realism with creative freedom beyond physical constraints.`,
+      
+      'design': `Design trends in AI are shifting towards ${keywords[0] || 'minimalist'} approaches that balance aesthetics with functionality. There's growing emphasis on creating designs that are both visually appealing and practically implementable across various platforms and media types.`,
+      
+      'writing': `AI writing trends emphasize ${keywords[0] || 'engaging'} content that maintains human-like quality while optimizing for specific audiences. The focus is on creating coherent, context-aware text that serves practical purposes across different domains and use cases.`,
+      
+      'general': `The AI prompt engineering field is experiencing rapid growth with trends focusing on more specific, detailed instructions that yield predictable, high-quality results. There's increasing emphasis on understanding how different AI models interpret various prompt structures and stylistic elements.`
+    };
+
+    return trends[category] || trends.general;
+  }
+
+  static generateUsageTips(promptData) {
+    const category = promptData.category || 'general';
+    
+    const tips = {
+      'art': [
+        "Experiment with different art styles and mediums mentioned in the prompt",
+        "Adjust the --ar parameter for different aspect ratios in Midjourney",
+        "Use style references for more consistent results",
+        "Try varying the chaos parameter for more creative variations",
+        "Combine with other artistic prompts for hybrid styles"
+      ],
+      
+      'photography': [
+        "Specify camera types and lenses for different photographic effects",
+        "Use lighting terms like 'golden hour' or 'studio lighting'",
+        "Experiment with different film types and processing styles",
+        "Add compositional rules like 'rule of thirds' explicitly",
+        "Include depth of field requirements for focus control"
+      ],
+      
+      'design': [
+        "Specify color palettes and design systems explicitly",
+        "Include layout requirements and spatial relationships",
+        "Mention target audience and purpose for better context",
+        "Reference design styles or movements for consistency",
+        "Consider aspect ratios and scalability requirements"
+      ],
+      
+      'writing': [
+        "Set clear tone and voice parameters for consistent output",
+        "Specify target audience and knowledge level",
+        "Include length requirements and structural elements",
+        "Use examples or references for style matching",
+        "Define the purpose and call-to-action if applicable"
+      ],
+      
+      'general': [
+        "Be specific and detailed in your modifications",
+        "Test the prompt across different AI platforms",
+        "Keep a log of successful variations and parameters",
+        "Understand the limitations of each AI model",
+        "Iterate and refine based on initial results"
+      ]
+    };
+
+    return tips[category] || tips.general;
+  }
+
+  static generateSEOTips(promptData) {
+    return [
+      `Use specific, descriptive language in your prompts for better AI understanding`,
+      `Include relevant keywords like '${(promptData.keywords || []).slice(0, 2).join("', '")}' for targeted results`,
+      `Experiment with different parameter combinations to optimize outputs`,
+      `Save successful prompt variations for future reference and refinement`,
+      `Stay updated with the latest AI model capabilities and limitations`
+    ];
+  }
+}
+
+// Advanced AI Description Generator
+class AIDescriptionGenerator {
+  static generatePlatformIntroduction(promptData) {
+    const platforms = {
+      'midjourney': {
+        name: 'Midjourney',
+        year: '2025',
+        description: 'has solidified its position as the premier AI art platform for creators seeking to transform imaginative concepts into stunning visual masterpieces.',
+        strengths: ['artistic styles', 'creative compositions', 'stylistic consistency', 'community features']
+      },
+      'dalle': {
+        name: 'Chatgpt',
+        year: '2025',
+        description: 'has become the industry standard for prompt understanding and realistic image generation with exceptional attention to detail.',
+        strengths: ['prompt comprehension', 'realistic rendering', 'complex scenes', 'text integration']
+      },
+      'gemini': {
+        name: 'Google Gemini AI',
+        year: '2025',
+        description: 'has emerged as the go-to solution for transforming everyday content into visually striking digital masterpieces.',
+        strengths: ['accessibility', 'real-time generation', 'multi-modal understanding', 'user-friendly interface']
+      },
+      'chatgpt': {
+        name: 'ChatGPT with DALL-E',
+        year: '2025',
+        description: 'has revolutionized creative workflows by combining advanced conversational AI with powerful image generation capabilities.',
+        strengths: ['iterative refinement', 'context understanding', 'creative collaboration', 'rapid prototyping']
+      },
+      'stable-diffusion': {
+        name: 'Stable Diffusion',
+        year: '2025',
+        description: 'has empowered creators with open-source flexibility and unparalleled control over the image generation process.',
+        strengths: ['custom models', 'local generation', 'fine-tuned control', 'community extensions']
+      },
+      'leonardo': {
+        name: 'Leonardo AI',
+        year: '2025',
+        description: 'has become the favorite among professional artists and designers for its studio-quality outputs and advanced features.',
+        strengths: ['professional quality', 'style consistency', 'commercial use', 'advanced controls']
+      }
+    };
+
+    const category = promptData.category || 'general';
+    const platform = platforms[this.detectPlatform(promptData)] || platforms.gemini;
+    
+    return `${platform.name} ${platform.description} Whether you want ${this.getCategoryBenefits(category)}, ${platform.name}'s innovative prompts enable you to control ${this.getControlAspects(category)} with AI-powered precision.`;
+  }
+
+  static detectPlatform(promptData) {
+    const promptText = (promptData.promptText || '').toLowerCase();
+    const keywords = promptData.keywords || [];
+    
+    if (promptText.includes('midjourney') || promptText.includes('--')) {
+      return 'midjourney';
+    } else if (promptText.includes('dall-e') || promptText.includes('dalle')) {
+      return 'dalle';
+    } else if (promptText.includes('gemini') || keywords.includes('google')) {
+      return 'gemini';
+    } else if (promptText.includes('chatgpt') || keywords.includes('openai')) {
+      return 'chatgpt';
+    } else if (promptText.includes('stable diffusion') || keywords.includes('sd')) {
+      return 'stable-diffusion';
+    } else if (keywords.includes('leonardo') || keywords.includes('professional')) {
+      return 'leonardo';
+    }
+    
+    // Default based on category
+    const category = promptData.category || 'general';
+    const categoryPlatforms = {
+      'art': 'midjourney',
+      'photography': 'dalle',
+      'design': 'leonardo',
+      'writing': 'chatgpt',
+      'general': 'gemini'
+    };
+    
+    return categoryPlatforms[category] || 'gemini';
+  }
+
+  static getCategoryBenefits(category) {
+    const benefits = {
+      'art': 'stunning visual artwork, creative compositions, or unique artistic styles',
+      'photography': 'professional-grade photography, realistic portraits, or cinematic scenes',
+      'design': 'visually appealing designs, professional layouts, or brand assets',
+      'writing': 'engaging content, professional copy, or creative storytelling',
+      'general': 'high-quality outputs, creative solutions, or professional results'
+    };
+    
+    return benefits[category] || benefits.general;
+  }
+
+  static getControlAspects(category) {
+    const aspects = {
+      'art': 'style, composition, color palette, and artistic elements',
+      'photography': 'lighting, composition, camera settings, and mood',
+      'design': 'layout, color theory, typography, and visual hierarchy',
+      'writing': 'tone, style, structure, and content flow',
+      'general': 'every aspect of your creative vision with precision'
+    };
+    
+    return aspects[category] || aspects.general;
+  }
+
+  static generateTargetAudience(promptData) {
+    const category = promptData.category || 'general';
+    const platform = this.detectPlatform(promptData);
+    
+    const audiences = {
+      'art': 'artists, designers, and creative professionals',
+      'photography': 'photographers, content creators, and visual storytellers',
+      'design': 'graphic designers, marketers, and brand managers',
+      'writing': 'writers, marketers, and content strategists',
+      'general': 'creators, professionals, and AI enthusiasts'
+    };
+    
+    const purposes = {
+      'art': 'experiment with artistic styles, build portfolios, and create unique visual content',
+      'photography': 'enhance photographic skills, create professional portfolios, and produce stunning visual content',
+      'design': 'develop brand assets, create marketing materials, and design professional layouts',
+      'writing': 'craft compelling content, develop writing skills, and produce professional copy',
+      'general': 'explore creative possibilities, enhance professional work, and stay ahead of AI trends'
+    };
+    
+    const platformNames = {
+      'midjourney': 'Midjourney',
+      'dalle': 'DALL-E 3',
+      'gemini': 'Gemini AI',
+      'chatgpt': 'ChatGPT',
+      'stable-diffusion': 'Stable Diffusion',
+      'leonardo': 'Leonardo AI'
+    };
+    
+    return `This curated collection of prompts is tailored for ${audiences[category]} who want more than just basic AI generation; it's for those eager to ${purposes[category]} using ${platformNames[platform]}'s advanced capabilities.`;
+  }
+
+  static generateTrendContext(promptData) {
+    const category = promptData.category || 'general';
+    const keywords = promptData.keywords || [];
+    const trendingTerms = keywords.slice(0, 3).join(', ');
+    
+    const trends = {
+      'art': `Each prompt combines trending aesthetics like ${trendingTerms || 'contemporary digital art styles'}, from innovative artistic movements to classic techniques reimagined for the digital age.`,
+      'photography': `Every prompt incorporates current visual trends including ${trendingTerms || 'modern photographic techniques'}, blending professional photography principles with AI-enhanced creativity.`,
+      'design': `These prompts integrate design trends such as ${trendingTerms || 'modern layout principles'}, combining aesthetic appeal with functional design requirements.`,
+      'writing': `Each writing prompt leverages contemporary styles including ${trendingTerms || 'modern communication techniques'}, merging engaging storytelling with practical content creation.`,
+      'general': `Every prompt features cutting-edge approaches like ${trendingTerms || 'advanced AI techniques'}, making it easy to consistently produce high-quality, trend-aware content.`
+    };
+    
+    return trends[category] || trends.general;
+  }
+
+  static generatePlatformCapabilities(promptData) {
+    const platform = this.detectPlatform(promptData);
+    const category = promptData.category || 'general';
+    
+    const capabilities = {
+      'midjourney': `With Midjourney's advanced artistic engine, even simple concepts can become gallery-worthy artworks that showcase creativity, style, and technical excellence.`,
+      'dalle': `Using DALL-E 3's sophisticated understanding capabilities, basic descriptions transform into photorealistic images that demonstrate exceptional detail and coherence.`,
+      'gemini': `With Gemini AI's powerful generation engine, straightforward inputs can become professional-quality outputs that reflect precision, style, and modern aesthetics.`,
+      'chatgpt': `Through ChatGPT's conversational interface and DALL-E integration, simple ideas evolve into refined creations that balance creativity with practical utility.`,
+      'stable-diffusion': `Leveraging Stable Diffusion's open-source flexibility, basic prompts can produce customized results that offer unique styles and specific artistic control.`,
+      'leonardo': `Using Leonardo AI's professional-grade tools, standard concepts can become studio-quality productions that exhibit commercial-ready polish and artistic integrity.`
+    };
+    
+    return capabilities[platform] || capabilities.gemini;
+  }
+
+  static generateStepByStepGuide(promptData) {
+    const platform = this.detectPlatform(promptData);
+    const category = promptData.category || 'general';
+    
+    const platformAccess = {
+      'midjourney': 'Access the Midjourney platform through Discord or the web interface. Join a dedicated channel or use direct messaging with the Midjourney bot.',
+      'dalle': 'Open ChatGPT with DALL-E integration or access DALL-E directly through the OpenAI platform. Use the web interface or mobile application.',
+      'gemini': 'Access Google Gemini AI through the browser interface, mobile application, or integrated Google Workspace tools.',
+      'chatgpt': 'Use ChatGPT with DALL-E capabilities through the OpenAI platform, available on web browsers and mobile applications.',
+      'stable-diffusion': 'Launch your preferred Stable Diffusion interface (Automatic1111, ComfyUI, or online platforms) or use compatible applications.',
+      'leonardo': 'Access Leonardo AI through their web platform or integrated design tools designed for professional creative workflows.'
+    };
+    
+    const inputPreparation = {
+      'art': 'Start with a clear concept or reference image. Consider the artistic style, composition, and mood you want to achieve.',
+      'photography': 'Upload your photo on respective AI . Ensure you have specific lighting, composition, and style requirements in mind.',
+      'design': 'Prepare your design brief with specific requirements for layout, branding elements, and visual hierarchy considerations.',
+      'writing': 'Define your content goals, target audience, and desired tone before starting the generation process.',
+      'general': 'Upload your photo, Have a clear objective and specific requirements in mind to guide the AI generation process effectively.'
+    };
+    
+    const promptUsage = {
+      'midjourney': `Type "/imagine" followed by your chosen prompt. For example: "${promptData.promptText?.substring(0, 100) || 'Your specific prompt here'}". Adjust parameters like --ar for aspect ratio or --style for different artistic approaches.`,
+      'dalle': `Enter your prompt in the generation field. Use: "${promptData.promptText?.substring(0, 100) || 'Your detailed description here'}". Specify style, quality, and any specific requirements in natural language.`,
+      'gemini': `Input your prompt directly into the generation interface. Try: "${promptData.promptText?.substring(0, 100) || 'Your customized prompt here'}". Use descriptive language and be specific about your desired outcome.`,
+      'chatgpt': `Provide your prompt in the chat interface. Use: "${promptData.promptText?.substring(0, 100) || 'Your tailored prompt here'}". You can have a conversation with the AI to refine and improve the results.`,
+      'stable-diffusion': `Enter your prompt in the text-to-image interface. Use: "${promptData.promptText?.substring(0, 100) || 'Your specific prompt here'}". Adjust sampling steps, CFG scale, and other parameters for optimal results.`,
+      'leonardo': `Input your prompt in the generation panel. Use: "${promptData.promptText?.substring(0, 100) || 'Your professional prompt here'}". Select appropriate models and adjust generation parameters as needed.`
+    };
+    
+    const customizationTips = {
+      'art': 'Specify artistic style, color palette, composition rules, and mood. Include references to specific artists or art movements if desired.',
+      'photography': 'Define camera settings, lighting conditions, focal length, and photographic style. Mention specific techniques or equipment if relevant.',
+      'design': 'Specify design principles, color schemes, typography requirements, and layout constraints. Include brand guidelines if applicable.',
+      'writing': 'Set tone, voice, length requirements, and structural elements. Define the target audience and purpose clearly.',
+      'general': 'Be specific about style, quality, context, and any special requirements. Include both what you want and what you want to avoid.'
+    };
+    
+    const generationProcess = {
+      'midjourney': 'Click generate and wait for the initial results. Use the U buttons to upscale specific variations or V buttons to create new variations based on your favorites.',
+      'dalle': 'Click the generate button and review the created images. You can request variations or make specific edits to the generated content.',
+      'gemini': 'Initiate generation and monitor the progress. The platform will provide multiple options that you can refine or regenerate as needed.',
+      'chatgpt': 'Send your prompt and wait for the AI to process your request. You can ask for modifications or clarifications in subsequent messages.',
+      'stable-diffusion': 'Start the generation process and monitor the progress through the interface. You can interrupt and restart with different parameters.',
+      'leonardo': 'Launch the generation and track progress. Use the platform\'s advanced tools to make real-time adjustments and refinements.'
+    };
+    
+    const finalization = {
+      'midjourney': 'Download your preferred result in your chosen resolution. Use Max Upscale for the highest quality output suitable for professional use.',
+      'dalle': 'Select your preferred output and download in high resolution. The platform offers different quality settings for various use cases.',
+      'gemini': 'Choose the best result and export in your desired format and resolution. The platform provides options for different applications and platforms.',
+      'chatgpt': 'Save your final result in the appropriate format. You can continue refining through conversation until you achieve the perfect outcome.',
+      'stable-diffusion': 'Save your generated image and consider post-processing if needed. The open-source nature allows for extensive customization and editing.',
+      'leonardo': 'Export your final creation in professional formats. The platform offers commercial-grade outputs ready for various applications.'
+    };
+    
+    return {
+      access: platformAccess[platform],
+      preparation: inputPreparation[category],
+      prompt: promptUsage[platform],
+      customization: customizationTips[category],
+      generation: generationProcess[platform],
+      finalization: finalization[platform]
+    };
+  }
+
+  static generateExpertTips(promptData) {
+    const category = promptData.category || 'general';
+    const platform = this.detectPlatform(promptData);
+    
+    const tips = {
+      'art': [
+        "Be Specific About Style: Mention artistic movements, specific artists, or detailed style descriptions for consistent results.",
+        "Control Composition: Use terms like 'rule of thirds', 'leading lines', or 'symmetrical composition' for better layout control.",
+        "Specify Color Palette: Include specific color combinations, mood-based palettes, or seasonal color themes.",
+        "Iterate and Refine: Don't hesitate to generate multiple variations and build upon successful results.",
+        "Use Negative Prompts: Exclude elements you don't want to see in the final artwork.",
+        "Experiment with Parameters: Adjust style, chaos, and quality parameters to explore different creative directions.",
+        "Combine Techniques: Mix different artistic styles and techniques for unique hybrid creations."
+      ],
+      'photography': [
+        "Define Lighting Conditions: Specify 'golden hour', 'studio lighting', 'natural light', or 'dramatic shadows' for mood control.",
+        "Mention Camera Equipment: Reference specific cameras, lenses, or photographic equipment for authentic results.",
+        "Set the Scene: Describe backgrounds, environments, and atmospheric conditions in detail.",
+        "Control Depth of Field: Use terms like 'shallow depth of field', 'bokeh background', or 'everything in focus'.",
+        "Specify Photo Style: Mention 'portrait photography', 'landscape', 'street photography', or 'commercial shoot'.",
+        "Include Technical Details: Reference ISO, aperture, shutter speed, or film types for realistic rendering.",
+        "Consider Post-Processing: Mention desired editing styles like 'vintage filter', 'high contrast', or 'natural colors'."
+      ],
+      'design': [
+        "Establish Visual Hierarchy: Clearly define what elements should be most prominent in your design.",
+        "Specify Brand Guidelines: Include color codes, font preferences, and logo placement requirements.",
+        "Define Layout Structure: Mention grid systems, spacing requirements, and compositional rules.",
+        "Consider User Experience: For UI/UX designs, include user flow considerations and interaction elements.",
+        "Set Style Parameters: Define minimalism, maximalism, retro, modern, or other design aesthetics.",
+        "Include Functional Elements: Specify buttons, navigation, calls-to-action, or other interactive components.",
+        "Account for Responsiveness: Consider how designs should adapt to different screen sizes and devices."
+      ],
+      'writing': [
+        "Set Clear Tone: Define whether the content should be formal, casual, persuasive, informative, or creative.",
+        "Specify Target Audience: Mention the reader's knowledge level, interests, and demographic information.",
+        "Define Structure: Outline the desired format, paragraph structure, and content flow.",
+        "Include Keywords: For SEO content, specify important keywords and their placement density.",
+        "Set Length Parameters: Define word count, paragraph count, or specific section requirements.",
+        "Establish Voice: Determine if the writing should be authoritative, conversational, technical, or storytelling.",
+        "Include Examples: Provide context through examples, analogies, or reference materials when possible."
+      ],
+      'general': [
+        "Be Descriptive: Use specific, detailed language rather than vague or abstract terms.",
+        "Provide Context: Include the purpose, audience, and intended use of the generated content.",
+        "Use Examples: Reference similar works, styles, or outcomes you're trying to achieve.",
+        "Iterate Systematically: Make small, specific changes between generations to understand what works.",
+        "Balance Specificity and Flexibility: Be specific about what matters most, but allow creative freedom elsewhere.",
+        "Learn Platform Nuances: Understand the specific strengths and limitations of your chosen AI platform.",
+        "Document Successful Prompts: Keep a record of what works well for future reference and consistency."
+      ]
+    };
+    
+    return tips[category] || tips.general;
+  }
+
+  static generateComprehensiveDescription(promptData) {
+    const platformIntro = this.generatePlatformIntroduction(promptData);
+    const targetAudience = this.generateTargetAudience(promptData);
+    const trendContext = this.generateTrendContext(promptData);
+    const capabilities = this.generatePlatformCapabilities(promptData);
+    
+    const steps = this.generateStepByStepGuide(promptData);
+    const expertTips = this.generateExpertTips(promptData);
+    
+    return {
+      introduction: `${platformIntro} ${targetAudience} ${trendContext} ${capabilities}`,
+      stepByStep: steps,
+      tips: expertTips
+    };
+  }
+}
+
+// Enhanced Engagement Analytics Class
+class EngagementAnalytics {
+  static async getPromptEngagement(promptId, db) {
+    try {
+      if (db && db.collection) {
+        const doc = await db.collection('uploads').doc(promptId).get();
+        if (doc.exists) {
+          const data = doc.data();
+          return {
+            likes: data.likes || 0,
+            views: data.views || 0,
+            uses: data.uses || 0,
+            engagementRate: this.calculateEngagementRate(data),
+            popularityScore: this.calculatePopularityScore(data)
+          };
+        }
+      }
+      
+      // Fallback for development
+      return {
+        likes: Math.floor(Math.random() * 100),
+        views: Math.floor(Math.random() * 500),
+        uses: Math.floor(Math.random() * 50),
+        engagementRate: Math.random() * 0.5 + 0.3,
+        popularityScore: Math.floor(Math.random() * 100)
+      };
+    } catch (error) {
+      console.error('Engagement analytics error:', error);
+      return { likes: 0, views: 0, uses: 0, engagementRate: 0, popularityScore: 0 };
+    }
+  }
+
+  static calculateEngagementRate(data) {
+    const likes = data.likes || 0;
+    const views = data.views || 1;
+    const uses = data.uses || 0;
+    
+    return ((likes + uses) / views) || 0;
+  }
+
+  static calculatePopularityScore(data) {
+    const likes = data.likes || 0;
+    const views = data.views || 0;
+    const uses = data.uses || 0;
+    const recency = data.createdAt ? (Date.now() - new Date(data.createdAt).getTime()) : 0;
+    
+    // Weighted score favoring recent, highly-engaged content
+    const timeWeight = Math.max(0, 1 - (recency / (30 * 24 * 60 * 60 * 1000))); // 30-day decay
+    return Math.round(((likes * 2 + uses * 3 + views * 0.1) * timeWeight) / 10);
   }
 }
 
@@ -480,7 +1063,7 @@ app.get('/admin/migrate-adsense', async (req, res) => {
   }
 });
 
-// Dynamic Robots.txt - FIXED HTTPS VERSION
+// Dynamic Robots.txt - UPDATED VERSION (ALLOWS INDEX.HTML)
 app.get('/robots.txt', (req, res) => {
   const domain = req.get('host');
   
@@ -530,9 +1113,9 @@ Disallow: /search/
 Allow: /promptconverter.html
 Allow: /howitworks.html
 Allow: /login.html
+Allow: /index.html  # ✅ Now allowing index.html
 
-# Block duplicate index pages
-Disallow: /index.html
+# Block duplicate index pages (removed index.html from here)
 Disallow: /home.html
 Disallow: /main.html
 
@@ -631,7 +1214,7 @@ app.get('/sitemap.xml', async (req, res) => {
   }
 });
 
-// Pages Sitemap (static pages)
+// Pages Sitemap (static pages) - UPDATED WITH INDEX.HTML
 app.get('/sitemap-pages.xml', async (req, res) => {
   try {
     const baseUrl = process.env.BASE_URL || `https://${req.get('host')}`;
@@ -642,6 +1225,12 @@ app.get('/sitemap-pages.xml', async (req, res) => {
         lastmod: new Date().toISOString(),
         changefreq: 'daily',
         priority: '1.0'
+      },
+      {
+        loc: baseUrl + '/index.html',  // ✅ Add index.html as separate entry
+        lastmod: new Date().toISOString(),
+        changefreq: 'daily',
+        priority: '0.9'
       },
       {
         loc: 'https://www.promptseen.co/promptconverter.html',
@@ -1138,6 +1727,18 @@ app.get('/api/prompt/:id/user-engagement', async (req, res) => {
   }
 });
 
+// NEW: Engagement Analytics API Endpoint
+app.get('/api/prompt/:id/engagement', async (req, res) => {
+  try {
+    const promptId = req.params.id;
+    const engagement = await EngagementAnalytics.getPromptEngagement(promptId, db);
+    res.json(engagement);
+  } catch (error) {
+    console.error('Engagement API error:', error);
+    res.status(500).json({ error: 'Failed to fetch engagement data' });
+  }
+});
+
 // Search API endpoint
 app.get('/api/search', async (req, res) => {
   try {
@@ -1510,7 +2111,7 @@ app.get('/api/uploads', async (req, res) => {
   }
 });
 
-// Individual prompt pages for SEO - ENHANCED WITH RICH CONTENT
+// Individual prompt pages for SEO - ENHANCED WITH RICH CONTENT AND MINI BROWSER
 app.get('/prompt/:id', async (req, res) => {
   try {
     const promptId = req.params.id;
@@ -1540,7 +2141,7 @@ app.get('/prompt/:id', async (req, res) => {
       promptData = createPromptData(mockPrompt, promptId);
     }
 
-    // ✅ This will use the enhanced template with rich content
+    // ✅ This will use the enhanced template with rich content and mini browser
     const html = generateEnhancedPromptHTML(promptData);
     res.set('Content-Type', 'text/html');
     res.send(html);
@@ -1597,7 +2198,7 @@ function createPromptData(prompt, id) {
   // Safe fallbacks for all properties
   const safePrompt = prompt || {};
   
-  return {
+  const promptData = {
     id: id || 'unknown',
     title: safePrompt.title || 'Untitled Prompt',
     seoTitle: safePrompt.seoTitle || safePrompt.title || 'AI Prompt - Prompt Seen',
@@ -1617,9 +2218,605 @@ function createPromptData(prompt, id) {
     seoScore: safePrompt.seoScore || 0,
     adsenseMigrated: safePrompt.adsenseMigrated || false
   };
+
+  // Generate dynamic content using the new AI Description Generator
+  const aiDescription = AIDescriptionGenerator.generateComprehensiveDescription(promptData);
+  
+  promptData.detailedExplanation = aiDescription.introduction;
+  promptData.stepByStepInstructions = PromptContentGenerator.generateStepByStepInstructions(promptData);
+  promptData.bestAITools = PromptContentGenerator.generateBestAITools(promptData);
+  promptData.trendAnalysis = PromptContentGenerator.generateTrendAnalysis(promptData);
+  promptData.usageTips = PromptContentGenerator.generateUsageTips(promptData);
+  promptData.seoTips = PromptContentGenerator.generateSEOTips(promptData);
+  
+  // Add AI-generated comprehensive content
+  promptData.aiStepByStepGuide = aiDescription.stepByStep;
+  promptData.aiExpertTips = aiDescription.tips;
+
+  return promptData;
 }
 
-// ENHANCED PROMPT PAGE GENERATOR WITH RICH CONTENT - MOBILE RESPONSIVE VERSION
+// Mini Browser CSS - ENHANCED MOBILE RESPONSIVE
+const miniBrowserCSS = `
+/* Mini Browser Styles */
+.mini-browser-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 320px;
+    height: 450px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    z-index: 10000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 2px solid #4e54c8;
+    resize: both;
+    min-width: 300px;
+    min-height: 400px;
+}
+
+.mini-browser-container.expanded {
+    width: 90vw !important;
+    height: 90vh !important;
+    bottom: 5vh !important;
+    right: 5vw !important;
+    resize: none;
+}
+
+.mini-browser-header {
+    background: #4e54c8;
+    color: white;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: move;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.mini-browser-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.mini-browser-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.mini-browser-btn {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.mini-browser-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: scale(1.1);
+}
+
+.mini-browser-content {
+    flex: 1;
+    background: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.mini-browser-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: white;
+}
+
+.mini-browser-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4e54c8;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(78, 84, 200, 0.4);
+    z-index: 9999;
+    transition: all 0.3s ease;
+    font-size: 1.5rem;
+}
+
+.mini-browser-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(78, 84, 200, 0.6);
+}
+
+/* Enhanced Mobile Responsive Adjustments */
+@media (max-width: 768px) {
+    .mini-browser-container {
+        width: 280px;
+        height: 350px;
+        bottom: 10px;
+        right: 10px;
+        min-width: 250px;
+        min-height: 300px;
+    }
+    
+    .mini-browser-container.expanded {
+        width: 95vw !important;
+        height: 70vh !important;
+        bottom: 5vh !important;
+        right: 2.5vw !important;
+    }
+    
+    .mini-browser-toggle {
+        width: 45px;
+        height: 45px;
+        bottom: 10px;
+        right: 10px;
+        font-size: 1.1rem;
+    }
+    
+    .mini-browser-header {
+        padding: 8px 10px;
+    }
+    
+    .mini-browser-title {
+        font-size: 0.75rem;
+    }
+    
+    .mini-browser-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 0.7rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mini-browser-container {
+        width: 250px;
+        height: 300px;
+        bottom: 8px;
+        right: 8px;
+        min-width: 220px;
+        min-height: 250px;
+    }
+    
+    .mini-browser-container.expanded {
+        width: 98vw !important;
+        height: 60vh !important;
+        bottom: 5vh !important;
+        right: 1vw !important;
+    }
+    
+    .mini-browser-header {
+        padding: 6px 8px;
+    }
+    
+    .mini-browser-title {
+        font-size: 0.7rem;
+    }
+    
+    .mini-browser-toggle {
+        width: 40px;
+        height: 40px;
+        bottom: 8px;
+        right: 8px;
+        font-size: 1rem;
+    }
+    
+    .mini-browser-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 0.65rem;
+    }
+    
+    .title-text {
+        display: none;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 360px) {
+    .mini-browser-container {
+        width: 220px;
+        height: 280px;
+        bottom: 5px;
+        right: 5px;
+        min-width: 200px;
+        min-height: 220px;
+    }
+    
+    .mini-browser-container.expanded {
+        width: 99vw !important;
+        height: 55vh !important;
+        bottom: 2.5vh !important;
+        right: 0.5vw !important;
+    }
+    
+    .mini-browser-header {
+        padding: 5px 6px;
+    }
+    
+    .mini-browser-title {
+        font-size: 0.65rem;
+    }
+    
+    .mini-browser-toggle {
+        width: 35px;
+        height: 35px;
+        bottom: 5px;
+        right: 5px;
+        font-size: 0.9rem;
+    }
+}
+
+/* Loading state */
+.mini-browser-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    z-index: 10;
+}
+
+.mini-browser-loading .spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #4e54c8;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Ensure iframe is visible when loaded */
+.mini-browser-iframe {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+.mini-browser-iframe[style*="display: none"] {
+    opacity: 0;
+}
+`;
+
+// Mini Browser HTML
+const miniBrowserHTML = `
+<!-- Mini Browser Container -->
+<div class="mini-browser-container" id="miniBrowser">
+    <div class="mini-browser-header" id="miniBrowserHeader">
+        <div class="mini-browser-title">
+            <i class="fas fa-compact-disc"></i> <span class="title-text">Quick Unique Best Match</span>
+        </div>
+        <div class="mini-browser-controls">
+            <button class="mini-browser-btn" onclick="refreshMiniBrowser()" title="Refresh">
+                <i class="fas fa-redo"></i>
+            </button>
+            <button class="mini-browser-btn" onclick="toggleMiniBrowserSize()" title="Expand/Collapse">
+                <i class="fas fa-expand"></i>
+            </button>
+            <button class="mini-browser-btn" onclick="closeMiniBrowser()" title="Close">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+    <div class="mini-browser-content">
+        <div class="mini-browser-loading" id="miniBrowserLoading">
+            <div class="spinner"></div>
+            <div>Loading Prompt Seen...</div>
+        </div>
+        <iframe 
+            src="https://www.promptseen.co" 
+            class="mini-browser-iframe" 
+            id="miniBrowserIframe"
+            onload="hideMiniBrowserLoading()"
+            allow="fullscreen"
+            referrerpolicy="strict-origin-when-cross-origin"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+        ></iframe>
+    </div>
+</div>
+
+<!-- Mini Browser Toggle Button -->
+<button class="mini-browser-toggle" id="miniBrowserToggle" onclick="toggleMiniBrowser()">
+    <i class="fas fa-plus"></i>
+</button>
+`;
+
+// Mini Browser JavaScript - ENHANCED WITH AUTO-OPEN AND MOBILE DETECTION
+const miniBrowserJS = `
+// Mini Browser functionality
+let isMiniBrowserOpen = false;
+let isMiniBrowserExpanded = false;
+let isDragging = false;
+let dragOffset = { x: 0, y: 0 };
+
+// Auto-open mini browser when page loads - with mobile detection
+function autoOpenMiniBrowser() {
+    console.log('Auto-opening mini browser...');
+    
+    // Check if mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Small delay to ensure page is loaded
+    setTimeout(() => {
+        // Only auto-open if not on mobile or if it's a small mobile device
+        if (!isMobile || window.innerWidth > 480) {
+            toggleMiniBrowser();
+        } else {
+            // On very small mobile devices, show a notification instead
+            console.log('Mobile device detected - mini browser auto-open disabled');
+            // Optionally show a small notification
+            showMobileNotification();
+        }
+    }, 1500); // Increased delay to ensure page stability
+}
+
+function showMobileNotification() {
+    const notification = document.createElement('div');
+    notification.innerHTML = \`
+        <div style="
+            position: fixed;
+            bottom: 60px;
+            right: 10px;
+            background: #4e54c8;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            z-index: 10001;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            max-width: 150px;
+        ">
+            <i class="fas fa-compass"></i> Quick Browser Available
+            <br>
+            <small>Tap the + button</small>
+        </div>
+    \`;
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 3000);
+}
+
+function toggleMiniBrowser() {
+    console.log('Toggle mini browser called');
+    const miniBrowser = document.getElementById('miniBrowser');
+    const toggleBtn = document.getElementById('miniBrowserToggle');
+    
+    // Check if mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    if (!isMiniBrowserOpen) {
+        // Open mini browser
+        miniBrowser.style.display = 'flex';
+        toggleBtn.innerHTML = '<i class="fas fa-times"></i>';
+        toggleBtn.style.background = '#ff6b6b';
+        isMiniBrowserOpen = true;
+        
+        // On mobile, start with smaller size
+        if (isMobile && window.innerWidth <= 480) {
+            miniBrowser.style.width = '250px';
+            miniBrowser.style.height = '300px';
+        }
+        
+        // Show loading initially
+        showMiniBrowserLoading();
+        
+        // Ensure iframe loads the homepage
+        const iframe = document.getElementById('miniBrowserIframe');
+        iframe.src = 'https://www.promptseen.co';
+    } else {
+        // Close mini browser
+        closeMiniBrowser();
+    }
+}
+
+function closeMiniBrowser() {
+    const miniBrowser = document.getElementById('miniBrowser');
+    const toggleBtn = document.getElementById('miniBrowserToggle');
+    
+    miniBrowser.style.display = 'none';
+    toggleBtn.innerHTML = '<i class="fas fa-plus"></i>';
+    toggleBtn.style.background = '#4e54c8';
+    isMiniBrowserOpen = false;
+    isMiniBrowserExpanded = false;
+    miniBrowser.classList.remove('expanded');
+    
+    // Update expand button icon
+    const expandBtn = document.querySelector('.mini-browser-btn .fa-expand, .mini-browser-btn .fa-compress');
+    if (expandBtn) {
+        expandBtn.className = 'fas fa-expand';
+    }
+}
+
+function toggleMiniBrowserSize() {
+    const miniBrowser = document.getElementById('miniBrowser');
+    const expandBtn = document.querySelector('.mini-browser-controls .fa-expand, .mini-browser-controls .fa-compress');
+    
+    if (!isMiniBrowserExpanded) {
+        // Expand
+        miniBrowser.classList.add('expanded');
+        if (expandBtn) expandBtn.className = 'fas fa-compress';
+        isMiniBrowserExpanded = true;
+    } else {
+        // Collapse
+        miniBrowser.classList.remove('expanded');
+        if (expandBtn) expandBtn.className = 'fas fa-expand';
+        isMiniBrowserExpanded = false;
+    }
+}
+
+function refreshMiniBrowser() {
+    const iframe = document.getElementById('miniBrowserIframe');
+    showMiniBrowserLoading();
+    iframe.src = 'https://www.promptseen.co'; // Always refresh to homepage
+}
+
+function showMiniBrowserLoading() {
+    const loading = document.getElementById('miniBrowserLoading');
+    if (loading) loading.style.display = 'block';
+}
+
+function hideMiniBrowserLoading() {
+    const loading = document.getElementById('miniBrowserLoading');
+    if (loading) loading.style.display = 'none';
+}
+
+// Make mini browser draggable
+function initializeDragging() {
+    const header = document.getElementById('miniBrowserHeader');
+    const browser = document.getElementById('miniBrowser');
+    
+    if (!header || !browser) return;
+    
+    header.addEventListener('mousedown', startDrag);
+    header.addEventListener('touchstart', startDragTouch);
+    
+    function startDrag(e) {
+        if (isMiniBrowserExpanded) return; // Don't drag when expanded
+        
+        isDragging = true;
+        const rect = browser.getBoundingClientRect();
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+        
+        document.addEventListener('mousemove', onDrag);
+        document.addEventListener('mouseup', stopDrag);
+        e.preventDefault();
+    }
+    
+    function startDragTouch(e) {
+        if (isMiniBrowserExpanded) return; // Don't drag when expanded
+        
+        isDragging = true;
+        const touch = e.touches[0];
+        const rect = browser.getBoundingClientRect();
+        dragOffset.x = touch.clientX - rect.left;
+        dragOffset.y = touch.clientY - rect.top;
+        
+        document.addEventListener('touchmove', onDragTouch);
+        document.addEventListener('touchend', stopDrag);
+        e.preventDefault();
+    }
+    
+    function onDrag(e) {
+        if (!isDragging) return;
+        
+        browser.style.position = 'fixed';
+        browser.style.left = (e.clientX - dragOffset.x) + 'px';
+        browser.style.top = (e.clientY - dragOffset.y) + 'px';
+        browser.style.right = 'auto';
+        browser.style.bottom = 'auto';
+    }
+    
+    function onDragTouch(e) {
+        if (!isDragging) return;
+        
+        const touch = e.touches[0];
+        browser.style.position = 'fixed';
+        browser.style.left = (touch.clientX - dragOffset.x) + 'px';
+        browser.style.top = (touch.clientY - dragOffset.y) + 'px';
+        browser.style.right = 'auto';
+        browser.style.bottom = 'auto';
+    }
+    
+    function stopDrag() {
+        isDragging = false;
+        document.removeEventListener('mousemove', onDrag);
+        document.removeEventListener('touchmove', onDragTouch);
+        document.removeEventListener('mouseup', stopDrag);
+        document.removeEventListener('touchend', stopDrag);
+    }
+}
+
+// Close mini browser when clicking outside (only when not expanded)
+document.addEventListener('click', function(e) {
+    const miniBrowser = document.getElementById('miniBrowser');
+    const toggleBtn = document.getElementById('miniBrowserToggle');
+    
+    if (isMiniBrowserOpen && !isMiniBrowserExpanded && 
+        miniBrowser && !miniBrowser.contains(e.target) && 
+        e.target !== toggleBtn) {
+        closeMiniBrowser();
+    }
+});
+
+// Handle iframe navigation events
+window.addEventListener('message', function(e) {
+    console.log('Message from iframe:', e.data);
+});
+
+// Initialize when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing mini browser');
+    initializeDragging();
+    
+    // Auto-open mini browser on page load
+    autoOpenMiniBrowser();
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + B to toggle mini browser
+    if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+        e.preventDefault();
+        toggleMiniBrowser();
+    }
+    
+    // Escape to close mini browser
+    if (e.key === 'Escape' && isMiniBrowserOpen) {
+        if (isMiniBrowserExpanded) {
+            toggleMiniBrowserSize(); // First collapse if expanded
+        } else {
+            closeMiniBrowser(); // Then close if collapsed
+        }
+    }
+});
+`;
+
+// Mini Browser Toggle Button for Engagement Section
+const miniBrowserToggleButton = `
+<button class="engagement-btn" onclick="toggleMiniBrowser()" title="Open Prompt Seen Browser (Ctrl+B)">
+    <i class="fas fa-external-link-alt"></i> Quick Browse
+</button>
+`;
+
+// ENHANCED PROMPT PAGE GENERATOR WITH RICH CONTENT AND MINI BROWSER
 function generateEnhancedPromptHTML(promptData) {
   const adsenseCode = generateAdSenseCode();
   
@@ -1627,9 +2824,69 @@ function generateEnhancedPromptHTML(promptData) {
   const baseUrl = 'https://www.promptseen.co';
   const promptUrl = baseUrl + '/prompt/' + promptData.id;
   
-  // Generate supporting content
-  const supportingContent = generateSupportingContent(promptData);
-  
+  // Generate AI-powered step-by-step guide HTML
+  const aiStepsHTML = `
+    <div class="instruction-step">
+      <div class="step-number">1</div>
+      <div class="step-content">
+        <strong>Access the Platform:</strong> ${promptData.aiStepByStepGuide.access}
+      </div>
+    </div>
+    <div class="instruction-step">
+      <div class="step-number">2</div>
+      <div class="step-content">
+        <strong>Prepare Your Input:</strong> ${promptData.aiStepByStepGuide.preparation}
+      </div>
+    </div>
+    <div class="instruction-step">
+      <div class="step-number">3</div>
+      <div class="step-content">
+        <strong>Use Your Prompt:</strong> ${promptData.aiStepByStepGuide.prompt}
+      </div>
+    </div>
+    <div class="instruction-step">
+      <div class="step-number">4</div>
+      <div class="step-content">
+        <strong>Customize Details:</strong> ${promptData.aiStepByStepGuide.customization}
+      </div>
+    </div>
+    <div class="instruction-step">
+      <div class="step-number">5</div>
+      <div class="step-content">
+        <strong>Generate and Refine:</strong> ${promptData.aiStepByStepGuide.generation}
+      </div>
+    </div>
+    <div class="instruction-step">
+      <div class="step-number">6</div>
+      <div class="step-content">
+        <strong>Finalize and Export:</strong> ${promptData.aiStepByStepGuide.finalization}
+      </div>
+    </div>
+  `;
+
+  // Generate AI expert tips HTML
+  const aiExpertTipsHTML = promptData.aiExpertTips.map(tip => `
+    <li>${tip}</li>
+  `).join('');
+
+  // Generate AI tools HTML
+  const toolsHTML = promptData.bestAITools.map(tool => `
+    <div class="tool-card">
+      <h4>${tool.name}</h4>
+      <p>${tool.description}</p>
+    </div>
+  `).join('');
+
+  // Generate usage tips HTML
+  const tipsHTML = promptData.usageTips.map(tip => `
+    <li>${tip}</li>
+  `).join('');
+
+  // Generate SEO tips HTML
+  const seoTipsHTML = promptData.seoTips.map(tip => `
+    <li>${tip}</li>
+  `).join('');
+
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -1665,6 +2922,42 @@ function generateEnhancedPromptHTML(promptData) {
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
+      "@type": "HowTo",
+      "name": "How to Use: ${promptData.title.replace(/"/g, '\\"')}",
+      "description": "${promptData.metaDescription.replace(/"/g, '\\"')}",
+      "image": "${promptData.imageUrl}",
+      "totalTime": "PT5M",
+      "estimatedCost": {
+        "@type": "MonetaryAmount",
+        "currency": "USD",
+        "value": "0"
+      },
+      "supply": [
+        {
+          "@type": "HowToSupply",
+          "name": "AI Platform Access"
+        }
+      ],
+      "tool": [
+        {
+          "@type": "HowToTool",
+          "name": "AI Image Generator"
+        }
+      ],
+      "step": [
+        ${promptData.stepByStepInstructions.map((step, index) => `{
+          "@type": "HowToStep",
+          "position": ${index + 1},
+          "name": "Step ${index + 1}",
+          "text": "${step.replace(/"/g, '\\"')}"
+        }`).join(',')}
+      ]
+    }
+    </script>
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
       "@type": "Article",
       "mainEntityOfPage": {
         "@type": "WebPage",
@@ -1693,34 +2986,6 @@ function generateEnhancedPromptHTML(promptData) {
     }
     </script>
     
-    <!-- Breadcrumb Structured Data -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "BreadcrumbList",
-      "itemListElement": [
-        {
-          "@type": "ListItem",
-          "position": 1,
-          "name": "Home",
-          "item": "https://www.promptseen.co"
-        },
-        {
-          "@type": "ListItem",
-          "position": 2,
-          "name": "AI Prompts",
-          "item": "https://www.promptseen.co/#promptsContainer"
-        },
-        {
-          "@type": "ListItem",
-          "position": 3,
-          "name": "${promptData.title.replace(/"/g, '\\"')}",
-          "item": "${promptUrl}"
-        }
-      ]
-    }
-    </script>
-    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -1728,6 +2993,88 @@ function generateEnhancedPromptHTML(promptData) {
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         body { background: #f5f7fa; line-height: 1.6; color: #2d334a; }
         
+        /* Add all the existing CSS styles here */
+        /* ... existing styles ... */
+        
+        /* Mini Browser Styles */
+        ${miniBrowserCSS}
+        
+        /* Related Prompts Grid Layout */
+        .content-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .related-prompt-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border: 1px solid #e9ecef;
+        }
+
+        .related-prompt-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+
+        .related-prompt-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .related-prompt-content {
+            padding: 1.25rem;
+        }
+
+        .related-prompt-content h4 {
+            color: #2d334a;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            min-height: 3em;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* Mobile responsive adjustments for related prompts */
+        @media (max-width: 768px) {
+            .content-grid {
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 1rem;
+            }
+            
+            .related-prompt-image {
+                height: 180px;
+            }
+            
+            .related-prompt-content {
+                padding: 1rem;
+            }
+            
+            .related-prompt-content h4 {
+                font-size: 1rem;
+                min-height: 2.8em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .related-prompt-image {
+                height: 160px;
+            }
+        }
+
         /* Header Styles - MOBILE RESPONSIVE */
         .site-header { 
             background: white; 
@@ -1825,6 +3172,10 @@ function generateEnhancedPromptHTML(promptData) {
         }
         .content-section {
             margin-bottom: 1.5rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .section-title {
             color: #2d334a;
@@ -1890,24 +3241,211 @@ function generateEnhancedPromptHTML(promptData) {
             transform: translateY(-2px); 
         }
         
-        /* Supporting Content */
-        .supporting-content {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 10px;
+        /* NEW: Enhanced Content Styles */
+        .platform-intro {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
             margin: 1.5rem 0;
+            position: relative;
+            overflow: hidden;
         }
-        .content-grid {
+
+        .platform-intro::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: rgba(255,255,255,0.1);
+            transform: rotate(45deg);
+        }
+
+        .platform-intro p {
+            position: relative;
+            z-index: 1;
+            font-size: 1.1rem;
+            line-height: 1.7;
+            margin: 0;
+        }
+        
+        .instruction-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .instruction-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 5px solid #4e54c8;
+            transition: all 0.3s ease;
+        }
+        
+        .instruction-step:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .step-number {
+            background: #4e54c8;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        
+        .step-content strong {
+            color: #4e54c8;
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .tools-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 1rem;
             margin-top: 1rem;
         }
-        .content-card {
-            background: white;
-            padding: 1.25rem;
+        
+        .tool-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid #e9ecef;
+        }
+        
+        .tool-card h4 {
+            color: #4e54c8;
+            margin-bottom: 0.5rem;
+        }
+        
+        .tips-list {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .tips-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+        
+        .tips-list li:before {
+            content: "💡";
+            position: absolute;
+            left: 0;
+        }
+        
+        .engagement-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .trend-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+
+        /* SMALLER Engagement Stats */
+        .engagement-stats-small {
+            display: flex;
+            gap: 1.5rem;
+            margin: 1rem 0;
+            justify-content: center;
+        }
+
+        .stat-item-small {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.75rem;
+            background: rgba(78, 84, 200, 0.1);
+            border-radius: 8px;
+            min-width: 80px;
+        }
+
+        .stat-item-small i {
+            color: #4e54c8;
+            font-size: 1.25rem;
+        }
+
+        .stat-number-small {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #2d334a;
+        }
+
+        .stat-label-small {
+            font-size: 0.75rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Mobile responsive for small stats */
+        @media (max-width: 768px) {
+            .engagement-stats-small {
+                gap: 1rem;
+            }
+            
+            .stat-item-small {
+                padding: 0.5rem;
+                min-width: 70px;
+            }
+            
+            .stat-item-small i {
+                font-size: 1.1rem;
+            }
+            
+            .stat-number-small {
+                font-size: 1.1rem;
+            }
+            
+            .stat-label-small {
+                font-size: 0.7rem;
+            }
         }
         
         /* Footer */
@@ -2075,6 +3613,36 @@ function generateEnhancedPromptHTML(promptData) {
                 padding: 1.5rem 0.75rem;
                 margin-top: 2rem;
             }
+            
+            /* NEW: Mobile responsive adjustments */
+            .instruction-step {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .step-number {
+                align-self: center;
+            }
+            
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .engagement-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-number {
+                font-size: 1.5rem;
+            }
+
+            .platform-intro {
+                padding: 1.5rem;
+            }
         }
         
         @media (max-width: 480px) {
@@ -2168,26 +3736,17 @@ function generateEnhancedPromptHTML(promptData) {
                     ${promptData.seoScore ? '<span style="background: #20bf6b; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; margin-left: 10px;">Prompt Seen: ' + promptData.seoScore + '/100</span>' : ''}
                 </div>
                 <h1 class="article-title">${promptData.title}</h1>
-                <div class="prompt-meta">
-                    <div class="meta-item" data-type="likes">
-                        <i class="fas fa-heart" style="color: #ff6b6b;"></i>
-                        <strong>Likes:</strong> <span class="likes-count">${promptData.likes}</span>
+                
+                <div class="engagement-stats-small" id="engagementStats">
+                    <div class="stat-item-small">
+                        <i class="fas fa-heart"></i>
+                        <span class="stat-number-small">${promptData.likes}</span>
+                        <span class="stat-label-small">Likes</span>
                     </div>
-                    <div class="meta-item" data-type="views">
-                        <i class="fas fa-eye" style="color: #4e54c8;"></i>
-                        <strong>Views:</strong> <span class="views-count">${promptData.views}</span>
-                    </div>
-                    <div class="meta-item" data-type="uses">
-                        <i class="fas fa-download" style="color: #20bf6b;"></i>
-                        <strong>Uses:</strong> <span class="uses-count">${promptData.uses}</span>
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-calendar" style="color: #8f94fb;"></i>
-                        <strong>Created:</strong> ${new Date(promptData.createdAt).toLocaleDateString()}
-                    </div>
-                    <div class="meta-item">
-                        <i class="fas fa-sync-alt" style="color: #ffa726;"></i>
-                        <strong>Updated:</strong> ${new Date(promptData.updatedAt).toLocaleDateString()}
+                    <div class="stat-item-small">
+                        <i class="fas fa-eye"></i>
+                        <span class="stat-number-small">${promptData.views}</span>
+                        <span class="stat-label-small">Views</span>
                     </div>
                 </div>
             </div>
@@ -2205,6 +3764,7 @@ function generateEnhancedPromptHTML(promptData) {
                  id="promptImage">
 
             <div class="prompt-content">
+                <!-- Original Prompt Section -->
                 <section class="content-section">
                     <h2 class="section-title"><i class="fas fa-magic"></i> AI Prompt Used</h2>
                     <div class="prompt-text">${promptData.promptText}</div>
@@ -2216,26 +3776,56 @@ function generateEnhancedPromptHTML(promptData) {
                     <!-- Auto ads will populate here -->
                 </div>
 
-                <!-- Supporting Content Section -->
-                <section class="content-section supporting-content">
-                    <h2 class="section-title"><i class="fas fa-lightbulb"></i> About This Prompt</h2>
-                    <div class="content-grid">
-                        <div class="content-card">
-                            <h4><i class="fas fa-cogs"></i> Prompt Analysis</h4>
-                            <p>This AI prompt generates ${promptData.keywords && promptData.keywords.length > 0 ? promptData.keywords.slice(0, 3).join(', ') : 'creative'} imagery using advanced AI models. The prompt utilizes specific keywords and stylistic elements to create unique visual content.</p>
-                        </div>
-                        <div class="content-card">
-                            <h4><i class="fas fa-tags"></i> Keywords & Tags</h4>
-                            <p>${(promptData.keywords || ['AI', 'prompt', 'image generation']).map(keyword => '<span style="background: #4e54c8; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; margin: 2px; display: inline-block;">' + keyword + '</span>').join('')}</p>
-                        </div>
-                        <div class="content-card">
-                            <h4><i class="fas fa-chart-line"></i> Engagement Stats</h4>
-                            <p>This prompt has been viewed ${promptData.views} times and used by ${promptData.uses} creators. It has received ${promptData.likes} likes from the community.</p>
-                        </div>
+                <!-- UPDATED: AI-Generated About This Prompt Section -->
+                <section class="content-section">
+                    <h2 class="section-title"><i class="fas fa-info-circle"></i>Discover Superior Results With The Help Following Ai Option</h2>
+                    <div class="platform-intro">
+                        <p>${promptData.detailedExplanation}</p>
                     </div>
                 </section>
 
+                <!-- NEW: Comprehensive Step-by-Step Guide -->
+                <section class="content-section">
+                    <h2 class="section-title"><i class="fas fa-list-ol"></i> How To Edit Your Photo Using This Prompt</h2>
+                    <div class="instruction-steps">
+                        ${aiStepsHTML}
+                    </div>
+                </section>
+
+                <!-- NEW: AI Expert Tips Section -->
+                <section class="content-section">
+                    <h2 class="section-title"><i class="fas fa-graduation-cap"></i> Expert Tips for Best Results</h2>
+                    <ul class="tips-list">
+                        ${aiExpertTipsHTML}
+                    </ul>
+                </section>
+
+                <!-- Existing Best AI Tools Section -->
+                <section class="content-section">
+                    <h2 class="section-title"><i class="fas fa-robot"></i> Recommended AI Tools</h2>
+                    <div class="tools-grid">
+                        ${toolsHTML}
+                    </div>
+                </section>
+
+                <!-- Existing Usage Tips Section -->
+                <section class="content-section">
+                    <h2 class="section-title"><i class="fas fa-lightbulb"></i> Usage Tips</h2>
+                    <ul class="tips-list">
+                        ${tipsHTML}
+                    </ul>
+                </section>
+
+                <!-- Existing SEO Tips Section -->
+                <section class="content-section">
+                    <h2 class="section-title"><i class="fas fa-search"></i> Optimization Tips</h2>
+                    <ul class="tips-list">
+                        ${seoTipsHTML}
+                    </ul>
+                </section>
+
                 <div class="engagement-buttons">
+                    ${miniBrowserToggleButton}
                     <button class="engagement-btn like-btn" onclick="handleLike('${promptData.id}')">
                         <i class="far fa-heart"></i> Like Prompt
                     </button>
@@ -2272,7 +3862,7 @@ function generateEnhancedPromptHTML(promptData) {
         <div class="footer-container">
             <div class="footer-section">
                 <h3>Prompt Seen</h3>
-                <p>Your premier destination for AI prompts and creative inspiration. Share, discover, and create amazing AI-generated content.</p>
+                <p>Prompt Seen is a platform that offers trending and viral AI prompts for photo editing and other creative tasks. It provides users with free, high-quality prompts that can be used with various AI tools, including ChatGPT and Google Gemini. The platform aims to simplify the photo editing process by offering ready-to-use prompts that enhance creativity and efficiency. Additionally, it features an AI image generator that allows users to create visuals from text prompts.</p>
             </div>
             <div class="footer-section">
                 <h3>Quick Links</h3>
@@ -2293,11 +3883,61 @@ function generateEnhancedPromptHTML(promptData) {
             </div>
         </div>
         <div class="copyright">
-            <p>&copy; 2024 Prompt Seen. All rights reserved. | AI Prompt Sharing Platform</p>
+            <p>&copy; 2025 Prompt Seen. All rights reserved. | AI Prompt Sharing Platform</p>
         </div>
     </footer>
 
+    <!-- Mini Browser Components -->
+    ${miniBrowserHTML}
+
     <script>
+        // Force initialization of mini browser
+        console.log('Initializing Prompt Seen page with mini browser');
+
+        // Ensure Font Awesome is loaded
+        if (!document.querySelector('link[href*="font-awesome"]')) {
+            const faLink = document.createElement('link');
+            faLink.rel = 'stylesheet';
+            faLink.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css';
+            document.head.appendChild(faLink);
+        }
+
+        // Enhanced engagement tracking with real-time updates
+        async function updateEngagementStats() {
+            try {
+                const response = await fetch('/api/prompt/${promptData.id}/engagement');
+                if (response.ok) {
+                    const data = await response.json();
+                    document.querySelector('.likes-count').textContent = data.likes;
+                    document.querySelector('.views-count').textContent = data.views;
+                    document.querySelector('.uses-count').textContent = data.uses;
+                    
+                    // Update engagement stats cards
+                    const engagementRate = Math.round((data.likes + data.uses) / Math.max(data.views, 1) * 100);
+                    document.querySelector('#engagementStats').innerHTML = \`
+                        <div class="stat-card">
+                            <div class="stat-number">\${data.likes}</div>
+                            <div class="stat-label">Likes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">\${data.views}</div>
+                            <div class="stat-label">Views</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">\${data.uses}</div>
+                            <div class="stat-label">Uses</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">\${engagementRate}%</div>
+                            <div class="stat-label">Engagement</div>
+                        </div>
+                    \`;
+                }
+            } catch (error) {
+                console.error('Error updating engagement stats:', error);
+            }
+        }
+
         // Enhanced image loading
         document.addEventListener('DOMContentLoaded', function() {
             const img = document.getElementById('promptImage');
@@ -2316,10 +3956,7 @@ function generateEnhancedPromptHTML(promptData) {
             // Track view
             fetch('https://www.promptseen.co/api/prompt/${promptData.id}/view', { method: 'POST' })
                 .then(() => {
-                    const viewsCount = document.querySelector('.views-count');
-                    if (viewsCount) {
-                        viewsCount.textContent = parseInt(viewsCount.textContent) + 1;
-                    }
+                    updateEngagementStats();
                 })
                 .catch(console.error);
 
@@ -2397,6 +4034,7 @@ function generateEnhancedPromptHTML(promptData) {
                         likeBtn.classList.remove('liked');
                         likesCount.textContent = parseInt(likesCount.textContent) - 1;
                     }
+                    updateEngagementStats();
                 }
             } catch (error) {
                 console.error('Like error:', error);
@@ -2418,6 +4056,7 @@ function generateEnhancedPromptHTML(promptData) {
                     useBtn.innerHTML = '<i class="fas fa-check"></i> Used';
                     useBtn.classList.add('used');
                     usesCount.textContent = parseInt(usesCount.textContent) + 1;
+                    updateEngagementStats();
                 }
             } catch (error) {
                 console.error('Use error:', error);
@@ -2439,30 +4078,12 @@ function generateEnhancedPromptHTML(promptData) {
                 });
             }
         }
+
+        // Mini Browser JavaScript
+        ${miniBrowserJS}
     </script>
 </body>
 </html>`;
-}
-
-// Helper function to generate supporting content - FIXED VERSION
-function generateSupportingContent(promptData) {
-    var keywords = promptData.keywords || ['AI', 'prompt', 'image generation'];
-    return `
-        <div class="supporting-content">
-            <h3>About This AI Prompt</h3>
-            <p>This prompt creates ${keywords.slice(0, 2).join(' and ')} imagery using advanced AI technology. 
-            The composition focuses on specific visual elements and stylistic choices that make it unique.</p>
-            
-            <div class="content-tips">
-                <h4>Prompt Engineering Tips:</h4>
-                <ul>
-                    <li>Use specific, descriptive language for better results</li>
-                    <li>Include style references for consistent output</li>
-                    <li>Experiment with different AI models</li>
-                </ul>
-            </div>
-        </div>
-    `;
 }
 
 // Generate News HTML - CLEAN VERSION
@@ -2549,6 +4170,7 @@ function generateNewsHTML(newsData) {
 </body>
 </html>`;
 }
+
 function generateCategoryHTML(category, baseUrl) {
   const categoryNames = {
     'art': 'AI Art', 'photography': 'AI Photography', 'design': 'AI Design',
@@ -2582,7 +4204,7 @@ function generateCategoryHTML(category, baseUrl) {
 </html>`;
 }
 
-// Helper function for 404 page - FIXED VERSION
+// Helper function for 404 page
 function sendPromptNotFound(res, promptId) {
   res.status(404).send(`
 <!DOCTYPE html>
@@ -2633,7 +4255,7 @@ function sendNewsNotFound(res, newsId) {
 </html>`);
 }
 
-// Helper function for error page - FIXED VERSION
+// Helper function for error page
 function sendErrorPage(res, error) {
   res.status(500).send(`
 <!DOCTYPE html>
@@ -2682,12 +4304,7 @@ function sendNewsErrorPage(res, error) {
 </html>`);
 }
 
-// Serve main page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Simple 404 handler - MINIMAL FIX
+// Simple 404 handler
 app.use((req, res) => {
   res.status(404).send(`
     <html>
@@ -2716,12 +4333,17 @@ app.listen(port, async () => {
   console.log(`   → Views: http://localhost:${port}/api/prompt/:id/view`);
   console.log(`   → Likes: http://localhost:${port}/api/prompt/:id/like`);
   console.log(`   → Uses: http://localhost:${port}/api/prompt/:id/use`);
+  console.log(`   → Analytics: http://localhost:${port}/api/prompt/:id/engagement`);
   console.log(`🔍 Search: http://localhost:${port}/api/search`);
   console.log(`🗺️  Sitemap: http://localhost:${port}/sitemap.xml`);
   console.log(`🤖 Robots.txt: http://localhost:${port}/robots.txt`);
   console.log(`❤️  Health check: http://localhost:${port}/health`);
   console.log(`💰 AdSense Client ID: ${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}`);
   console.log(`🔄 AdSense Migration: http://localhost:${port}/admin/migrate-adsense`);
+  console.log(`🤖 AI Description Generator: Active for all prompt pages`);
+  console.log(`🌐 Mini Browser: Integrated into prompt pages - Auto-opens on page load`);
+  console.log(`📱 Mobile Optimized: Enhanced mobile responsiveness for mini browser`);
+  console.log(`📄 Dual Indexing: Both / and /index.html are now properly indexed`);
   
   // Auto-migrate on startup (optional - remove if you want manual control)
   if (process.env.AUTO_MIGRATE_ADSENSE === 'true') {
@@ -2744,5 +4366,8 @@ app.listen(port, async () => {
     mockPrompts.forEach(prompt => {
       console.log(`   → http://localhost:${port}/prompt/${prompt.id}`);
     });
+    console.log(`🏠 Home pages:`);
+    console.log(`   → Root: http://localhost:${port}/`);
+    console.log(`   → Index: http://localhost:${port}/index.html`);
   }
 });
