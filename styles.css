@@ -533,6 +533,7 @@ body {
     background: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
     text-align: center;
     border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+
 }
 
 .desktop-title {
@@ -2940,6 +2941,7 @@ nav {
 .showcase {
     padding: 10px 0;
     background: white;
+  
 }
 
 .trending-header {

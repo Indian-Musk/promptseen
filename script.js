@@ -1,4 +1,3 @@
-﻿
 ﻿// Firebase Configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDWDn4T6tkk8ihjLX8Y_YHMkz7y2Uw9paQ",
@@ -133,6 +132,438 @@ function showAuthElements() {
   }
 }
 
+// Enhanced Search Functionality with Better Mobile Support
+function initSearchFunctionality() {
+    const searchIconButton = document.getElementById('searchIconButton');
+    const searchExpandable = document.getElementById('searchExpandable');
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const searchSuggestions = document.getElementById('searchSuggestions');
+
+    // Enhanced toggle with smooth animations
+    if (searchIconButton && searchExpandable) {
+        searchIconButton.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isActive = searchExpandable.classList.contains('active');
+            
+            if (isActive) {
+                // Smooth close animation
+                searchExpandable.style.transform = 'translateY(-10px)';
+                searchExpandable.style.opacity = '0';
+                setTimeout(() => {
+                    searchExpandable.classList.remove('active');
+                }, 200);
+            } else {
+                // Smooth open animation
+                searchExpandable.classList.add('active');
+                setTimeout(() => {
+                    searchExpandable.style.transform = 'translateY(5px)';
+                    searchExpandable.style.opacity = '1';
+                }, 10);
+                
+                // Focus on input with slight delay for better UX
+                setTimeout(() => {
+                    if (searchInput) {
+                        searchInput.focus();
+                        // Show keyboard on mobile
+                        searchInput.setAttribute('inputmode', 'search');
+                    }
+                }, 150);
+            }
+        });
+    }
+
+    // Enhanced mobile touch support for search input
+    if (searchInput) {
+        // Better touch handling for mobile
+        searchInput.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+
+        searchInput.addEventListener('touchend', function(e) {
+            e.stopPropagation();
+            // Prevent focus loss on mobile
+            this.focus();
+        }, { passive: true });
+
+        // Improved input handling with debouncing
+        let inputTimeout;
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(inputTimeout);
+            inputTimeout = setTimeout(() => {
+                const query = e.target.value.trim();
+                if (query.length > 0) {
+                    showSearchSuggestions(query);
+                } else {
+                    showRecentSearches();
+                }
+            }, 150); // Reduced debounce time for better responsiveness
+        });
+
+        // Enhanced keyboard handling
+        searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeSearch();
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                focusFirstSuggestion();
+            }
+        });
+
+        // Better focus handling for mobile
+        searchInput.addEventListener('focus', function() {
+            if (this.value.trim() === '') {
+                showRecentSearches();
+            }
+        });
+    }
+
+    // Enhanced search button with better touch feedback
+    if (searchButton) {
+        // Add touch feedback
+        searchButton.addEventListener('touchstart', function() {
+            this.style.transform = 'scale(0.95)';
+        }, { passive: true });
+
+        searchButton.addEventListener('touchend', function() {
+            this.style.transform = 'scale(1)';
+            performSearch(searchInput.value);
+        }, { passive: true });
+
+        searchButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            performSearch(searchInput.value);
+        });
+    }
+
+    // Enhanced outside click detection
+    document.addEventListener('click', function(e) {
+        if (searchExpandable && searchIconButton && 
+            !searchExpandable.contains(e.target) && 
+            !searchIconButton.contains(e.target)) {
+            closeSearch();
+        }
+    });
+
+    // Enhanced touch support for search expandable
+    if (searchExpandable) {
+        searchExpandable.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+
+        searchExpandable.addEventListener('touchmove', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+
+        searchExpandable.addEventListener('touchend', function(e) {
+            e.stopPropagation();
+        }, { passive: true });
+    }
+
+    // Keyboard navigation for suggestions
+    document.addEventListener('keydown', function(e) {
+        if (!searchExpandable.classList.contains('active')) return;
+
+        const suggestions = searchSuggestions.querySelectorAll('.suggestion-item');
+        const focusedSuggestion = searchSuggestions.querySelector('.suggestion-item:focus');
+        
+        switch(e.key) {
+            case 'ArrowDown':
+                e.preventDefault();
+                if (!focusedSuggestion) {
+                    focusFirstSuggestion();
+                } else {
+                    focusNextSuggestion(focusedSuggestion);
+                }
+                break;
+            case 'ArrowUp':
+                e.preventDefault();
+                if (focusedSuggestion) {
+                    focusPreviousSuggestion(focusedSuggestion);
+                }
+                break;
+            case 'Enter':
+                if (focusedSuggestion) {
+                    e.preventDefault();
+                    focusedSuggestion.click();
+                }
+                break;
+        }
+    });
+}
+
+// Enhanced search performance with better mobile support
+function performSearch(query) {
+    if (!query || !query.trim()) {
+        showNotification('Please enter a search term', 'error');
+        return;
+    }
+
+    const searchExpandable = document.getElementById('searchExpandable');
+    const searchInput = document.getElementById('searchInput');
+
+    // Smooth close animation
+    if (searchExpandable) {
+        searchExpandable.style.transform = 'translateY(-10px)';
+        searchExpandable.style.opacity = '0';
+        setTimeout(() => {
+            searchExpandable.classList.remove('active');
+            searchExpandable.style.transform = '';
+            searchExpandable.style.opacity = '';
+        }, 200);
+    }
+
+    // Add to recent searches
+    addToRecentSearches(query);
+
+    // Show loading state with better mobile optimization
+    showNotification(`Searching for: "${query}"`, 'info');
+
+    // Use requestAnimationFrame for smoother performance
+    requestAnimationFrame(() => {
+        if (window.searchManager) {
+            searchManager.currentSearchTerm = query;
+            searchManager.showSearchResults();
+        } else if (window.youtubePrompts) {
+            // Fallback: filter prompts by search term
+            const filteredPrompts = allPrompts.filter(prompt => {
+                const searchLower = query.toLowerCase();
+                const title = (prompt.title || '').toLowerCase();
+                const promptText = (prompt.promptText || '').toLowerCase();
+                const keywords = prompt.keywords || [];
+                
+                return (
+                    title.includes(searchLower) ||
+                    promptText.includes(searchLower) ||
+                    keywords.some(keyword => 
+                        keyword.toLowerCase().includes(searchLower)
+                    )
+                );
+            });
+
+            if (filteredPrompts.length > 0) {
+                youtubePrompts.displayFilteredPrompts(filteredPrompts);
+                showNotification(`Found ${filteredPrompts.length} results for "${query}"`, 'success');
+            } else {
+                showNotification(`No results found for "${query}"`, 'error');
+                youtubePrompts.showNoResults();
+            }
+        }
+    });
+
+    // Clear input and hide suggestions
+    if (searchInput) {
+        searchInput.value = '';
+    }
+    hideSearchSuggestions();
+
+    // Blur input to hide keyboard on mobile after search
+    setTimeout(() => {
+        if (searchInput) searchInput.blur();
+    }, 300);
+}
+
+// Enhanced search suggestions with better mobile touch
+function showSearchSuggestions(query) {
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    if (!searchSuggestions) return;
+
+    // Show loading state
+    searchSuggestions.innerHTML = `
+        <div class="suggestion-item">
+            <i class="fas fa-spinner fa-spin suggestion-icon"></i>
+            <span>Searching...</span>
+        </div>
+    `;
+    searchSuggestions.style.display = 'block';
+
+    // Simulate API call with better mobile performance
+    setTimeout(() => {
+        const mockSuggestions = [
+            { text: `${query} art`, category: 'art', icon: 'fas fa-palette' },
+            { text: `${query} photography`, category: 'photography', icon: 'fas fa-camera' },
+            { text: `${query} design`, category: 'design', icon: 'fas fa-pencil-ruler' },
+            { text: `${query} AI`, category: 'ai', icon: 'fas fa-robot' }
+        ];
+
+        const suggestionsHTML = mockSuggestions.map(suggestion => `
+            <div class="suggestion-item" 
+                 data-query="${suggestion.text}"
+                 tabindex="0"
+                 role="button"
+                 aria-label="Search for ${suggestion.text}">
+                <i class="${suggestion.icon} suggestion-icon"></i>
+                <div class="suggestion-text">${suggestion.text}</div>
+                <span class="suggestion-category">${suggestion.category}</span>
+            </div>
+        `).join('');
+
+        searchSuggestions.innerHTML = suggestionsHTML;
+        
+        // Enhanced touch/click handlers for suggestions
+        searchSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
+            // Click handler
+            item.addEventListener('click', function() {
+                handleSuggestionClick(this.getAttribute('data-query'));
+            });
+
+            // Touch handlers for better mobile
+            item.addEventListener('touchstart', function() {
+                this.style.background = '#f0f0f0';
+            }, { passive: true });
+
+            item.addEventListener('touchend', function() {
+                this.style.background = '';
+                handleSuggestionClick(this.getAttribute('data-query'));
+            }, { passive: true });
+
+            item.addEventListener('touchcancel', function() {
+                this.style.background = '';
+            }, { passive: true });
+
+            // Keyboard support
+            item.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleSuggestionClick(this.getAttribute('data-query'));
+                }
+            });
+        });
+
+    }, 200); // Reduced delay for better responsiveness
+}
+
+// Helper function for suggestion clicks
+function handleSuggestionClick(query) {
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.value = query;
+        searchInput.focus(); // Keep focus for better UX
+    }
+    performSearch(query);
+}
+
+// Enhanced recent searches with mobile optimization
+function showRecentSearches() {
+    const searchSuggestions = document.getElementById('searchSuggestions');
+    if (!searchSuggestions) return;
+
+    const recentSearches = getRecentSearches();
+    
+    if (recentSearches.length === 0) {
+        searchSuggestions.innerHTML = `
+            <div class="suggestion-item">
+                <i class="fas fa-clock suggestion-icon"></i>
+                <span>No recent searches</span>
+            </div>
+        `;
+    } else {
+        const recentHTML = recentSearches.map(search => `
+            <div class="suggestion-item" 
+                 data-query="${search}"
+                 tabindex="0"
+                 role="button"
+                 aria-label="Search for ${search}">
+                <i class="fas fa-history suggestion-icon"></i>
+                <div class="suggestion-text">${search}</div>
+                <span class="suggestion-category">recent</span>
+            </div>
+        `).join('');
+
+        searchSuggestions.innerHTML = `
+            <div class="suggestion-item" style="font-weight: 600; color: #666; pointer-events: none;">
+                <i class="fas fa-clock suggestion-icon"></i>
+                <span>Recent searches</span>
+            </div>
+            ${recentHTML}
+            <div class="suggestion-item" id="clearRecentSearches" style="border-top: 1px solid #eee; margin-top: 5px;">
+                <i class="fas fa-trash suggestion-icon" style="color: #ff6b6b;"></i>
+                <span style="color: #ff6b6b;">Clear recent searches</span>
+            </div>
+        `;
+
+        // Add handlers for recent searches
+        searchSuggestions.querySelectorAll('.suggestion-item:not(:first-child):not(:last-child)').forEach(item => {
+            setupSuggestionHandlers(item);
+        });
+
+        // Clear recent searches handler
+        const clearBtn = document.getElementById('clearRecentSearches');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', clearRecentSearches);
+        }
+    }
+
+    searchSuggestions.style.display = 'block';
+}
+
+// Setup suggestion handlers
+function setupSuggestionHandlers(item) {
+    const query = item.getAttribute('data-query');
+    
+    item.addEventListener('click', () => handleSuggestionClick(query));
+    
+    item.addEventListener('touchstart', function() {
+        this.style.background = '#f0f0f0';
+    }, { passive: true });
+
+    item.addEventListener('touchend', function() {
+        this.style.background = '';
+        handleSuggestionClick(query);
+    }, { passive: true });
+}
+
+// Enhanced keyboard navigation functions
+function focusFirstSuggestion() {
+    const suggestions = document.querySelectorAll('.suggestion-item');
+    if (suggestions.length > 0) {
+        suggestions[0].focus();
+    }
+}
+
+function focusNextSuggestion(current) {
+    const next = current.nextElementSibling;
+    if (next && next.classList.contains('suggestion-item')) {
+        next.focus();
+    }
+}
+
+function focusPreviousSuggestion(current) {
+    const prev = current.previousElementSibling;
+    if (prev && prev.classList.contains('suggestion-item')) {
+        prev.focus();
+    }
+}
+
+// Enhanced close search function
+function closeSearch() {
+    const searchExpandable = document.getElementById('searchExpandable');
+    const searchInput = document.getElementById('searchInput');
+    
+    if (searchExpandable) {
+        searchExpandable.style.transform = 'translateY(-10px)';
+        searchExpandable.style.opacity = '0';
+        setTimeout(() => {
+            searchExpandable.classList.remove('active');
+            searchExpandable.style.transform = '';
+            searchExpandable.style.opacity = '';
+        }, 200);
+    }
+    
+    hideSearchSuggestions();
+    
+    // Blur input to hide keyboard on mobile
+    if (searchInput) {
+        searchInput.blur();
+    }
+}
+
+// Clear recent searches
+function clearRecentSearches() {
+    localStorage.removeItem('recentSearches');
+    showRecentSearches(); // Refresh the display
+    showNotification('Recent searches cleared', 'success');
+}
 // YouTube Shorts Style Horizontal Feed - UPDATED
 class ShortsHorizontalFeed {
     constructor() {
@@ -3199,6 +3630,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   initScrollEffects();
   initUploadModal();
   initNewsUploadModal();
+  
+  // Initialize search functionality
+  initSearchFunctionality(); // Add this line
   
   // Initialize YouTube-style prompts with infinite scroll (vertical feed)
   window.youtubePrompts = new YouTubeStylePrompts();

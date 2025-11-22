@@ -149,40 +149,111 @@ app.get('/index.html', (req, res) => {
   serveHTMLWithCanonical(path.join(__dirname, 'index.html'), '/index.html', req, res);
 });
 
-// AdSense Helper Functions
+// ENHANCED AdSense Helper Functions - FIXED DUPLICATE ISSUE
+class AdSenseManager {
+  static generateAutoAdsCode() {
+    const clientId = process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724';
+    
+    return `
+      <!-- Google AdSense Auto Ads -->
+      <script>
+        (function() {
+          // Check if AdSense is already loaded
+          if (window.adsbygoogle && window.adsbygoogle.loaded) {
+            console.log('AdSense already loaded, skipping...');
+            return;
+          }
+          
+          // Mark as loading
+          window.adsbygoogle = window.adsbygoogle || [];
+          window.adsbygoogle.loaded = true;
+          
+          // Load script only once
+          var script = document.createElement('script');
+          script.async = true;
+          script.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}';
+          script.crossOrigin = 'anonymous';
+          script.onload = function() {
+            // Push configuration only once
+            if (!window.adsbygoogle.initialized) {
+              window.adsbygoogle.push({
+                google_ad_client: "${clientId}",
+                enable_page_level_ads: true,
+                overlays: {bottom: true}
+              });
+              window.adsbygoogle.initialized = true;
+            }
+          };
+          document.head.appendChild(script);
+        })();
+      </script>
+    `;
+  }
+
+  static generateManualAd(adSlot = 'default') {
+    const clientId = process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724';
+    
+    return `
+      <!-- Manual Ad Placement -->
+      <div class="ad-container">
+        <div class="ad-label">Advertisement</div>
+        <ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="${clientId}"
+            data-ad-slot="${adSlot}"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+        <script>
+          // Wait for AdSense to load before pushing
+          (function() {
+            function initAd() {
+              if (window.adsbygoogle && !window.adsbygoogle.pushed) {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+                window.adsbygoogle.pushed = true;
+              } else {
+                setTimeout(initAd, 100);
+              }
+            }
+            initAd();
+          })();
+        </script>
+      </div>
+    `;
+  }
+
+  // For prompt pages - use manual ads only to avoid conflicts
+  static generatePromptPageAds() {
+    const clientId = process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724';
+    
+    return `
+      <!-- Manual Ad Placement for Prompt Pages -->
+      <div class="ad-container">
+        <div class="ad-label">Advertisement</div>
+        <ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="${clientId}"
+            data-ad-slot="YOUR_AD_SLOT_ID"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins>
+        <script>
+          (adsbygoogle = window.adsbygoogle || []).push({});
+        </script>
+      </div>
+    `;
+  }
+}
+
+// Replace old functions with enhanced versions
 function generateAdSenseCode() {
-  const clientId = process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724';
-  
-  return `
-    <!-- Google AdSense Auto Ads -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}" crossorigin="anonymous"></script>
-    <script>
-      (adsbygoogle = window.adsbygoogle || []).push({
-        google_ad_client: "${clientId}",
-        enable_page_level_ads: true,
-        overlays: {bottom: true}
-      });
-    </script>
-  `;
+  return AdSenseManager.generateAutoAdsCode();
 }
 
 function generateManualAdPlacement(adUnit = 'default') {
-  return `
-    <!-- Manual Ad Placement -->
-    <div class="ad-container">
-      <div class="ad-label">Advertisement</div>
-      <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724" crossorigin="anonymous"></script>
-      <ins class="adsbygoogle"
-           style="display:block"
-           data-ad-client="ca-pub-5992381116749724"
-           data-ad-slot="YOUR_AD_SLOT_ID"
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
-      <script>
-           (adsbygoogle = window.adsbygoogle || []).push({});
-      </script>
-    </div>
-  `;
+  return AdSenseManager.generateManualAd(adUnit);
+}
+
+function generatePromptAdPlacement() {
+  return AdSenseManager.generatePromptPageAds();
 }
 
 // Migration function for existing prompts
@@ -2130,11 +2201,7 @@ app.get('/prompt/:id', async (req, res) => {
       const prompt = doc.data();
       promptData = createPromptData(prompt, doc.id);
       
-      // Update view count (without updating updatedAt)
-      await db.collection('uploads').doc(promptId).update({
-        views: (prompt.views || 0) + 1
-        // Removed: updatedAt: new Date().toISOString()
-      });
+    
     } else {
       // Development mode - use mock data
       const mockPrompt = mockPrompts.find(p => p.id === promptId) || mockPrompts[0];
@@ -2816,9 +2883,10 @@ const miniBrowserToggleButton = `
 </button>
 `;
 
-// ENHANCED PROMPT PAGE GENERATOR WITH RICH CONTENT AND MINI BROWSER
+// ENHANCED PROMPT PAGE GENERATOR WITH RICH CONTENT AND MINI BROWSER - FIXED ADSENSE
 function generateEnhancedPromptHTML(promptData) {
-  const adsenseCode = generateAdSenseCode();
+  // Use manual ads only for prompt pages to avoid conflicts
+  const promptAdHTML = generatePromptAdPlacement();
   
   // FORCE WWW VERSION IN ALL LINKS AND META TAGS
   const baseUrl = 'https://www.promptseen.co';
@@ -2898,8 +2966,7 @@ function generateEnhancedPromptHTML(promptData) {
     <meta name="keywords" content="${(promptData.keywords || []).join(', ')}">
     <meta name="robots" content="index, follow, max-image-preview:large">
     
-    <!-- Google AdSense Auto Ads -->
-    ${adsenseCode}
+    <!-- Manual AdSense for Prompt Pages - No Auto Ads -->
     
     <!-- Enhanced Open Graph - USING WWW VERSION -->
     <meta property="og:title" content="${promptData.seoTitle}">
@@ -3706,8 +3773,8 @@ function generateEnhancedPromptHTML(promptData) {
     </style>
 </head>
 <body>
-    <!-- Auto Ads will be placed here automatically by Google -->
-    
+    <!-- Manual Ads Only - No Auto Ads -->
+
     <!-- Site Header - CLEAN AND MOBILE RESPONSIVE -->
     <header class="site-header">
         <div class="header-container">
@@ -3751,11 +3818,21 @@ function generateEnhancedPromptHTML(promptData) {
                 </div>
             </div>
 
-            <!-- Top Ad Placement -->
-            <div class="ad-container">
-                <div class="ad-label">Advertisement</div>
-                <!-- Auto ads will populate here -->
-            </div>
+            <!-- Top Ad Placement - MANUAL ADS ONLY -->
+            
+<div class="ad-container">
+    <div class="ad-label">Advertisement</div>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724"></script>
+    <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-5992381116749724"
+        data-ad-slot="3256783957"  
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
             
             <img src="${promptData.imageUrl}" 
                  alt="${promptData.title} - AI Generated Image" 
@@ -3770,11 +3847,21 @@ function generateEnhancedPromptHTML(promptData) {
                     <div class="prompt-text">${promptData.promptText}</div>
                 </section>
 
-                <!-- Middle Ad Placement -->
-                <div class="ad-container">
-                    <div class="ad-label">Advertisement</div>
-                    <!-- Auto ads will populate here -->
-                </div>
+                <!-- Middle Ad Placement - MANUAL ADS ONLY -->
+               
+<div class="ad-container">
+    <div class="ad-label">Advertisement</div>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724"></script>
+    <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-5992381116749724"
+        data-ad-slot="3256783957" 
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
 
                 <!-- UPDATED: AI-Generated About This Prompt Section -->
                 <section class="content-section">
@@ -3841,11 +3928,21 @@ function generateEnhancedPromptHTML(promptData) {
                 </div>
             </div>
 
-            <!-- Bottom Ad Placement -->
-            <div class="ad-container">
-                <div class="ad-label">Advertisement</div>
-                <!-- Auto ads will populate here -->
-            </div>
+            <!-- Bottom Ad Placement - MANUAL ADS ONLY -->
+         
+<div class="ad-container">
+    <div class="ad-label">Advertisement</div>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724"></script>
+    <ins class="adsbygoogle"
+        style="display:block"
+        data-ad-client="ca-pub-5992381116749724"
+        data-ad-slot="3256783957"  
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
+    <script>
+        (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+</div>
         </article>
         
         <!-- Related Prompts Section -->
@@ -4344,6 +4441,7 @@ app.listen(port, async () => {
   console.log(`🌐 Mini Browser: Integrated into prompt pages - Auto-opens on page load`);
   console.log(`📱 Mobile Optimized: Enhanced mobile responsiveness for mini browser`);
   console.log(`📄 Dual Indexing: Both / and /index.html are now properly indexed`);
+  console.log(`✅ AdSense FIXED: Manual ads only on prompt pages to prevent conflicts`);
   
   // Auto-migrate on startup (optional - remove if you want manual control)
   if (process.env.AUTO_MIGRATE_ADSENSE === 'true') {
