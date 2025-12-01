@@ -1,7 +1,6 @@
 ﻿<!DOCTYPE html>
 <html lang="en" itemscope itemtype="https://schema.org/WebSite">
 <head>
-<script async src="https://pagead2.googletagmanager.com/pagead/js/adsbygoogle.js?client=ca-pub-5992381116749724" crossorigin="anonymous"></script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-LS811PSS3V"></script>
 <script>
@@ -159,6 +158,248 @@
     
     <!-- Search Functionality Styles -->
     <style>
+
+/* Enhanced Mobile Responsive Fixes */
+@media (max-width: 767px) {
+  .shorts-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    padding: 16px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+  
+  .shorts-prompt-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    min-height: auto !important;
+  }
+  
+  .shorts-video-container {
+    height: 400px !important;
+    width: 100% !important;
+    max-height: 60vh !important;
+  }
+  
+  .shorts-image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+  
+  /* Horizontal feed mobile fixes */
+  .horizontal-feed-section {
+    margin: 20px 0 !important;
+    padding: 15px 0 !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+  
+  .horizontal-feed-track {
+    padding: 0 15px !important;
+    gap: 12px !important;
+    scroll-snap-type: x mandatory !important;
+  }
+  
+  .horizontal-prompt-item {
+    width: 160px !important;
+    scroll-snap-align: start !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .horizontal-prompt-image {
+    height: 120px !important;
+  }
+  
+  /* Ensure proper spacing between vertical and horizontal sections */
+  .shorts-container > * {
+    width: 100% !important;
+    margin-bottom: 16px !important;
+  }
+  
+  /* Fix for prompt text overflow */
+  .shorts-prompt-text {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    max-height: 63px !important; /* 3 lines */
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .shorts-video-container {
+    height: 350px !important;
+  }
+  
+  .shorts-prompt-text {
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+  }
+  
+  .horizontal-prompt-item {
+    width: 140px !important;
+  }
+  
+  .horizontal-prompt-image {
+    height: 100px !important;
+  }
+  
+  .horizontal-prompt-title {
+    font-size: 0.8rem !important;
+    height: 32px !important;
+  }
+}
+
+/* Very small devices */
+@media (max-width: 360px) {
+  .shorts-video-container {
+    height: 300px !important;
+  }
+  
+  .shorts-container {
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+  
+  .horizontal-prompt-item {
+    width: 130px !important;
+  }
+}
+
+/* Enhanced Mobile Responsive Fixes */
+@media (max-width: 767px) {
+  .shorts-container {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+    padding: 16px !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+  }
+  
+  .shorts-prompt-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    min-height: auto !important;
+  }
+  
+  .shorts-video-container {
+    height: 400px !important;
+    width: 100% !important;
+    max-height: 60vh !important;
+  }
+  
+  .shorts-image {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+  }
+  
+  /* Horizontal feed mobile fixes */
+  .horizontal-feed-section {
+    margin: 20px 0 !important;
+    padding: 15px 0 !important;
+    border-radius: 12px !important;
+    width: 100% !important;
+    overflow: hidden !important;
+  }
+  
+  .horizontal-feed-track {
+    padding: 0 15px !important;
+    gap: 12px !important;
+    scroll-snap-type: x mandatory !important;
+  }
+  
+  .horizontal-prompt-item {
+    width: 160px !important;
+    scroll-snap-align: start !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .horizontal-prompt-image {
+    height: 120px !important;
+  }
+  
+  /* Ensure proper spacing between vertical and horizontal sections */
+  .shorts-container > * {
+    width: 100% !important;
+    margin-bottom: 16px !important;
+  }
+  
+  /* Fix for prompt text overflow */
+  .shorts-prompt-text {
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    max-height: 63px !important; /* 3 lines */
+  }
+}
+
+/* Extra small devices */
+@media (max-width: 480px) {
+  .shorts-video-container {
+    height: 350px !important;
+  }
+  
+  .shorts-prompt-text {
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+  }
+  
+  .horizontal-prompt-item {
+    width: 140px !important;
+  }
+  
+  .horizontal-prompt-image {
+    height: 100px !important;
+  }
+  
+  .horizontal-prompt-title {
+    font-size: 0.8rem !important;
+    height: 32px !important;
+  }
+}
+
+/* Very small devices */
+@media (max-width: 360px) {
+  .shorts-video-container {
+    height: 300px !important;
+  }
+  
+  .shorts-container {
+    padding: 12px !important;
+    gap: 12px !important;
+  }
+  
+  .horizontal-prompt-item {
+    width: 130px !important;
+  }
+}
+
+/* Fix for horizontal feed header on mobile */
+@media (max-width: 768px) {
+  .horizontal-feed-header {
+    padding: 0 15px !important;
+    margin-bottom: 15px !important;
+  }
+  
+  .horizontal-feed-header h3 {
+    font-size: 1.1rem !important;
+  }
+  
+  .horizontal-control-btn {
+    width: 35px !important;
+    height: 35px !important;
+    font-size: 0.8rem !important;
+  }
+}
       
 /* Enhanced Mobile Search Styles */
 @media (max-width: 768px) {
@@ -295,6 +536,278 @@
     background: rgba(255, 107, 107, 0.1) !important;
 }
 
+/* Horizontal Feed Styles */
+.horizontal-feed-section {
+    grid-column: 1 / -1;
+    margin: 30px 0;
+    padding: 20px 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 15px;
+    border: 1px solid #e9ecef;
+}
+
+.horizontal-feed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 20px;
+}
+
+.horizontal-feed-header h3 {
+    color: #2d334a;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.horizontal-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.horizontal-control-btn {
+    background: white;
+    border: 2px solid #4e54c8;
+    color: #4e54c8;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.horizontal-control-btn:hover {
+    background: #4e54c8;
+    color: white;
+    transform: scale(1.1);
+}
+
+.horizontal-control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.horizontal-control-btn:disabled:hover {
+    background: white;
+    color: #4e54c8;
+}
+
+.horizontal-feed-track {
+    display: flex;
+    gap: 15px;
+    padding: 0 20px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #4e54c8 #f1f1f1;
+}
+
+.horizontal-feed-track::-webkit-scrollbar {
+    height: 6px;
+}
+
+.horizontal-feed-track::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.horizontal-feed-track::-webkit-scrollbar-thumb {
+    background: #4e54c8;
+    border-radius: 10px;
+}
+
+.horizontal-prompt-item {
+    flex: 0 0 auto;
+    width: 200px;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.horizontal-prompt-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.horizontal-prompt-image {
+    position: relative;
+    width: 100%;
+    height: 150px;
+    overflow: hidden;
+}
+
+.horizontal-prompt-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.horizontal-prompt-item:hover .horizontal-prompt-image img {
+    transform: scale(1.05);
+}
+
+.horizontal-prompt-views {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.7);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.horizontal-prompt-info {
+    padding: 12px;
+}
+
+.horizontal-prompt-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #2d334a;
+    margin-bottom: 8px;
+    line-height: 1.3;
+    height: 36px;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.view-prompt-btn {
+    width: 100%;
+    padding: 8px 12px;
+    background: #4e54c8;
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-prompt-btn:hover {
+    background: #3f44b8;
+    transform: translateY(-2px);
+}
+
+/* Mobile Responsive for Horizontal Feed */
+@media (max-width: 768px) {
+    .horizontal-feed-section {
+        margin: 20px 0;
+        padding: 15px 0;
+        border-radius: 12px;
+    }
+    
+    .horizontal-feed-header {
+        padding: 0 15px;
+        margin-bottom: 15px;
+    }
+    
+    .horizontal-feed-header h3 {
+        font-size: 1.1rem;
+    }
+    
+    .horizontal-control-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 0.8rem;
+    }
+    
+    .horizontal-feed-track {
+        padding: 0 15px;
+        gap: 12px;
+    }
+    
+    .horizontal-prompt-item {
+        width: 160px;
+    }
+    
+    .horizontal-prompt-image {
+        height: 120px;
+    }
+    
+    .horizontal-prompt-info {
+        padding: 10px;
+    }
+    
+    .horizontal-prompt-title {
+        font-size: 0.85rem;
+        height: 32px;
+    }
+    
+    .view-prompt-btn {
+        padding: 6px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .horizontal-feed-section {
+        margin: 15px 0;
+        padding: 12px 0;
+    }
+    
+    .horizontal-feed-header {
+        padding: 0 12px;
+    }
+    
+    .horizontal-feed-header h3 {
+        font-size: 1rem;
+    }
+    
+    .horizontal-feed-track {
+        padding: 0 12px;
+        gap: 10px;
+    }
+    
+    .horizontal-prompt-item {
+        width: 140px;
+    }
+    
+    .horizontal-prompt-image {
+        height: 100px;
+    }
+}
+
+/* Animation for horizontal feed items */
+.horizontal-prompt-item {
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Loading states for horizontal feed */
+.loading-horizontal .horizontal-feed-header .loading-text,
+.loading-horizontal-item .loading-text {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1s infinite;
+    border-radius: 4px;
+}
 
   /* Search Icon and Expandable Styles */
         .search-container {
@@ -696,7 +1209,7 @@
             
             <!-- YouTube Shorts Style Container -->
             <div class="shorts-container" id="promptsContainer">
-                <!-- Prompts will be loaded here automatically -->
+                <!-- Prompts will be loaded here automatically with horizontal feeds -->
             </div>
         </div>
     </section>

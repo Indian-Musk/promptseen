@@ -564,6 +564,323 @@ function clearRecentSearches() {
     showRecentSearches(); // Refresh the display
     showNotification('Recent searches cleared', 'success');
 }
+
+// Enhanced Horizontal Feed Scrolling Functionality
+class HorizontalFeedManager {
+    constructor() {
+        this.feeds = new Map();
+        this.init();
+    }
+
+    init() {
+        this.setupHorizontalFeeds();
+        this.setupEventListeners();
+    }
+
+    setupHorizontalFeeds() {
+        // This will be called when horizontal feeds are created
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                this.initializeAllFeeds();
+            }, 1000);
+        });
+    }
+
+    initializeAllFeeds() {
+        const feedSections = document.querySelectorAll('.horizontal-feed-section');
+        
+        feedSections.forEach((section, index) => {
+            const track = section.querySelector('.horizontal-feed-track');
+            const controls = section.querySelector('.horizontal-controls');
+            
+            if (track && !this.feeds.has(track)) {
+                this.initializeFeed(track, controls, `feed-${index}`);
+            }
+        });
+    }
+
+    initializeFeed(track, controls, feedId) {
+        // Store feed reference
+        this.feeds.set(track, {
+            id: feedId,
+            controls: controls,
+            isDragging: false,
+            startX: 0,
+            scrollLeft: 0
+        });
+
+        // Setup navigation controls
+        this.setupFeedControls(track, controls);
+        
+        // Setup touch/swipe for mobile
+        this.setupTouchScrolling(track);
+        
+        // Setup mouse drag for desktop
+        this.setupMouseScrolling(track);
+        
+        // Setup keyboard navigation
+        this.setupKeyboardNavigation(track);
+        
+        // Initial control state update
+        this.updateFeedControls(track, controls);
+    }
+
+    setupFeedControls(track, controls) {
+        const prevBtn = controls?.querySelector('.prev-horizontal');
+        const nextBtn = controls?.querySelector('.next-horizontal');
+
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => this.scrollFeed(track, -1));
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => this.scrollFeed(track, 1));
+        }
+
+        // Update controls on scroll
+        track.addEventListener('scroll', () => {
+            this.updateFeedControls(track, controls);
+        });
+    }
+
+    setupTouchScrolling(track) {
+        const feedData = this.feeds.get(track);
+        if (!feedData) return;
+
+        track.addEventListener('touchstart', (e) => {
+            feedData.isDragging = true;
+            feedData.startX = e.touches[0].pageX;
+            feedData.scrollLeft = track.scrollLeft;
+            track.style.cursor = 'grabbing';
+            track.style.scrollSnapType = 'none'; // Disable snap while dragging
+        }, { passive: true });
+
+        track.addEventListener('touchmove', (e) => {
+            if (!feedData.isDragging) return;
+            
+            e.preventDefault();
+            const x = e.touches[0].pageX;
+            const walk = (x - feedData.startX) * 2; // Multiply for better feel
+            track.scrollLeft = feedData.scrollLeft - walk;
+        }, { passive: false });
+
+        track.addEventListener('touchend', () => {
+            feedData.isDragging = false;
+            track.style.cursor = 'grab';
+            
+            // Re-enable snap scrolling on mobile after drag
+            if (window.innerWidth <= 768) {
+                track.style.scrollSnapType = 'x mandatory';
+                this.snapToNearestItem(track);
+            }
+        });
+
+        track.addEventListener('touchcancel', () => {
+            feedData.isDragging = false;
+            track.style.cursor = 'grab';
+        });
+    }
+
+    setupMouseScrolling(track) {
+        const feedData = this.feeds.get(track);
+        if (!feedData) return;
+
+        track.addEventListener('mousedown', (e) => {
+            feedData.isDragging = true;
+            feedData.startX = e.pageX;
+            feedData.scrollLeft = track.scrollLeft;
+            track.style.cursor = 'grabbing';
+            e.preventDefault();
+        });
+
+        track.addEventListener('mousemove', (e) => {
+            if (!feedData.isDragging) return;
+            
+            const x = e.pageX;
+            const walk = (x - feedData.startX) * 2;
+            track.scrollLeft = feedData.scrollLeft - walk;
+        });
+
+        track.addEventListener('mouseup', () => {
+            feedData.isDragging = false;
+            track.style.cursor = 'grab';
+        });
+
+        track.addEventListener('mouseleave', () => {
+            feedData.isDragging = false;
+            track.style.cursor = 'grab';
+        });
+    }
+
+    setupKeyboardNavigation(track) {
+        track.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                this.scrollFeed(track, -1);
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                this.scrollFeed(track, 1);
+            }
+        });
+
+        // Make horizontal items focusable
+        const items = track.querySelectorAll('.horizontal-prompt-item');
+        items.forEach((item, index) => {
+            item.setAttribute('tabindex', '0');
+            item.setAttribute('aria-label', `Prompt ${index + 1}`);
+        });
+    }
+
+    scrollFeed(track, direction) {
+        const itemWidth = this.getItemWidth(track);
+        const gap = this.getGapSize(track);
+        const scrollAmount = (itemWidth + gap) * direction;
+
+        track.scrollBy({
+            left: scrollAmount,
+            behavior: 'smooth'
+        });
+
+        // Update controls after scroll
+        setTimeout(() => {
+            const feedData = this.feeds.get(track);
+            if (feedData && feedData.controls) {
+                this.updateFeedControls(track, feedData.controls);
+            }
+        }, 300);
+    }
+
+    getItemWidth(track) {
+        const item = track.querySelector('.horizontal-prompt-item');
+        if (!item) return 200; // Default fallback
+        
+        const style = window.getComputedStyle(item);
+        return parseInt(style.width) || 200;
+    }
+
+    getGapSize(track) {
+        const style = window.getComputedStyle(track);
+        const gap = style.gap || style.columnGap;
+        return parseInt(gap) || 15;
+    }
+
+    snapToNearestItem(track) {
+        const scrollLeft = track.scrollLeft;
+        const itemWidth = this.getItemWidth(track);
+        const gap = this.getGapSize(track);
+        const totalItemWidth = itemWidth + gap;
+        
+        const nearestIndex = Math.round(scrollLeft / totalItemWidth);
+        const targetScroll = Math.max(0, nearestIndex * totalItemWidth);
+        
+        track.scrollTo({
+            left: targetScroll,
+            behavior: 'smooth'
+        });
+    }
+
+    updateFeedControls(track, controls) {
+        if (!controls) return;
+        
+        const prevBtn = controls.querySelector('.prev-horizontal');
+        const nextBtn = controls.querySelector('.next-horizontal');
+        
+        if (!prevBtn || !nextBtn) return;
+        
+        const scrollLeft = track.scrollLeft;
+        const scrollWidth = track.scrollWidth;
+        const clientWidth = track.clientWidth;
+        
+        // Show/hide previous button
+        prevBtn.disabled = scrollLeft <= 10;
+        prevBtn.style.opacity = scrollLeft <= 10 ? '0.5' : '1';
+        
+        // Show/hide next button
+        nextBtn.disabled = scrollLeft >= scrollWidth - clientWidth - 10;
+        nextBtn.style.opacity = scrollLeft >= scrollWidth - clientWidth - 10 ? '0.5' : '1';
+    }
+
+    setupEventListeners() {
+        // Reinitialize feeds when new content is added
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.addedNodes.length > 0) {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1 && node.classList?.contains('horizontal-feed-section')) {
+                            setTimeout(() => {
+                                this.initializeAllFeeds();
+                            }, 100);
+                        }
+                    });
+                }
+            });
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Reinitialize on window resize
+        window.addEventListener('resize', () => {
+            this.feeds.forEach((feedData, track) => {
+                if (feedData.controls) {
+                    this.updateFeedControls(track, feedData.controls);
+                }
+            });
+        });
+    }
+
+    // Public method to add a new feed
+    addFeed(track, controls, feedId) {
+        this.initializeFeed(track, controls, feedId);
+    }
+}
+
+// Global horizontal feed manager instance
+window.horizontalFeedManager = new HorizontalFeedManager();
+
+// Update the existing scrollHorizontalFeed function to use the new manager
+function scrollHorizontalFeed(button, direction) {
+    const controls = button.closest('.horizontal-controls');
+    const feedSection = controls.closest('.horizontal-feed-section');
+    const track = feedSection.querySelector('.horizontal-feed-track');
+    
+    if (track && window.horizontalFeedManager) {
+        window.horizontalFeedManager.scrollFeed(track, direction);
+    }
+}
+
+// Add touch support for horizontal feed items
+function initHorizontalFeedTouchSupport() {
+    document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('click', function(e) {
+            const horizontalItem = e.target.closest('.horizontal-prompt-item');
+            if (horizontalItem) {
+                const promptId = horizontalItem.dataset.promptId;
+                if (promptId) {
+                    openPromptPage(promptId);
+                }
+            }
+        });
+
+        // Add touch feedback for horizontal items
+        document.addEventListener('touchstart', function(e) {
+            const horizontalItem = e.target.closest('.horizontal-prompt-item');
+            if (horizontalItem) {
+                horizontalItem.style.transform = 'scale(0.98)';
+            }
+        }, { passive: true });
+
+        document.addEventListener('touchend', function(e) {
+            const horizontalItem = e.target.closest('.horizontal-prompt-item');
+            if (horizontalItem) {
+                horizontalItem.style.transform = '';
+            }
+        }, { passive: true });
+    });
+}
+
 // YouTube Shorts Style Horizontal Feed - UPDATED
 class ShortsHorizontalFeed {
     constructor() {
@@ -931,9 +1248,7 @@ class ShortsHorizontalFeed {
                          alt="${title}"
                          loading="lazy"
                          onerror="this.src='https://via.placeholder.com/120x160/4e54c8/white?text=Prompt'">
-                    <div class="shorts-views">
-                        <i class="fas fa-eye"></i> ${this.formatCount(views)}
-                    </div>
+                    
                     ${isNew ? '<div class="shorts-new-indicator"></div>' : ''}
                 </div>
                 <div class="shorts-info">
@@ -1599,7 +1914,7 @@ async function handleNewsSubmit(e) {
   }
 }
 
-// YouTube-style Prompts with Infinite Scroll - UPDATED
+// YouTube-style Prompts with Infinite Scroll - UPDATED WITH HORIZONTAL FEEDS
 class YouTubeStylePrompts {
   constructor() {
     this.currentPage = 1;
@@ -1615,7 +1930,7 @@ class YouTubeStylePrompts {
     this.setupInfiniteScroll();
     this.loadInitialPrompts();
     this.setupEngagementListeners();
-    console.log('YouTubeStylePrompts initialized');
+    console.log('YouTubeStylePrompts initialized with horizontal feeds');
   }
 
   injectCriticalCSS() {
@@ -1978,7 +2293,7 @@ class YouTubeStylePrompts {
       return;
     }
 
-    console.log('Loading initial prompts for vertical feed...');
+    console.log('Loading initial prompts for vertical feed with horizontal feeds...');
     
     // Clear any existing content and apply critical styles
     promptsContainer.innerHTML = '';
@@ -2123,6 +2438,151 @@ class YouTubeStylePrompts {
     }
   }
 
+  // NEW: Create horizontal feed section
+  createHorizontalFeed(prompts, index) {
+    const horizontalFeed = document.createElement('div');
+    horizontalFeed.className = 'horizontal-feed-section';
+    horizontalFeed.innerHTML = `
+        <div class="horizontal-feed-header">
+            <h3>More Prompts You Might Like</h3>
+            <div class="horizontal-controls">
+                <button class="horizontal-control-btn prev-horizontal" onclick="scrollHorizontalFeed(this, -1)">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <button class="horizontal-control-btn next-horizontal" onclick="scrollHorizontalFeed(this, 1)">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="horizontal-feed-track" id="horizontalFeed${index}">
+            ${prompts.map(prompt => this.createHorizontalPromptItem(prompt)).join('')}
+        </div>
+    `;
+    
+    return horizontalFeed;
+  }
+
+  // NEW: Create horizontal prompt item
+  createHorizontalPromptItem(prompt) {
+    const safePrompt = prompt || {};
+    const promptId = safePrompt.id || 'unknown';
+    const title = safePrompt.title || 'Untitled Prompt';
+    const imageUrl = safePrompt.imageUrl || 'https://via.placeholder.com/200x150/4e54c8/white?text=Prompt';
+    const views = safePrompt.views || 0;
+    
+    return `
+        <div class="horizontal-prompt-item" data-prompt-id="${promptId}" onclick="openPromptPage('${promptId}')">
+            <div class="horizontal-prompt-image">
+                <img src="${imageUrl}" 
+                     alt="${title}"
+                     loading="lazy"
+                     onerror="this.src='https://via.placeholder.com/200x150/4e54c8/white?text=Prompt'">
+                <div class="horizontal-prompt-views">
+                    <i class="fas fa-eye"></i> ${this.formatCount(views)}
+                </div>
+            </div>
+            <div class="horizontal-prompt-info">
+                <div class="horizontal-prompt-title">${title.substring(0, 40)}${title.length > 40 ? '...' : ''}</div>
+                <button class="view-prompt-btn" onclick="event.stopPropagation(); openPromptPage('${promptId}')">
+                    View Prompt
+                </button>
+            </div>
+        </div>
+    `;
+  }
+
+  // NEW: Get random prompts for horizontal feed
+  getRandomPrompts(count, excludePrompts = []) {
+    const excludeIds = new Set(excludePrompts.map(p => p.id));
+    const availablePrompts = allPrompts.filter(prompt => 
+        prompt && !excludeIds.has(prompt.id)
+    );
+    
+    // Shuffle and take required number
+    const shuffled = [...availablePrompts].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
+  // UPDATED: Display prompts with horizontal feeds - MODIFIED TO SHOW AFTER EVERY 4 VERTICAL PROMPTS
+  displayPrompts(prompts, isInitial) {
+    const promptsContainer = document.getElementById('promptsContainer');
+    if (!promptsContainer) return;
+
+    promptsContainer.className = 'shorts-container';
+
+    if (isInitial) {
+      promptsContainer.innerHTML = '';
+      this.loadedPrompts.clear();
+    } else {
+      this.hideLoadingIndicator();
+    }
+
+    if (!prompts || prompts.length === 0) {
+      this.showNoResults();
+      return;
+    }
+
+    // MODIFIED: Group prompts - every 4 vertical items, add a horizontal feed
+    const groupedPrompts = [];
+    for (let i = 0; i < prompts.length; i += 4) {
+      const verticalPrompts = prompts.slice(i, i + 4);
+      groupedPrompts.push(verticalPrompts);
+      
+      // After every 4 vertical prompts, get random prompts for horizontal feed
+      if (i + 4 < prompts.length) {
+        const randomPrompts = this.getRandomPrompts(8, prompts.slice(i + 4)); // Get 8 random prompts
+        groupedPrompts.push({ type: 'horizontal', prompts: randomPrompts, index: i / 4 });
+      }
+    }
+
+    // Render the mixed feed
+    let globalIndex = 0;
+    groupedPrompts.forEach((group, groupIndex) => {
+      if (group.type === 'horizontal') {
+        // Add horizontal feed
+        const horizontalFeed = this.createHorizontalFeed(group.prompts, group.index);
+        promptsContainer.appendChild(horizontalFeed);
+        
+        // Initialize horizontal feed controls
+        setTimeout(() => {
+          this.initHorizontalFeedControls(horizontalFeed);
+        }, 100);
+      } else {
+        // Add vertical prompts
+        group.forEach((prompt, indexInGroup) => {
+          if (!prompt || this.loadedPrompts.has(prompt.id)) return;
+          
+          const promptElement = this.createShortsPrompt(prompt, globalIndex);
+          if (promptElement) {
+            promptsContainer.appendChild(promptElement);
+            this.loadedPrompts.add(prompt.id);
+            globalIndex++;
+          }
+        });
+      }
+    });
+
+    // Animate prompts in
+    setTimeout(() => {
+      this.animatePromptsIn();
+    }, 50);
+
+    // REMOVED: Client-side view tracking - rely on server-side only
+
+    console.log(`Displayed mixed feed with ${this.loadedPrompts.size} vertical prompts and ${Math.floor(this.loadedPrompts.size / 4)} horizontal feeds`);
+  }
+
+  // NEW: Initialize horizontal feed controls
+  initHorizontalFeedControls(horizontalFeed) {
+    const track = horizontalFeed.querySelector('.horizontal-feed-track');
+    const controls = horizontalFeed.querySelector('.horizontal-controls');
+    
+    if (track && controls && window.horizontalFeedManager) {
+      const feedId = `horizontal-feed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      window.horizontalFeedManager.addFeed(track, controls, feedId);
+    }
+  }
+
   filterByCategory(category) {
     const filteredPrompts = allPrompts.filter(prompt => 
       prompt.category === category
@@ -2186,53 +2646,6 @@ class YouTubeStylePrompts {
         </div>
       `;
     }
-  }
-
-  displayPrompts(prompts, isInitial) {
-    const promptsContainer = document.getElementById('promptsContainer');
-    if (!promptsContainer) return;
-
-    // Ensure container has correct class
-    promptsContainer.className = 'shorts-container';
-
-    if (isInitial) {
-      promptsContainer.innerHTML = '';
-      this.loadedPrompts.clear();
-    } else {
-      this.hideLoadingIndicator();
-    }
-
-    if (!prompts || prompts.length === 0) {
-      this.showNoResults();
-      return;
-    }
-
-    prompts.forEach((prompt, index) => {
-      // Avoid duplicates
-      if (!prompt || this.loadedPrompts.has(prompt.id)) {
-        return;
-      }
-      
-      const promptElement = this.createShortsPrompt(prompt, index);
-      if (promptElement) {
-        promptsContainer.appendChild(promptElement);
-        this.loadedPrompts.add(prompt.id);
-      }
-    });
-
-    // Animate prompts in with reduced delays
-    setTimeout(() => {
-      this.animatePromptsIn();
-    }, 50);
-
-    // Track views for new prompts
-    prompts.forEach(prompt => {
-      if (prompt && prompt.id) {
-        this.trackPromptView(prompt.id);
-      }
-    });
-
-    console.log(`Displayed ${prompts.length} prompts in vertical feed, total loaded: ${this.loadedPrompts.size}`);
   }
 
   createShortsPrompt(prompt, index) {
@@ -2475,39 +2888,56 @@ class YouTubeStylePrompts {
     }
   }
 
-  async trackPromptView(promptId) {
-    if (!promptId || promptId === 'unknown') return;
-    
-    try {
-      await fetch(`/api/prompt/${promptId}/view`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-    } catch (error) {
-      console.error('View tracking error:', error);
-    }
-  }
-
+  // UPDATED: Create loading shorts with horizontal feed skeletons
   createLoadingShorts() {
-    // Create loading cards
-    const loadingCards = Array(4).fill(0).map((_, i) => `
-      <div class="shorts-prompt-card loading-prompt" style="opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease ${i * 0.05}s, transform 0.3s ease ${i * 0.05}s">
-        <div class="shorts-video-container">
-          <div class="loading-placeholder"></div>
-        </div>
-        <div class="shorts-info">
-          <div class="shorts-prompt-text loading-text" style="height: 60px; margin-bottom: 10px;"></div>
-          <div class="shorts-meta">
-            <span class="loading-text" style="width: 100px; height: 12px; display: inline-block;"></span>
-            <span class="loading-text" style="width: 80px; height: 12px; display: inline-block;"></span>
+    // Create mixed loading cards (4 vertical + 1 horizontal skeleton)
+    const loadingCards = Array(12).fill(0).map((_, i) => {
+      if (i % 5 === 4) {
+        // Horizontal feed skeleton (every 5th item after 4 vertical ones)
+        return `
+          <div class="horizontal-feed-section loading-horizontal" style="opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease ${i * 0.05}s, transform 0.3s ease ${i * 0.05}s">
+            <div class="horizontal-feed-header">
+              <div class="loading-text" style="width: 200px; height: 20px; border-radius: 4px;"></div>
+              <div class="horizontal-controls">
+                <div class="loading-text" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+                <div class="loading-text" style="width: 40px; height: 40px; border-radius: 50%;"></div>
+              </div>
+            </div>
+            <div class="horizontal-feed-track">
+              ${Array(8).fill(0).map(() => `
+                <div class="horizontal-prompt-item loading-horizontal-item">
+                  <div class="horizontal-prompt-image loading-text" style="height: 150px;"></div>
+                  <div class="horizontal-prompt-info">
+                    <div class="loading-text" style="height: 36px; margin-bottom: 8px; border-radius: 4px;"></div>
+                    <div class="loading-text" style="height: 32px; border-radius: 20px;"></div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
           </div>
-          <div class="prompt-actions">
-            <div class="loading-text" style="width: 120px; height: 32px; border-radius: 20px;"></div>
-            <div class="loading-text" style="width: 60px; height: 12px; margin-left: auto;"></div>
+        `;
+      } else {
+        // Vertical prompt skeleton
+        return `
+          <div class="shorts-prompt-card loading-prompt" style="opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease ${i * 0.05}s, transform 0.3s ease ${i * 0.05}s">
+            <div class="shorts-video-container">
+              <div class="loading-placeholder"></div>
+            </div>
+            <div class="shorts-info">
+              <div class="shorts-prompt-text loading-text" style="height: 60px; margin-bottom: 10px;"></div>
+              <div class="shorts-meta">
+                <span class="loading-text" style="width: 100px; height: 12px; display: inline-block;"></span>
+                <span class="loading-text" style="width: 80px; height: 12px; display: inline-block;"></span>
+              </div>
+              <div class="prompt-actions">
+                <div class="loading-text" style="width: 120px; height: 32px; border-radius: 20px;"></div>
+                <div class="loading-text" style="width: 60px; height: 12px; margin-left: auto;"></div>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    `).join('');
+        `;
+      }
+    }).join('');
 
     return loadingCards;
   }
@@ -2547,7 +2977,7 @@ class YouTubeStylePrompts {
   }
 
   animatePromptsIn() {
-    const prompts = document.querySelectorAll('.shorts-prompt-card');
+    const prompts = document.querySelectorAll('.shorts-prompt-card, .horizontal-feed-section');
     prompts.forEach(prompt => {
       prompt.style.opacity = '1';
       prompt.style.transform = 'translateY(0)';
@@ -2604,6 +3034,118 @@ class YouTubeStylePrompts {
     setInterval(async () => {
       await this.refreshFeed();
     }, 2 * 60 * 1000);
+  }
+}
+
+// Horizontal scroll functionality
+function scrollHorizontalFeed(button, direction) {
+  const controls = button.closest('.horizontal-controls');
+  const feedSection = controls.closest('.horizontal-feed-section');
+  const track = feedSection.querySelector('.horizontal-feed-track');
+  
+  if (!track) return;
+  
+  const scrollAmount = 300; // Adjust based on your item width + gap
+  const newScrollLeft = track.scrollLeft + (scrollAmount * direction);
+  
+  track.scrollTo({
+    left: newScrollLeft,
+    behavior: 'smooth'
+  });
+  
+  // Update button states after scroll
+  setTimeout(() => updateHorizontalControls(track, controls), 300);
+}
+
+function updateHorizontalControls(track, controls) {
+  const prevBtn = controls.querySelector('.prev-horizontal');
+  const nextBtn = controls.querySelector('.next-horizontal');
+  
+  if (!prevBtn || !nextBtn) return;
+  
+  const scrollLeft = track.scrollLeft;
+  const scrollWidth = track.scrollWidth;
+  const clientWidth = track.clientWidth;
+  
+  prevBtn.disabled = scrollLeft <= 10;
+  nextBtn.disabled = scrollLeft >= scrollWidth - clientWidth - 10;
+}
+
+// Initialize horizontal feed controls
+function initHorizontalFeedControls() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const horizontalFeeds = document.querySelectorAll('.horizontal-feed-track');
+    
+    horizontalFeeds.forEach(track => {
+      const controls = track.closest('.horizontal-feed-section').querySelector('.horizontal-controls');
+      updateHorizontalControls(track, controls);
+      
+      // Update controls on scroll
+      track.addEventListener('scroll', () => {
+        updateHorizontalControls(track, controls);
+      });
+    });
+  });
+}
+
+// Touch/swipe support for horizontal feeds
+function initHorizontalTouchSupport() {
+  document.addEventListener('DOMContentLoaded', function() {
+    const tracks = document.querySelectorAll('.horizontal-feed-track');
+    
+    tracks.forEach(track => {
+      let startX = 0;
+      let startY = 0;
+      let scrollLeft = 0;
+      let isScrolling = false;
+      
+      track.addEventListener('touchstart', (e) => {
+        startX = e.touches[0].pageX;
+        startY = e.touches[0].pageY;
+        scrollLeft = track.scrollLeft;
+        isScrolling = true;
+      }, { passive: true });
+      
+      track.addEventListener('touchmove', (e) => {
+        if (!isScrolling) return;
+        
+        const x = e.touches[0].pageX;
+        const y = e.touches[0].pageY;
+        
+        const walkX = x - startX;
+        const walkY = y - startY;
+        
+        // Only prevent default if primarily horizontal movement
+        if (Math.abs(walkX) > Math.abs(walkY)) {
+          e.preventDefault();
+          track.scrollLeft = scrollLeft - walkX;
+        }
+      }, { passive: false });
+      
+      track.addEventListener('touchend', () => {
+        isScrolling = false;
+      });
+    });
+  });
+}
+
+// Call initialization functions
+initHorizontalFeedControls();
+initHorizontalTouchSupport();
+
+// Global function to open prompt page - RELY ON SERVER-SIDE VIEW COUNTING
+function openPromptPage(promptId) {
+  if (promptId && promptId !== 'unknown') {
+    const currentHost = window.location.hostname;
+    let targetUrl = `/prompt/${promptId}`;
+    
+    // If on non-www version in production, redirect to www
+    if (currentHost === 'promptseen.co' && window.location.hostname !== 'localhost') {
+      targetUrl = `https://www.promptseen.co/prompt/${promptId}`;
+    }
+    
+    // Server will handle view counting when the page loads
+    window.open(targetUrl, '_blank');
   }
 }
 
@@ -2886,75 +3428,28 @@ class YouTubeStyleHeader {
   }
 }
 
-// Engagement Manager Class
+// Engagement Manager Class - UPDATED: No view tracking
 class EngagementManager {
   constructor() {
     this.user = null;
-    this.trackedViews = new Set();
   }
 
   async init() {
     this.user = await getCurrentUser();
-    this.setupGlobalListeners();
+    // No automatic view tracking setup
   }
 
-  setupGlobalListeners() {
-    this.setupViewTracking();
+  // Only handle likes, uses, shares - NO VIEWS
+  async handleLike(likeBtn) {
+    // Your existing like handling code
   }
 
-  setupViewTracking() {
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const promptCard = entry.target;
-          const promptId = promptCard.dataset.promptId;
-          
-          if (promptId && promptId !== 'unknown' && !this.trackedViews.has(promptId)) {
-            this.trackView(promptId);
-            this.trackedViews.add(promptId);
-          }
-        }
-      });
-    }, { threshold: 0.5 });
-
-    const observerConfig = {
-      childList: true,
-      subtree: true
-    };
-
-    const domObserver = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === 1 && node.classList?.contains('shorts-prompt-card')) {
-            observer.observe(node);
-          } else if (node.nodeType === 1) {
-            const cards = node.querySelectorAll?.('.shorts-prompt-card');
-            if (cards) {
-              cards.forEach(card => {
-                observer.observe(card);
-              });
-            }
-          }
-        });
-      });
-    });
-
-    domObserver.observe(document.body, observerConfig);
+  async handleUse(useBtn) {
+    // Your existing use handling code
   }
 
-  async trackView(promptId) {
-    if (!promptId || promptId === 'unknown') return;
-    
-    try {
-      await fetch(`/api/prompt/${promptId}/view`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-    } catch (error) {
-      console.error('Error tracking view:', error);
-    }
+  async handleShare(shareBtn) {
+    // Your existing share handling code
   }
 }
 
@@ -3619,7 +4114,7 @@ function setupCaseInsensitiveSearch() {
 
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Initializing Prompt Seen with optimized loading...');
+  console.log('Initializing Prompt Seen with optimized loading and horizontal feeds...');
   
   await initializeFirebase();
   showAuthElements();
@@ -3675,6 +4170,21 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Initialize mobile horizontal scrolling
   initMobileHorizontalScroll();
   
+  // Initialize enhanced horizontal feed functionality
+  if (!window.horizontalFeedManager) {
+    window.horizontalFeedManager = new HorizontalFeedManager();
+  }
+  
+  // Initialize touch support
+  initHorizontalFeedTouchSupport();
+  
+  // Initialize all existing feeds
+  setTimeout(() => {
+    if (window.horizontalFeedManager) {
+      window.horizontalFeedManager.initializeAllFeeds();
+    }
+  }, 1500);
+  
   // Re-initialize on resize
   window.addEventListener('resize', initMobileHorizontalScroll);
   
@@ -3697,7 +4207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   script.textContent = JSON.stringify(structuredData);
   document.head.appendChild(script);
   
-  console.log('Prompt Seen initialization complete with optimized loading');
+  console.log('Prompt Seen initialization complete with horizontal feeds');
 });
 
 // Mobile Navigation Toggle
@@ -3754,3 +4264,33 @@ window.searchManager = window.searchManager || {};
 window.newsManager = window.newsManager || {};
 window.categoryManager = window.categoryManager || {};
 window.shortsHorizontalFeed = window.shortsHorizontalFeed || {};
+window.horizontalFeedManager = window.horizontalFeedManager || {};
+
+// Helper functions for search
+function getRecentSearches() {
+  try {
+    return JSON.parse(localStorage.getItem('recentSearches') || '[]');
+  } catch (error) {
+    console.error('Error getting recent searches:', error);
+    return [];
+  }
+}
+
+function addToRecentSearches(query) {
+  try {
+    let recent = getRecentSearches();
+    recent = recent.filter(item => item !== query);
+    recent.unshift(query);
+    recent = recent.slice(0, 5);
+    localStorage.setItem('recentSearches', JSON.stringify(recent));
+  } catch (error) {
+    console.error('Error adding to recent searches:', error);
+  }
+}
+
+function hideSearchSuggestions() {
+  const searchSuggestions = document.getElementById('searchSuggestions');
+  if (searchSuggestions) {
+    searchSuggestions.style.display = 'none';
+  }
+}
