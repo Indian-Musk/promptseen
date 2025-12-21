@@ -1,0 +1,441 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+    <title>Download app | Prompt Seen</title>
+    <meta name="description" content="Android app: Prompt Seen, Prompt Seen is a platform that offers trending and viral AI prompts for photo editing and other creative tasks. It provides users with free, high-quality prompts for AI tools." />
+    <meta name="keywords" content="app,android,Prompt Seen,AI prompts,photo editing,AI image generator" />
+    <meta name="author" content="Prompt Seen" />
+    <meta name="robots" content="all,index,follow" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta charset="UTF-8" />
+    <link rel="canonical" href="https://www.promptseen.co/app.html">
+
+    <meta property="og:title" content="Prompt Seen">
+    <meta property="og:description" content="Prompt Seen is a platform that offers trending and viral AI prompts for photo editing and other creative tasks.">
+    <meta property="og:image" content="https://www.promptseen.co/logo.png">
+    <meta property="og:url" content="https://apk.e-droid.net/apk/app3838675-1gfwzo.apk?v=1">
+    <meta property="og:type" content="website">
+
+    <style>
+        /* Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f9fafc 0%, #f1f3f8 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Container */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            text-align: center;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        /* App Image */
+        .app-img {
+            width: 150px;
+            height: 150px;
+            border-radius: 24px;
+            margin: 0 auto 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            object-fit: contain;
+            background: white;
+            padding: 10px;
+        }
+
+        /* Title */
+        .title {
+            font-size: 2.2em;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+
+        /* Description */
+        .description {
+            font-size: 1.05em;
+            color: #555;
+            line-height: 1.7;
+            margin-bottom: 35px;
+            padding: 0 10px;
+        }
+
+        /* Download Button */
+        .download-btn {
+            display: inline-block;
+            padding: 16px 40px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            font-size: 1.1em;
+            font-weight: 600;
+            text-decoration: none;
+            border-radius: 50px;
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+            transition: all 0.3s ease;
+            margin: 10px 0;
+            border: none;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+        }
+
+        .download-btn:active {
+            transform: translateY(0);
+        }
+
+        .file-info {
+            color: #777;
+            font-size: 0.9em;
+            margin-top: 8px;
+            margin-bottom: 30px;
+        }
+
+        /* QR Section */
+        .qr-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            display: none;
+        }
+
+        .qr-section.visible {
+            display: block;
+        }
+
+        .qr-section p {
+            margin-bottom: 15px;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .qr-section img {
+            width: 140px;
+            height: 140px;
+            border: 1px solid #eee;
+            border-radius: 10px;
+            padding: 10px;
+            background: white;
+        }
+
+        /* Toggle QR Button */
+        .toggle-qr {
+            background: none;
+            border: 1px solid #ddd;
+            color: #666;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-qr:hover {
+            background: #f5f5f5;
+            border-color: #007bff;
+            color: #007bff;
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            padding: 20px 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-top: 1px solid #eee;
+        }
+
+        .footer-content {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .footer-logo {
+            width: 64px;
+            height: 64px;
+            margin-bottom: 10px;
+        }
+
+        .footer-text {
+            font-family: Arial, sans-serif;
+            font-size: 0.85em;
+            color: #666;
+        }
+
+        .footer-link {
+            text-decoration: none;
+            color: #666;
+            transition: color 0.2s ease;
+        }
+
+        .footer-link:hover {
+            color: #007bff;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            position: relative;
+        }
+
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #333;
+        }
+
+        .modal-text {
+            text-align: left;
+            padding: 10px 0;
+            color: #444;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .app-img {
+                width: 120px;
+                height: 120px;
+                margin-bottom: 25px;
+            }
+
+            .title {
+                font-size: 1.8em;
+                margin-bottom: 12px;
+            }
+
+            .description {
+                font-size: 0.95em;
+                margin-bottom: 30px;
+                padding: 0;
+            }
+
+            .download-btn {
+                padding: 14px 35px;
+                font-size: 1em;
+                width: 100%;
+                max-width: 280px;
+            }
+
+            .qr-section img {
+                width: 120px;
+                height: 120px;
+            }
+
+            .modal-content {
+                padding: 20px;
+                margin: 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 1.6em;
+            }
+
+            .description {
+                font-size: 0.9em;
+            }
+
+            .app-img {
+                width: 100px;
+                height: 100px;
+                border-radius: 20px;
+            }
+
+            .download-btn {
+                padding: 12px 30px;
+                font-size: 0.95em;
+            }
+
+            .footer-logo {
+                width: 48px;
+                height: 48px;
+            }
+
+            .footer-text {
+                font-size: 0.8em;
+            }
+        }
+
+        /* Landscape Orientation */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .container {
+                padding: 10px 20px;
+            }
+
+            .app-img {
+                width: 80px;
+                height: 80px;
+                margin-bottom: 15px;
+            }
+
+            .description {
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- App Icon -->
+        <img src="https://www.promptseen.co/favicon.ico" alt="Prompt Seen App Icon" class="app-img" />
+        
+        <!-- Title -->
+        <h1 class="title">Prompt Seen</h1>
+        
+        <!-- Description -->
+        <p class="description">
+            Prompt Seen is a platform that offers trending and viral AI prompts for photo editing and other creative tasks. 
+            It provides users with free, high-quality prompts that can be used with various AI tools, including ChatGPT and Google Gemini. 
+            The platform aims to simplify the photo editing process by offering ready-to-use prompts that enhance creativity and efficiency. 
+            Additionally, it features an AI image generator that allows users to create visuals from text prompts.
+        </p>
+        
+        <!-- Download Button -->
+        <a class="download-btn" href="https://apk.e-droid.net/apk/app3838675-1gfwzo.apk?v=1" download>
+            &#x2B07;&#xFE0F; Download App
+        </a>
+        <p class="file-info">(Android APK file)</p>
+        
+        <!-- QR Code Toggle -->
+        <button class="toggle-qr" onclick="toggleQR()">
+            Show/Hide QR Code
+        </button>
+        
+        <!-- QR Code Section -->
+        <div class="qr-section" id="qrSection">
+            <p>Scan to download:</p>
+            <img src="/qr.png" alt="QR Code for Prompt Seen App" />
+        </div>
+        
+        <!-- Modal for Additional Info -->
+        <div class="modal" id="infoModal" onclick="closeModal()">
+            <div class="modal-content" onclick="event.stopPropagation()">
+                <span class="close" onclick="closeModal()">&times;</span>
+                <div class="modal-text">
+                    <p><strong>Installation Instructions:</strong></p>
+                    <ul style="margin: 15px 0; padding-left: 20px;">
+                        <li>Enable "Unknown Sources" in your Android settings</li>
+                        <li>Download the APK file using the button above</li>
+                        <li>Open the downloaded file to install</li>
+                        <li>Follow the on-screen installation prompts</li>
+                    </ul>
+                    <p><em>Note: Make sure you have enough storage space before installing.</em></p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Info Button -->
+        <button class="toggle-qr" onclick="showModal()" style="margin-top: 20px;">
+            Installation Help
+        </button>
+    </div>
+    
+    <!-- Footer -->
+    <footer>
+        <div class="footer-content">
+            <img src="https://www.promptseen.co/logo.png" alt="Prompt Seen Logo" class="footer-logo" />
+            <p class="footer-text">
+                © 2025 promptseen.co | 
+                <a href="https://www.promptseen.co" class="footer-link">AI Prompt Provider</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle QR Code visibility
+        function toggleQR() {
+            const qrSection = document.getElementById('qrSection');
+            qrSection.classList.toggle('visible');
+        }
+        
+        // Show modal
+        function showModal() {
+            document.getElementById('infoModal').classList.add('active');
+        }
+        
+        // Close modal
+        function closeModal() {
+            document.getElementById('infoModal').classList.remove('active');
+        }
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeModal();
+            }
+        });
+        
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('infoModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+        
+        // Add touch event for mobile
+        document.addEventListener('touchstart', function(event) {
+            if (event.target.classList.contains('modal')) {
+                closeModal();
+            }
+        });
+    </script>
+</body>
+</html>

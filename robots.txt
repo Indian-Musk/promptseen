@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://www.promptseen.co/sitemap.xml
+Sitemap: https://www.promptseen.co/sitemap-posts.xml
+Sitemap: https://www.promptseen.co/sitemap-news.xml
+Sitemap: https://www.promptseen.co/sitemap-pages.xml

@@ -3737,11 +3737,13 @@ function addMobileNavigation() {
         <i class="fas fa-exchange-alt"></i>
         <span>Create</span>
       </a>
- <!-- Add WhatsApp Group Button -->
-      <a href="https://whatsapp.com/channel/0029Vb5Th674SpkEB2iRMK01" class="nav-item whatsapp-mobile" target="_blank">
-        <i class="fab fa-whatsapp"></i>
-        <span>Join Group</span>
-
+  <!-- Replace WhatsApp with Download Android App Button -->
+      <a href="https://apk.e-droid.net/apk/app3838675-1gfwzo.apk?v=1" 
+         class="nav-item download-app-mobile" 
+         target="_blank" 
+         download="PromptSeen.apk">
+        <i class="fas fa-download"></i>
+        <span>Get App</span>
       </a>
    
     `;

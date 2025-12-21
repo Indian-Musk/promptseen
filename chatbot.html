@@ -937,7 +937,9 @@
                     <a href="howitworks.html">How It Works</a>
                      </div>
                 <div id="authSection">
-                    <a href="login.html" class="login-btn">Login</a>
+                    <a href="index.html" class="login-btn" style="background: transparent; color: var(--dark);">
+                        <i class="fas fa-home"></i> Home
+                    </a>
                 </div>
                 <div class="mobile-toggle" id="mobileToggle">
                     <i class="fas fa-bars"></i>
@@ -952,12 +954,11 @@
             <i class="fas fa-times"></i>
         </div>
         <a href="index.html">Showcase</a>
-<a href="ai.html" class="active">Generate Image</a>        
-<a href="promptconverter.html">Prompt Converter</a>
+        <a href="chatbot.html" class="active">Generate Image</a>        
+        <a href="promptconverter.html">Prompt Converter</a>
         <a href="features.html">Features</a>
         <a href="showcase.html">Gallery</a>
         <a href="howitworks.html">How It Works</a>
-        
         <a href="login.html">Login</a>
     </div>
     
@@ -1071,60 +1072,23 @@
             const chatContainer = document.getElementById('chatContainer');
             const authSection = document.getElementById('authSection');
             
-            // Check authentication status
+            // Check authentication status (optional)
             function checkAuth() {
                 return JSON.parse(localStorage.getItem('user'));
             }
             
-            function showAuthElements() {
-                const user = checkAuth();
-                if (authSection) {
-                    if (user) {
-                        authSection.innerHTML = `
-                            <div class="user-profile">
-                                <img src="${user.avatar}" alt="${user.name}" class="user-avatar">
-                                <span>${user.name}</span>
-                                <button class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
-                            </div>
-                        `;
-                        
-                        const logoutBtn = authSection.querySelector('.logout-btn');
-                        if (logoutBtn) {
-                            logoutBtn.addEventListener('click', async () => {
-                                try {
-                                    // Sign out from Firebase
-                                    await firebase.auth().signOut();
-                                    localStorage.removeItem('user');
-                                    window.location.reload();
-                                } catch (error) {
-                                    console.error('Logout error:', error);
-                                    localStorage.removeItem('user');
-                                    window.location.reload();
-                                }
-                            });
-                        }
-                    } else {
-                        authSection.innerHTML = `
-                            <a href="login.html?returnUrl=ai.html" class="login-btn">Login</a>
-                        `;
-                    }
-                }
-            }
+            // Initialize - no login required
+            authRequired.style.display = 'none';
+            chatContainer.style.display = 'flex';
             
-            // Initialize authentication check
-            const user = checkAuth();
-            if (!user) {
-                // Show auth required message, hide chat container
-                authRequired.style.display = 'block';
-                chatContainer.style.display = 'none';
-            } else {
-                // Show chat container, hide auth required message
-                authRequired.style.display = 'none';
-                chatContainer.style.display = 'flex';
+            // Update auth section to show Home link
+            if (authSection) {
+                authSection.innerHTML = `
+                    <a href="index.html" class="login-btn" style="background: transparent; color: var(--dark);">
+                        <i class="fas fa-home"></i> Home
+                    </a>
+                `;
             }
-            
-            // Update auth section
-            showAuthElements();
             
             // Mobile menu functionality
             mobileToggle.addEventListener('click', function() {
@@ -1172,14 +1136,6 @@
             retryButton.addEventListener('click', generateImage);
             
             async function generateImage() {
-                // Check authentication
-                const user = checkAuth();
-                if (!user) {
-                    alert('Please login to use the AI Image Generator');
-                    window.location.href = 'login.html?returnUrl=ai.html';
-                    return;
-                }
-                
                 const prompt = promptInput.value.trim();
                 
                 if (!prompt) {
