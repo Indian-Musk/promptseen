@@ -1,4 +1,4 @@
-﻿process.env.ADSENSE_CLIENT_ID = 'DISABLED';
+﻿process.env.ADSENSE_CLIENT_ID = 'ca-pub-5992381116749724';
 const express = require('express');
 const path = require('path');
 const admin = require('firebase-admin');
@@ -186,7 +186,7 @@ class AdSenseManager {
           script.crossOrigin = 'anonymous';
           script.onload = function() {
             if (!window.adsbygoogle.initialized) {
-              window.adsbygoogle.push({
+              (adsbygoogle = window.adsbygoogle || []).push({
                 google_ad_client: "${clientId}",
                 enable_page_level_ads: true,
                 overlays: {bottom: true}
@@ -202,6 +202,7 @@ class AdSenseManager {
 
   static generateManualAd(adSlot = 'default') {
     const clientId = process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724';
+    const slot = adSlot === 'default' ? '1234567890' : adSlot;
     
     return `
       <!-- Manual Ad Placement -->
@@ -210,7 +211,7 @@ class AdSenseManager {
         <ins class="adsbygoogle"
             style="display:block"
             data-ad-client="${clientId}"
-            data-ad-slot="${adSlot}"
+            data-ad-slot="${slot}"
             data-ad-format="auto"
             data-full-width-responsive="true"></ins>
         <script>
@@ -244,7 +245,17 @@ class AdSenseManager {
             data-ad-format="auto"
             data-full-width-responsive="true"></ins>
         <script>
-          (adsbygoogle = window.adsbygoogle || []).push({});
+          (function() {
+            function initAd() {
+              if (window.adsbygoogle && !window.adsbygoogle.pushed) {
+                (adsbygoogle = window.adsbygoogle || []).push({});
+                window.adsbygoogle.pushed = true;
+              } else {
+                setTimeout(initAd, 100);
+              }
+            }
+            initAd();
+          })();
         </script>
       </div>
     `;
@@ -437,10 +448,10 @@ class PromptContentGenerator {
       ],
       
       'photography': [
-        { name: "ChatGPT", description: "Superior at understanding photographic terms and realistic rendering" },
-        { name: "Google Gemini", description: "Strong research capabilities and factual accuracy" },
+        { name: "DALL-E 3", description: "Superior at understanding photographic terms and realistic rendering" },
+        { name: "Midjourney", description: "Excellent for artistic photography styles and compositions" },
         { name: "Stable Diffusion", description: "Best for photorealistic outputs with custom models" },
-        { name: "Midjourney", description: "Excellent for artistic photography styles and compositions" }
+        { name: "Adobe Firefly", description: "Great for commercial photography applications" }
       ],
       
       'design': [
@@ -557,7 +568,7 @@ class AIDescriptionGenerator {
         strengths: ['artistic styles', 'creative compositions', 'stylistic consistency', 'community features']
       },
       'dalle': {
-        name: 'ChatGPT',
+        name: 'DALL-E 3',
         year: '2025',
         description: 'has become the industry standard for prompt understanding and realistic image generation with exceptional attention to detail.',
         strengths: ['prompt comprehension', 'realistic rendering', 'complex scenes', 'text integration']
@@ -728,7 +739,7 @@ class AIDescriptionGenerator {
     
     const inputPreparation = {
       'art': 'Start with a clear concept or reference image. Consider the artistic style, composition, and mood you want to achieve.',
-      'photography': 'Upload your photo on respective AI . Ensure you have specific lighting, composition, and style requirements in mind.',
+      'photography': 'Upload your photo on respective AI. Ensure you have specific lighting, composition, and style requirements in mind.',
       'design': 'Prepare your design brief with specific requirements for layout, branding elements, and visual hierarchy considerations.',
       'writing': 'Define your content goals, target audience, and desired tone before starting the generation process.',
       'general': 'Have a clear objective and specific requirements in mind to guide the AI generation process effectively.'
@@ -2764,7 +2775,8 @@ function generateEnhancedPromptHTML(promptData) {
     <meta name="keywords" content="${(promptData.keywords || []).join(', ')}">
     <meta name="robots" content="index, follow, max-image-preview:large">
     
-    <!-- Manual AdSense for Prompt Pages -->
+    <!-- AdSense Auto Ads -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}" crossorigin="anonymous"></script>
     
     <!-- Enhanced Open Graph -->
     <meta property="og:title" content="${promptData.seoTitle}">
@@ -3510,7 +3522,7 @@ function generateEnhancedPromptHTML(promptData) {
     </style>
 </head>
 <body>
-    <!-- Manual Ads Only -->
+    <!-- AdSense Auto Ads will load from head -->
 
     <!-- Site Header -->
     <header class="site-header">
@@ -3870,7 +3882,6 @@ function generateEnhancedPromptHTML(promptData) {
 
 // Generate News HTML
 function generateNewsHTML(newsData) {
-  const adsenseCode = generateAdSenseCode();
   const baseUrl = process.env.NODE_ENV === 'production' ? 'https://www.promptseen.co' : '';
   const newsUrl = baseUrl + '/news/' + newsData.id;
   
@@ -3889,7 +3900,7 @@ function generateNewsHTML(newsData) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${newsData.seoTitle}</title>
     <meta name="description" content="${newsData.metaDescription}">
-    ${adsenseCode}
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}" crossorigin="anonymous"></script>
     <meta property="og:type" content="article">
     <meta property="og:url" content="${newsUrl}">
     <meta property="article:published_time" content="${newsData.publishedAt}">
@@ -3929,11 +3940,34 @@ function generateNewsHTML(newsData) {
                 ${newsData.views} views | ${newsData.category}
             </div>
         </header>
-        <div class="ad-container"><div class="ad-label">Advertisement</div></div>
+        <div class="ad-container"><div class="ad-label">Advertisement</div><ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}"
+            data-ad-slot="1234567890"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins></div>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        
         <img src="${newsData.imageUrl}" alt="${newsData.title}" class="news-image">
-        <div class="ad-container"><div class="ad-label">Advertisement</div></div>
+        
+        <div class="ad-container"><div class="ad-label">Advertisement</div><ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}"
+            data-ad-slot="1234567890"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins></div>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        
         <div class="news-content">${contentHTML}</div>
-        <div class="ad-container"><div class="ad-label">Advertisement</div></div>
+        
+        <div class="ad-container"><div class="ad-label">Advertisement</div><ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}"
+            data-ad-slot="1234567890"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins></div>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+        
         <a href="/" class="back-link">← Back to Prompt Seen</a>
     </article>
     <script>
@@ -3966,18 +4000,26 @@ function generateCategoryHTML(category, baseUrl) {
     <meta charset="UTF-8">
     <title>${categoryName} Prompts - Prompt Seen</title>
     <meta name="description" content="${description}">
-    ${generateAdSenseCode()}
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}" crossorigin="anonymous"></script>
     <style>
         body { font-family: Arial, sans-serif; margin: 0; padding: 40px; background: #f5f7fa; text-align: center; }
         .container { max-width: 800px; margin: 50px auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         h1 { color: #4e54c8; margin-bottom: 20px; }
         a { color: #4e54c8; text-decoration: none; padding: 12px 25px; border: 2px solid #4e54c8; border-radius: 30px; display: inline-block; margin-top: 20px; }
+        .ad-container { margin: 25px 0; text-align: center; background: #f8f9fa; padding: 15px; border-radius: 8px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>${categoryName} Prompts</h1>
         <p>${description}</p>
+        <div class="ad-container"><ins class="adsbygoogle"
+            style="display:block"
+            data-ad-client="${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}"
+            data-ad-slot="1234567890"
+            data-ad-format="auto"
+            data-full-width-responsive="true"></ins></div>
+        <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
         <a href="/">← Back to Prompt Showcase</a>
     </div>
 </body>
@@ -4102,6 +4144,7 @@ app.listen(port, async () => {
   console.log(`🚀 Server running on port ${port}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Base URL: http://localhost:${port}`);
+  console.log(`💰 AdSense Client ID: ${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}`);
   console.log(`📰 News routes: http://localhost:${port}/news/:id`);
   console.log(`🗞️  News API: http://localhost:${port}/api/news`);
   console.log(`📤 News upload: http://localhost:${port}/api/upload-news`);
@@ -4117,7 +4160,6 @@ app.listen(port, async () => {
   console.log(`🗺️  Sitemap: http://localhost:${port}/sitemap.xml`);
   console.log(`🤖 Robots.txt: http://localhost:${port}/robots.txt`);
   console.log(`❤️  Health check: http://localhost:${port}/health`);
-  console.log(`💰 AdSense Client ID: ${process.env.ADSENSE_CLIENT_ID || 'ca-pub-5992381116749724'}`);
   console.log(`🔄 AdSense Migration: http://localhost:${port}/admin/migrate-adsense`);
   console.log(`📊 Caching: Enabled with 5-minute TTL`);
   console.log(`🤖 AI Content: FULL DETAILED VERSION RESTORED`);
@@ -4142,5 +4184,18 @@ app.listen(port, async () => {
     console.log(`🏠 Home pages:`);
     console.log(`   → Root: http://localhost:${port}/`);
     console.log(`   → Index: http://localhost:${port}/index.html`);
+  }
+  
+  // Auto-migrate if configured
+  if (process.env.AUTO_MIGRATE_ADSENSE === 'true') {
+    console.log('🔄 Auto-migrating prompts for AdSense...');
+    setTimeout(async () => {
+      try {
+        const migratedCount = await migrateExistingPromptsForAdSense();
+        console.log(`✅ Auto-migration complete! Migrated ${migratedCount} prompts.`);
+      } catch (error) {
+        console.error('❌ Auto-migration failed:', error);
+      }
+    }, 2000);
   }
 });
